@@ -10,19 +10,51 @@ interface DateWheelPickerProps {
 }
 
 export default function DateWheelPicker({ value, onChange, onClose }: DateWheelPickerProps) {
-  // Parse initial value or default to today
-  const initialDate = value ? new Date(value.slice(0, 4) + "-" + value.slice(4, 6) + "-" + value.slice(6, 8)) : new Date(1990, 0, 1);
+  // Parse initial value or default to 1983-01-01 (40세, 올해 기준 2025년)
+  const getInitialDate = () => {
+    if (value && value.length === 8) {
+      return new Date(
+        value.slice(0, 4) + "-" + value.slice(4, 6) + "-" + value.slice(6, 8)
+      );
+    }
+    return new Date(1983, 0, 1); // 디폴트: 1983년 1월 1일
+  };
+  
+  const initialDate = getInitialDate();
   
   const [selectedYear, setSelectedYear] = useState(initialDate.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(initialDate.getMonth() + 1);
   const [selectedDay, setSelectedDay] = useState(initialDate.getDate());
 
-  const years = Array.from({ length: 100 }, (_, i) => 2025 - i); // 2025 ~ 1926
+
+  const years = Array.from({ length: 100 }, (_, i) => 2025 - i); // 2025 ~ 1926 (100년 범위)
   const months = Array.from({ length: 12 }, (_, i) => i + 1);
   const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
+
   const handleConfirm = () => {
+    // 만 14세 미만 체크 (정확한 만 나이 계산)
+    const selectedDate = new Date(selectedYear, selectedMonth - 1, selectedDay);
+    const today = new Date();
+    
+    // 만 나이 계산
+    let age = today.getFullYear() - selectedDate.getFullYear();
+    const monthDiff = today.getMonth() - selectedDate.getMonth();
+    const dayDiff = today.getDate() - selectedDate.getDate();
+    
+    // 생일이 지나지 않았으면 나이 -1
+    if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+      age--;
+    }
+    
+    // 만 14세 미만인 경우 가입 불가
+    if (age < 14) {
+      alert("만 14세 미만은 서비스 가입이 불가능합니다.");
+      onClose();
+      return;
+    }
+    
     const y = selectedYear.toString();
     const m = selectedMonth.toString().padStart(2, "0");
     const d = selectedDay.toString().padStart(2, "0");

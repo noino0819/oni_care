@@ -28,21 +28,27 @@ export default function SignupVerifyPage() {
   const isNameValid = name.length >= 2;
   const isBirthDateValid = birthDate.length === 8; // YYYYMMDD
   const isPhoneValid = phone.length >= 10;
+  const isNextButtonEnabled = isVerified;
   
-  // Auto-trigger next steps
-  useEffect(() => {
-    if (isNameValid && !birthDate && !showDatePicker) {
-      const timer = setTimeout(() => setShowDatePicker(true), 500);
-      return () => clearTimeout(timer);
+  // 이름 입력 검증 (한글 10자/영문 20자, 특수문자/숫자/띄어쓰기 불가)
+  const validateNameInput = (value: string) => {
+    // 한글, 영문만 허용 (특수문자, 숫자, 띄어쓰기 불가)
+    const validChars = /^[가-힣a-zA-Z]*$/;
+    if (!validChars.test(value)) {
+      return name; // 유효하지 않은 문자는 입력 거부
     }
-  }, [isNameValid, birthDate, showDatePicker]);
-
-  useEffect(() => {
-    if (isBirthDateValid && !gender && !showGenderModal) {
-      const timer = setTimeout(() => setShowGenderModal(true), 500);
-      return () => clearTimeout(timer);
+    
+    // 한글/영문 개별 길이 체크
+    const koreanCount = (value.match(/[가-힣]/g) || []).length;
+    const englishCount = (value.match(/[a-zA-Z]/g) || []).length;
+    
+    // 한글 10자 초과 또는 영문 20자 초과 시 입력 거부
+    if (koreanCount > 10 || englishCount > 20) {
+      return name;
     }
-  }, [isBirthDateValid, gender, showGenderModal]);
+    
+    return value;
+  };
 
   const handleSendPhone = () => {
     if (!isPhoneValid) return;
@@ -59,7 +65,7 @@ export default function SignupVerifyPage() {
   };
 
   const handleNext = () => {
-    if (!isVerified) return;
+    if (!isNextButtonEnabled) return;
 
     const verifyData = {
       name,
@@ -125,11 +131,10 @@ export default function SignupVerifyPage() {
                 value={phone}
                 onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, ""))}
                 className="h-14 rounded-xl text-lg bg-gray-50 border-none flex-1"
-                disabled={isVerified}
               />
               <Button 
                 className="h-14 w-24 rounded-xl"
-                disabled={!isPhoneValid || isVerified}
+                disabled={!isPhoneValid}
                 onClick={handleSendPhone}
               >
                 {isPhoneSent ? "재전송" : "전송"}
@@ -185,14 +190,26 @@ export default function SignupVerifyPage() {
           <Input 
             placeholder="이름" 
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => setName(validateNameInput(e.target.value))}
             className={cn(
-              "h-14 rounded-xl text-lg border-none transition-colors",
+              "h-14 rounded-xl text-lg border-none transition-colors cursor-text",
               isNameValid ? "bg-gray-100 text-gray-500" : "bg-gray-50 text-black"
             )}
-            readOnly={isNameValid}
           />
         </div>
+
+        {/* 생년월일 입력 후 "다음" 버튼 */}
+        {isBirthDateValid && !gender && (
+          <div className="fixed bottom-0 left-0 right-0 p-6 bg-white border-t border-gray-100 animate-in slide-in-from-bottom duration-300">
+            <Button
+              className="w-full h-14 text-base font-bold rounded-xl"
+              size="lg"
+              onClick={() => setShowGenderModal(true)}
+            >
+              다 음
+            </Button>
+          </div>
+        )}
 
         {isVerified && (
           <div className="fixed bottom-0 left-0 right-0 p-6 bg-white border-t border-gray-100 animate-in slide-in-from-bottom duration-300">
@@ -200,6 +217,7 @@ export default function SignupVerifyPage() {
               className="w-full h-14 text-base font-bold rounded-xl"
               size="lg"
               onClick={handleNext}
+              disabled={!isNextButtonEnabled}
             >
               다 음
             </Button>
