@@ -117,21 +117,31 @@ export default function DateWheelPicker({ value, onChange, onClose }: DateWheelP
 function WheelColumn({ items, selectedItem, onSelect, label }: { items: number[], selectedItem: number, onSelect: (val: number) => void, label: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const itemHeight = 40; // Height of each item in pixels
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Scroll to selected item on mount
   useEffect(() => {
-    if (containerRef.current) {
+    if (containerRef.current && !isInitialized) {
       const index = items.indexOf(selectedItem);
       if (index !== -1) {
-        // setTimeout을 사용하여 DOM이 완전히 렌더링된 후 스크롤
-        setTimeout(() => {
+        // requestAnimationFrame을 사용하여 브라우저가 다음 프레임을 렌더링한 후 스크롤
+        requestAnimationFrame(() => {
           if (containerRef.current) {
+            // scrollBehavior를 auto로 변경하여 즉시 스크롤
+            containerRef.current.style.scrollBehavior = 'auto';
             containerRef.current.scrollTop = index * itemHeight;
+            // 다시 smooth로 변경
+            setTimeout(() => {
+              if (containerRef.current) {
+                containerRef.current.style.scrollBehavior = 'smooth';
+              }
+            }, 50);
+            setIsInitialized(true);
           }
-        }, 0);
+        });
       }
     }
-  }, [items, selectedItem, itemHeight]);
+  }, [items, selectedItem, itemHeight, isInitialized]);
 
   const handleScroll = () => {
     if (containerRef.current) {
