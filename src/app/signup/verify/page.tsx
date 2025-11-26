@@ -129,73 +129,8 @@ export default function SignupVerifyPage() {
         <h1 className="text-2xl font-bold mb-8">휴대폰번호를 입력해 주세요.</h1>
         
         <div className="space-y-6">
-          {/* 이름 */}
-          <div className="space-y-2">
-            <label className="text-sm text-gray-600">이름</label>
-            <Input 
-              placeholder="김건강" 
-              value={name}
-              onChange={(e) => setName(validateNameInput(e.target.value))}
-              onCompositionStart={() => setIsComposing(true)}
-              onCompositionEnd={(e) => {
-                setIsComposing(false);
-                const target = e.target as HTMLInputElement;
-                setName(validateNameInput(target.value));
-              }}
-              className="h-14 rounded-xl text-base bg-gray-50 border-none"
-            />
-          </div>
-
-          {/* 생년월일 */}
-          <div className="space-y-2">
-            <label className="text-sm text-gray-600">생년월일</label>
-            <div 
-              className="h-14 rounded-xl flex items-center px-4 text-base bg-gray-50 cursor-pointer"
-              onClick={() => setShowDatePicker(true)}
-            >
-              <span className={birthDate ? "text-gray-900" : "text-gray-400"}>
-                {birthDate ? `${birthDate.slice(0,4)}.${birthDate.slice(4,6)}.${birthDate.slice(6,8)}` : "생년월일 선택"}
-              </span>
-            </div>
-          </div>
-
-          {/* 성별 */}
-          <div className="space-y-2">
-            <label className="text-sm text-gray-600">성별</label>
-            <div 
-              className="h-14 rounded-xl flex items-center px-4 justify-between cursor-pointer bg-gray-50"
-              onClick={() => setShowGenderModal(true)}
-            >
-              <span className={gender ? "text-gray-900" : "text-gray-400"}>
-                {gender === "male" ? "남성" : gender === "female" ? "여성" : "성별 선택"}
-              </span>
-              <ChevronLeft className="h-5 w-5 rotate-270 text-gray-400" />
-            </div>
-          </div>
-
-          {/* 휴대폰 번호 */}
-          <div className="space-y-2">
-            <label className="text-sm text-gray-600">휴대폰 번호</label>
-            <div className="flex space-x-2">
-              <Input 
-                type="tel"
-                placeholder="010-1234-5678" 
-                value={phone}
-                onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, ""))}
-                className="h-14 rounded-xl text-base bg-gray-50 border-none flex-1"
-              />
-              <Button 
-                className="h-14 px-6 rounded-xl whitespace-nowrap"
-                disabled={!isPhoneValid}
-                onClick={handleSendPhone}
-              >
-                재전송
-              </Button>
-            </div>
-          </div>
-
-          {/* 인증번호 */}
-          {isPhoneSent && (
+          {/* 5. 인증번호 (가장 위) */}
+          {isPhoneSent && !isVerified && (
             <div className="space-y-2 animate-in fade-in slide-in-from-top-4 duration-300">
               <div className="relative">
                 <Input 
@@ -222,6 +157,77 @@ export default function SignupVerifyPage() {
               )}
             </div>
           )}
+
+          {/* 4. 휴대폰 번호 */}
+          {isGenderValid && (
+            <div className="space-y-2 animate-in fade-in slide-in-from-top-4 duration-700">
+              <label className="text-sm text-gray-600">휴대폰 번호</label>
+              <div className="flex space-x-2">
+                <Input 
+                  type="tel"
+                  placeholder="010-1234-5678" 
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, ""))}
+                  className="h-14 rounded-xl text-base bg-gray-50 border-none flex-1"
+                />
+                <Button 
+                  className="h-14 px-6 rounded-xl whitespace-nowrap"
+                  disabled={!isPhoneValid}
+                  onClick={handleSendPhone}
+                >
+                  재전송
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* 3. 성별 */}
+          {isBirthDateValid && (
+            <div className="space-y-2 animate-in fade-in slide-in-from-top-4 duration-700">
+              <label className="text-sm text-gray-600">성별</label>
+              <div 
+                className="h-14 rounded-xl flex items-center px-4 justify-between cursor-pointer bg-gray-50"
+                onClick={() => setShowGenderModal(true)}
+              >
+                <span className={gender ? "text-gray-900" : "text-gray-400"}>
+                  {gender === "male" ? "남성" : gender === "female" ? "여성" : "성별"}
+                </span>
+                <ChevronLeft className="h-5 w-5 rotate-270 text-gray-400" />
+              </div>
+            </div>
+          )}
+
+          {/* 2. 생년월일 */}
+          {isNameValid && (
+            <div className="space-y-2 animate-in fade-in slide-in-from-top-4 duration-700">
+              <label className="text-sm text-gray-600">생년월일</label>
+              <div 
+                className="h-14 rounded-xl flex items-center px-4 text-base bg-gray-50 cursor-pointer"
+                onClick={() => setShowDatePicker(true)}
+              >
+                <span className={birthDate ? "text-gray-900" : "text-gray-400"}>
+                  {birthDate ? `${birthDate.slice(0,4)}.${birthDate.slice(4,6)}.${birthDate.slice(6,8)}` : "생년월일 선택"}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* 1. 이름 (가장 아래) */}
+          <div className="space-y-2">
+            <label className="text-sm text-gray-600">이름</label>
+            <Input 
+              placeholder="이름" 
+              value={name}
+              onChange={(e) => setName(validateNameInput(e.target.value))}
+              onCompositionStart={() => setIsComposing(true)}
+              onCompositionEnd={(e) => {
+                setIsComposing(false);
+                const target = e.target as HTMLInputElement;
+                setName(validateNameInput(target.value));
+              }}
+              className="h-14 rounded-xl text-base bg-gray-50 border-none"
+            />
+          </div>
         </div>
       </div>
 
