@@ -123,7 +123,7 @@ export default function LoginPage() {
       <div className="flex items-center justify-center space-x-4 mt-4 text-sm text-gray-500">
         <Link href="/find-account" className="hover:text-gray-900">비밀번호 찾기</Link>
         <span className="h-3 w-px bg-gray-300" />
-        <Link href="/signup" className="hover:text-gray-900">회원가입</Link>
+        <Link href="/signup/terms" className="hover:text-gray-900">회원가입</Link>
       </div>
 
       {/* Divider */}
