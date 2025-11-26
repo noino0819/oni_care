@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ChevronLeft, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import Link from "next/link";
+import DateWheelPicker from "@/components/ui/DateWheelPicker";
 import { cn } from "@/lib/utils";
 
 export default function SignupVerifyPage() {
@@ -22,48 +22,31 @@ export default function SignupVerifyPage() {
   const [isPhoneSent, setIsPhoneSent] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const [showGenderModal, setShowGenderModal] = useState(false);
-
-  // Refs for scrolling
-  const nameRef = useRef<HTMLDivElement>(null);
-  const birthRef = useRef<HTMLDivElement>(null);
-  const genderRef = useRef<HTMLDivElement>(null);
-  const phoneRef = useRef<HTMLDivElement>(null);
-  const verifyRef = useRef<HTMLDivElement>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   // Validation
   const isNameValid = name.length >= 2;
-  const isBirthDateValid = birthDate.length === 6; 
+  const isBirthDateValid = birthDate.length === 8; // YYYYMMDD
   const isPhoneValid = phone.length >= 10;
   
-  // Auto-scroll effect
+  // Auto-trigger next steps
   useEffect(() => {
-    if (isNameValid && !birthDate) {
-      setTimeout(() => birthRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 100);
+    if (isNameValid && !birthDate && !showDatePicker) {
+      const timer = setTimeout(() => setShowDatePicker(true), 500);
+      return () => clearTimeout(timer);
     }
-  }, [isNameValid, birthDate]);
+  }, [isNameValid, birthDate, showDatePicker]);
 
   useEffect(() => {
-    if (isBirthDateValid && !gender) {
-      setTimeout(() => genderRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 100);
+    if (isBirthDateValid && !gender && !showGenderModal) {
+      const timer = setTimeout(() => setShowGenderModal(true), 500);
+      return () => clearTimeout(timer);
     }
-  }, [isBirthDateValid, gender]);
-
-  useEffect(() => {
-    if (gender && !phone) {
-      setTimeout(() => phoneRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 100);
-    }
-  }, [gender, phone]);
-
-  useEffect(() => {
-    if (isPhoneSent && !isVerified) {
-      setTimeout(() => verifyRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 100);
-    }
-  }, [isPhoneSent, isVerified]);
+  }, [isBirthDateValid, gender, showGenderModal]);
 
   const handleSendPhone = () => {
     if (!isPhoneValid) return;
     setIsPhoneSent(true);
-    // Mocking: 실제로는 SMS 전송 API 호출
     alert("인증번호가 전송되었습니다. (테스트용: 123456)");
   };
 
@@ -78,16 +61,13 @@ export default function SignupVerifyPage() {
   const handleNext = () => {
     if (!isVerified) return;
 
-    // 본인인증 정보를 sessionStorage에 저장
     const verifyData = {
       name,
-      birthDate, // 실제로는 YYYY-MM-DD 포맷으로 변환 필요할 수 있음
+      birthDate,
       gender,
       phone
     };
     sessionStorage.setItem("signup_verify", JSON.stringify(verifyData));
-    
-    // 계정 생성 페이지로 이동
     router.push("/signup");
   };
 
@@ -102,7 +82,7 @@ export default function SignupVerifyPage() {
       </header>
 
       {/* Progress */}
-      <div className="px-6 py-2">
+      <div className="px-6 py-2 sticky top-14 bg-white z-10 pb-4">
         <div className="flex items-center space-x-2 mb-6">
           <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-white text-xs font-bold">1</div>
           <div className="h-[1px] w-4 bg-primary"></div>
@@ -115,66 +95,28 @@ export default function SignupVerifyPage() {
 
       <div className="flex-1 flex flex-col px-6 pb-24 space-y-8">
         
-        {/* 이름 입력 */}
-        <div ref={nameRef} className="space-y-2 transition-all duration-500">
-          <h1 className={cn("text-2xl font-bold transition-colors", isNameValid ? "text-gray-400" : "text-black")}>
-            이름을 입력해 주세요.
-          </h1>
-          <Input 
-            placeholder="이름" 
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className={cn(
-              "h-14 rounded-xl text-lg border-none transition-colors",
-              isNameValid ? "bg-gray-100 text-gray-500" : "bg-gray-50 text-black"
-            )}
-            readOnly={isNameValid && !!birthDate} // 다음 단계 진행 시 읽기 전용 처리 (선택)
-          />
-        </div>
-
-        {/* 생년월일 입력 */}
-        {name.length >= 2 && (
-          <div ref={birthRef} className="space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <h2 className={cn("text-2xl font-bold transition-colors", isBirthDateValid ? "text-gray-400" : "text-black")}>
-              생년월일을 입력해 주세요.
-            </h2>
+        {/* 5. 인증번호 (가장 위) */}
+        {isPhoneSent && !isVerified && (
+          <div className="space-y-2 animate-in fade-in slide-in-from-top-4 duration-700">
             <Input 
               type="number"
-              placeholder="YYMMDD (6자리)"
-              value={birthDate}
-              onChange={(e) => setBirthDate(e.target.value.slice(0, 6))}
-              className={cn(
-                "h-14 rounded-xl text-lg border-none transition-colors",
-                isBirthDateValid ? "bg-gray-100 text-gray-500" : "bg-gray-50 text-black"
-              )}
+              placeholder="인증번호 6자리" 
+              value={verifyCode}
+              onChange={(e) => setVerifyCode(e.target.value)}
+              className="h-14 rounded-xl text-lg bg-gray-50 border-none"
             />
-          </div>
-        )}
-
-        {/* 성별 선택 */}
-        {isBirthDateValid && (
-          <div ref={genderRef} className="space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <h2 className={cn("text-2xl font-bold transition-colors", gender ? "text-gray-400" : "text-black")}>
-              성별을 선택해 주세요.
-            </h2>
-            <div 
-              className={cn(
-                "h-14 rounded-xl flex items-center px-4 justify-between cursor-pointer transition-colors",
-                gender ? "bg-gray-100" : "bg-gray-50"
-              )}
-              onClick={() => setShowGenderModal(true)}
+            <Button 
+              className="w-full h-14 rounded-xl mt-2"
+              onClick={handleVerify}
             >
-              <span className={gender ? "text-gray-500" : "text-gray-400"}>
-                {gender === "male" ? "남성" : gender === "female" ? "여성" : "성별 선택"}
-              </span>
-              <ChevronLeft className="h-5 w-5 rotate-270 text-gray-400" />
-            </div>
+              인증확인
+            </Button>
           </div>
         )}
 
-        {/* 휴대폰 번호 입력 */}
+        {/* 4. 휴대폰 */}
         {gender && (
-          <div ref={phoneRef} className="space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <div className="space-y-2 animate-in fade-in slide-in-from-top-4 duration-700">
             <h2 className="text-2xl font-bold">휴대폰 번호를 입력해 주세요.</h2>
             <div className="flex space-x-2">
               <Input 
@@ -196,38 +138,85 @@ export default function SignupVerifyPage() {
           </div>
         )}
 
-        {/* 인증번호 입력 */}
-        {isPhoneSent && !isVerified && (
-          <div ref={verifyRef} className="space-y-2 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <Input 
-              type="number"
-              placeholder="인증번호 6자리" 
-              value={verifyCode}
-              onChange={(e) => setVerifyCode(e.target.value)}
-              className="h-14 rounded-xl text-lg bg-gray-50 border-none"
-            />
-            <Button 
-              className="w-full h-14 rounded-xl mt-2"
-              onClick={handleVerify}
+        {/* 3. 성별 */}
+        {isBirthDateValid && (
+          <div className="space-y-2 animate-in fade-in slide-in-from-top-4 duration-700">
+            <h2 className={cn("text-2xl font-bold transition-colors", gender ? "text-gray-400" : "text-black")}>
+              성별을 선택해 주세요.
+            </h2>
+            <div 
+              className={cn(
+                "h-14 rounded-xl flex items-center px-4 justify-between cursor-pointer transition-colors",
+                gender ? "bg-gray-100" : "bg-gray-50"
+              )}
+              onClick={() => setShowGenderModal(true)}
             >
-              인증확인
-            </Button>
+              <span className={gender ? "text-gray-500" : "text-gray-400"}>
+                {gender === "male" ? "남성" : gender === "female" ? "여성" : "성별 선택"}
+              </span>
+              <ChevronLeft className="h-5 w-5 rotate-270 text-gray-400" />
+            </div>
           </div>
         )}
 
-        <div className="fixed bottom-0 left-0 right-0 p-6 bg-white border-t border-gray-100">
-          <Button
-            className="w-full h-14 text-base font-bold rounded-xl"
-            size="lg"
-            disabled={!isVerified}
-            onClick={handleNext}
-          >
-            다 음
-          </Button>
+        {/* 2. 생년월일 */}
+        {isNameValid && (
+          <div className="space-y-2 animate-in fade-in slide-in-from-top-4 duration-700">
+            <h2 className={cn("text-2xl font-bold transition-colors", isBirthDateValid ? "text-gray-400" : "text-black")}>
+              생년월일을 입력해 주세요.
+            </h2>
+            <div 
+              className={cn(
+                "h-14 rounded-xl flex items-center px-4 text-lg transition-colors cursor-pointer",
+                isBirthDateValid ? "bg-gray-100 text-gray-500" : "bg-gray-50 text-black"
+              )}
+              onClick={() => setShowDatePicker(true)}
+            >
+              {birthDate ? `${birthDate.slice(0,4)}년 ${birthDate.slice(4,6)}월 ${birthDate.slice(6,8)}일` : "YYYYMMDD"}
+            </div>
+          </div>
+        )}
+
+        {/* 1. 이름 (가장 아래) */}
+        <div className="space-y-2 transition-all duration-500">
+          <h1 className={cn("text-2xl font-bold transition-colors", isNameValid ? "text-gray-400" : "text-black")}>
+            이름을 입력해 주세요.
+          </h1>
+          <Input 
+            placeholder="이름" 
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className={cn(
+              "h-14 rounded-xl text-lg border-none transition-colors",
+              isNameValid ? "bg-gray-100 text-gray-500" : "bg-gray-50 text-black"
+            )}
+            readOnly={isNameValid}
+          />
         </div>
+
+        {isVerified && (
+          <div className="fixed bottom-0 left-0 right-0 p-6 bg-white border-t border-gray-100 animate-in slide-in-from-bottom duration-300">
+            <Button
+              className="w-full h-14 text-base font-bold rounded-xl"
+              size="lg"
+              onClick={handleNext}
+            >
+              다 음
+            </Button>
+          </div>
+        )}
       </div>
 
-      {/* 성별 선택 모달 (Bottom Sheet) */}
+      {/* Date Wheel Picker Modal */}
+      {showDatePicker && (
+        <DateWheelPicker 
+          value={birthDate}
+          onChange={setBirthDate}
+          onClose={() => setShowDatePicker(false)}
+        />
+      )}
+
+      {/* Gender Selection Modal */}
       {showGenderModal && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50">
           <div className="bg-white w-full max-w-md rounded-t-2xl p-6 animate-in slide-in-from-bottom duration-300">

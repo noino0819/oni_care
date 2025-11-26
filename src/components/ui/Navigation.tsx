@@ -2,40 +2,61 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, FileText, PieChart, User } from "lucide-react";
+import { Home, ClipboardList, PieChart, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export function Navigation() {
+export default function Navigation() {
   const pathname = usePathname();
 
-  const links = [
-    { href: "/home", label: "홈", icon: Home },
-    { href: "/record", label: "기록", icon: FileText },
-    { href: "/report", label: "리포트", icon: PieChart },
-    { href: "/profile", label: "마이", icon: User },
+  // 하단 메뉴를 숨길 경로 목록
+  const hiddenPaths = [
+    "/",
+    "/login",
+    "/signup",
+    "/signup/terms",
+    "/signup/verify",
+    "/onboarding",
+    "/find-account",
   ];
 
-  // Don't show navigation on login page
-  if (pathname === "/") return null;
+  if (hiddenPaths.includes(pathname)) {
+    return null;
+  }
+
+  const navItems = [
+    { href: "/home", label: "홈", icon: Home },
+    { href: "/record", label: "기록", icon: ClipboardList },
+    { href: "/report", label: "분석", icon: PieChart },
+    { href: "/profile", label: "MY", icon: User },
+  ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background pb-safe">
-      <div className="flex h-16 items-center justify-around px-4">
-        {links.map(({ href, label, icon: Icon }) => {
-          const isActive = pathname.startsWith(href);
+    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 pb-safe z-50">
+      <div className="flex justify-around items-center h-16">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = pathname === item.href;
+          
           return (
-            <Link
-              key={href}
-              href={href}
-              className={cn(
-                "flex flex-col items-center justify-center space-y-1 text-xs font-medium transition-colors",
-                isActive
-                  ? "text-primary"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
+            <Link 
+              key={item.href} 
+              href={item.href}
+              className="flex flex-col items-center justify-center w-full h-full space-y-1"
             >
-              <Icon className="h-6 w-6" />
-              <span>{label}</span>
+              <Icon 
+                className={cn(
+                  "w-6 h-6 transition-colors",
+                  isActive ? "text-primary" : "text-gray-400"
+                )} 
+              />
+              <span 
+                className={cn(
+                  "text-[10px] font-medium transition-colors",
+                  isActive ? "text-primary" : "text-gray-400"
+                )}
+              >
+                {item.label}
+              </span>
             </Link>
           );
         })}
