@@ -116,10 +116,15 @@ function WheelColumn({ items, selectedItem, onSelect, label }: { items: number[]
     if (containerRef.current) {
       const index = items.indexOf(selectedItem);
       if (index !== -1) {
-        containerRef.current.scrollTop = index * itemHeight;
+        // setTimeout을 사용하여 DOM이 완전히 렌더링된 후 스크롤
+        setTimeout(() => {
+          if (containerRef.current) {
+            containerRef.current.scrollTop = index * itemHeight;
+          }
+        }, 0);
       }
     }
-  }, []);
+  }, [items, selectedItem, itemHeight]);
 
   const handleScroll = () => {
     if (containerRef.current) {
