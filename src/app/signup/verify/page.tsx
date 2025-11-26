@@ -129,38 +129,9 @@ export default function SignupVerifyPage() {
         <h1 className="text-2xl font-bold mb-8">휴대폰번호를 입력해 주세요.</h1>
         
         <div className="space-y-6">
-          {/* 5. 인증번호 (가장 위) */}
-          {isPhoneSent && !isVerified && (
-            <div className="space-y-2 animate-in fade-in slide-in-from-top-4 duration-300">
-              <div className="relative">
-                <Input 
-                  type="text"
-                  placeholder="111456" 
-                  value={verifyCode}
-                  onChange={(e) => {
-                    setVerifyCode(e.target.value.replace(/[^0-9]/g, "").slice(0, 6));
-                    setVerifyError("");
-                  }}
-                  className={cn(
-                    "h-14 rounded-xl text-base bg-gray-50 border-none pr-16",
-                    verifyError && "border-2 border-red-500"
-                  )}
-                />
-                {timer > 0 && !isVerified && (
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 text-blue-500 text-sm font-medium">
-                    {formatTime(timer)}
-                  </div>
-                )}
-              </div>
-              {verifyError && (
-                <p className="text-red-500 text-xs">{verifyError}</p>
-              )}
-            </div>
-          )}
-
           {/* 4. 휴대폰 번호 */}
           {isGenderValid && (
-            <div className="space-y-2 animate-in fade-in slide-in-from-top-4 duration-700">
+            <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-500">
               <label className="text-sm text-gray-600">휴대폰 번호</label>
               <div className="flex space-x-2">
                 <Input 
@@ -178,12 +149,41 @@ export default function SignupVerifyPage() {
                   재전송
                 </Button>
               </div>
+              
+              {/* 5. 인증번호 (휴대폰 번호 바로 아래) */}
+              {isPhoneSent && !isVerified && (
+                <div className="animate-in fade-in slide-in-from-top-2 duration-500">
+                  <div className="relative">
+                    <Input 
+                      type="text"
+                      placeholder="111456" 
+                      value={verifyCode}
+                      onChange={(e) => {
+                        setVerifyCode(e.target.value.replace(/[^0-9]/g, "").slice(0, 6));
+                        setVerifyError("");
+                      }}
+                      className={cn(
+                        "h-14 rounded-xl text-base bg-gray-50 border-none pr-16",
+                        verifyError && "border-2 border-red-500"
+                      )}
+                    />
+                    {timer > 0 && !isVerified && (
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 text-blue-500 text-sm font-medium">
+                        {formatTime(timer)}
+                      </div>
+                    )}
+                  </div>
+                  {verifyError && (
+                    <p className="text-red-500 text-xs mt-2">{verifyError}</p>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
           {/* 3. 성별 */}
           {isBirthDateValid && (
-            <div className="space-y-2 animate-in fade-in slide-in-from-top-4 duration-700">
+            <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-500">
               <label className="text-sm text-gray-600">성별</label>
               <div 
                 className="h-14 rounded-xl flex items-center px-4 justify-between cursor-pointer bg-gray-50"
@@ -199,7 +199,7 @@ export default function SignupVerifyPage() {
 
           {/* 2. 생년월일 */}
           {isNameValid && (
-            <div className="space-y-2 animate-in fade-in slide-in-from-top-4 duration-700">
+            <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-500">
               <label className="text-sm text-gray-600">생년월일</label>
               <div 
                 className="h-14 rounded-xl flex items-center px-4 text-base bg-gray-50 cursor-pointer"
