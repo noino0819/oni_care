@@ -22,9 +22,9 @@ export default function LoginPage() {
 
         <div className="space-y-8">
           <div className="space-y-1">
-            <h2 className="text-2xl font-bold tracking-tight">Sign in</h2>
+            <h1 className="text-2xl font-bold tracking-tight">로그인</h1>
             <p className="text-muted-foreground">
-              Please sign in to continue.
+              서비스 이용을 위해 로그인해주세요.
             </p>
           </div>
 
@@ -35,7 +35,7 @@ export default function LoginPage() {
                   htmlFor="email"
                   className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                 >
-                  Email
+                  이메일
                 </label>
                 <Input
                   id="email"
@@ -51,7 +51,7 @@ export default function LoginPage() {
                   htmlFor="password"
                   className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                 >
-                  Password
+                  비밀번호
                 </label>
                 <Input id="password" type="password" />
                 <div className="flex justify-end">
@@ -59,7 +59,7 @@ export default function LoginPage() {
                     href="/forgot-password"
                     className="text-sm font-medium text-primary hover:underline"
                   >
-                    Forgot password?
+                    비밀번호 찾기
                   </Link>
                 </div>
               </div>
@@ -67,15 +67,15 @@ export default function LoginPage() {
 
             <Link href="/home" className="w-full block">
               <Button className="w-full h-12 text-base font-semibold rounded-xl" size="lg">
-                Sign in
+                로그인
               </Button>
             </Link>
           </form>
 
           <div className="text-center text-sm text-muted-foreground">
-            Don&apos;t have an account?{" "}
+            계정이 없으신가요?{" "}
             <Link href="/signup" className="font-semibold text-primary hover:underline">
-              Sign up
+              회원가입
             </Link>
           </div>
         </div>
