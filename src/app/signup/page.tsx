@@ -73,11 +73,11 @@ export default function SignupPage() {
             </div>
           </div>
 
-          <Link href="/onboarding" className="w-full block">
-            <Button className="w-full h-12 text-base font-semibold rounded-xl" size="lg">
-              회원가입
-            </Button>
-          </Link>
+          <Link href="/onboarding" className="block w-full mt-8">
+          <Button className="w-full h-12 text-lg font-bold rounded-xl bg-primary hover:bg-primary/90">
+            회원가입
+          </Button>
+        </Link>
         </form>
 
         <div className="text-center text-sm text-muted-foreground mt-6">

@@ -1,47 +1,74 @@
+import Link from "next/link";
+import { ChevronLeft, Search, Camera, Plus } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card, CardContent } from "@/components/ui/Card";
-import { Camera, Search } from "lucide-react";
+import { Navigation } from "@/components/ui/Navigation";
 
 export default function RecordPage() {
+  const recentFoods = [
+    { id: 1, name: "계란", calories: 80, unit: "1개" },
+    { id: 2, name: "바나나", calories: 100, unit: "1개" },
+    { id: 3, name: "닭가슴살 샐러드", calories: 350, unit: "1인분" },
+    { id: 4, name: "아메리카노", calories: 10, unit: "1잔" },
+  ];
+
   return (
-    <div className="p-4 space-y-6">
-      <header>
-        <h1 className="text-2xl font-bold">식사 기록</h1>
-        <p className="text-muted-foreground text-sm">오늘 무엇을 드셨나요?</p>
+    <div className="min-h-screen bg-background pb-24 flex flex-col">
+      {/* Header */}
+      <header className="flex items-center justify-between px-4 py-4 bg-white sticky top-0 z-10">
+        <Link href="/home">
+          <Button variant="ghost" size="icon" className="-ml-2">
+            <ChevronLeft className="h-6 w-6" />
+          </Button>
+        </Link>
+        <h1 className="text-lg font-bold">식사 기록</h1>
+        <div className="w-10" /> {/* Spacer for centering */}
       </header>
 
-      <Card className="bg-muted/50 border-dashed border-2">
-        <CardContent className="flex flex-col items-center justify-center py-12 space-y-4">
-          <div className="h-16 w-16 rounded-full bg-background flex items-center justify-center shadow-sm">
-            <Camera className="h-8 w-8 text-primary" />
-          </div>
-          <div className="text-center">
-            <h3 className="font-medium">사진으로 기록하기</h3>
-            <p className="text-sm text-muted-foreground">음식 사진을 찍으면 AI가 분석해드려요</p>
-          </div>
-          <Button>카메라 열기</Button>
-        </CardContent>
-      </Card>
-
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold">직접 검색</h2>
+      <div className="flex-1 px-6 space-y-6 pt-2">
+        {/* Search Bar */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input className="pl-9" placeholder="음식 이름 검색 (예: 닭가슴살)" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <Input 
+            placeholder="어떤 음식을 드셨나요?" 
+            className="pl-10 h-12 rounded-xl bg-gray-50 border-none"
+          />
+        </div>
+
+        {/* Photo Logging Button */}
+        <Button 
+          variant="outline" 
+          className="w-full h-32 flex flex-col items-center justify-center space-y-3 rounded-2xl border-dashed border-2 border-primary/30 bg-primary/5 hover:bg-primary/10 hover:border-primary/50"
+        >
+          <div className="h-12 w-12 rounded-full bg-white flex items-center justify-center shadow-sm">
+            <Camera className="h-6 w-6 text-primary" />
+          </div>
+          <span className="font-medium text-primary">사진으로 간편하게 기록하기</span>
+        </Button>
+
+        {/* Recent Records */}
+        <div className="space-y-4">
+          <h2 className="text-lg font-bold">최근 기록</h2>
+          <div className="space-y-3">
+            {recentFoods.map((food) => (
+              <Card key={food.id} className="rounded-xl shadow-sm border-none bg-white">
+                <CardContent className="p-4 flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">{food.name}</p>
+                    <p className="text-sm text-gray-500">{food.calories} kcal / {food.unit}</p>
+                  </div>
+                  <Button size="icon" variant="ghost" className="h-8 w-8 text-primary hover:bg-primary/10 rounded-full">
+                    <Plus className="h-5 w-5" />
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </div>
 
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold">최근 기록</h2>
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          {["현미밥", "닭가슴살", "아메리카노", "사과"].map((item) => (
-            <Button key={item} variant="outline" size="sm" className="rounded-full whitespace-nowrap">
-              {item}
-            </Button>
-          ))}
-        </div>
-      </div>
+      <Navigation />
     </div>
   );
 }
