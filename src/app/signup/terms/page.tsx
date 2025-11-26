@@ -2,55 +2,86 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Check } from "lucide-react";
+import { ChevronLeft, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
+
+interface Term {
+  id: string;
+  code: string;
+  title: string;
+  content: string;
+  is_required: boolean;
+}
 
 export default function SignupTermsPage() {
   const router = useRouter();
-  
-  const [agreements, setAgreements] = useState({
-    all: false,
-    terms: false, // 이용약관 (필수)
-    privacy: false, // 개인정보 수집 및 이용동의 (필수)
-    sensitive: false, // 민감정보 수집 및 이용동의 (필수)
-    marketing: false, // 마케팅 활용동의 (선택)
-    push: false, // 앱 푸시 알림 동의 (선택)
-  });
+  const [terms, setTerms] = useState<Term[]>([]);
+  const [agreements, setAgreements] = useState<Record<string, boolean>>({});
+  const [loading, setLoading] = useState(true);
+  const [selectedTerm, setSelectedTerm] = useState<Term | null>(null); // For modal
+
+  useEffect(() => {
+    const fetchTerms = async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("terms")
+        .select("*")
+        .order("created_at", { ascending: true }); // 순서 보장을 위해 정렬 필요 (code 등으로 정렬 추천)
+
+      if (error) {
+        console.error("Error fetching terms:", error);
+        return;
+      }
+
+      if (data) {
+        // 기획서 순서대로 정렬 (하드코딩된 순서 매핑)
+        const order = ['terms_service', 'privacy_policy', 'sensitive_info', 'marketing', 'push_notification'];
+        const sortedData = data.sort((a, b) => order.indexOf(a.code) - order.indexOf(b.code));
+        
+        setTerms(sortedData);
+        
+        // 초기 동의 상태 설정
+        const initialAgreements: Record<string, boolean> = {};
+        sortedData.forEach(term => {
+          initialAgreements[term.code] = false;
+        });
+        setAgreements(initialAgreements);
+      }
+      setLoading(false);
+    };
+
+    fetchTerms();
+  }, []);
 
   // 전체 동의 체크박스 로직
   const handleAllCheck = () => {
-    const newValue = !agreements.all;
-    setAgreements({
-      all: newValue,
-      terms: newValue,
-      privacy: newValue,
-      sensitive: newValue,
-      marketing: newValue,
-      push: newValue,
+    const allChecked = Object.values(agreements).every(v => v);
+    const newValue = !allChecked;
+    
+    const newAgreements = { ...agreements };
+    terms.forEach(term => {
+      newAgreements[term.code] = newValue;
     });
+    setAgreements(newAgreements);
   };
 
   // 개별 체크박스 로직
-  const handleCheck = (key: keyof typeof agreements) => {
-    setAgreements((prev) => {
-      const newState = { ...prev, [key]: !prev[key] };
-      
-      // 모든 항목이 체크되었는지 확인하여 전체 동의 상태 업데이트
-      const allChecked = 
-        newState.terms && 
-        newState.privacy && 
-        newState.sensitive && 
-        newState.marketing && 
-        newState.push;
-        
-      return { ...newState, all: allChecked };
-    });
+  const handleCheck = (code: string) => {
+    setAgreements(prev => ({
+      ...prev,
+      [code]: !prev[code]
+    }));
   };
 
   // 필수 항목 동의 여부 확인
-  const isRequiredChecked = agreements.terms && agreements.privacy && agreements.sensitive;
+  const isRequiredChecked = terms
+    .filter(term => term.is_required)
+    .every(term => agreements[term.code]);
+
+  const isAllChecked = terms.length > 0 && terms.every(term => agreements[term.code]);
 
   const handleNext = () => {
     if (!isRequiredChecked) return;
@@ -61,6 +92,8 @@ export default function SignupTermsPage() {
     // 본인인증 페이지로 이동
     router.push("/signup/verify");
   };
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-white">로딩 중...</div>;
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -101,40 +134,24 @@ export default function SignupTermsPage() {
               <span className="text-lg font-bold">전체동의</span>
               <div className={cn(
                 "w-6 h-6 rounded-full border flex items-center justify-center transition-colors",
-                agreements.all ? "bg-primary border-primary" : "border-gray-300"
+                isAllChecked ? "bg-primary border-primary" : "border-gray-300"
               )}>
-                {agreements.all && <Check className="h-4 w-4 text-white" />}
+                {isAllChecked && <Check className="h-4 w-4 text-white" />}
               </div>
             </div>
           </div>
 
           {/* 개별 약관들 */}
           <div className="space-y-4">
-            <TermItem 
-              label="이용약관 (필수)" 
-              checked={agreements.terms} 
-              onCheck={() => handleCheck("terms")} 
-            />
-            <TermItem 
-              label="개인정보 수집 및 이용동의 (필수)" 
-              checked={agreements.privacy} 
-              onCheck={() => handleCheck("privacy")} 
-            />
-            <TermItem 
-              label="민감정보 수집 및 이용동의 (필수)" 
-              checked={agreements.sensitive} 
-              onCheck={() => handleCheck("sensitive")} 
-            />
-            <TermItem 
-              label="마케팅 활용동의 (선택)" 
-              checked={agreements.marketing} 
-              onCheck={() => handleCheck("marketing")} 
-            />
-            <TermItem 
-              label="앱 푸시(광고성) 알림 동의 (선택)" 
-              checked={agreements.push} 
-              onCheck={() => handleCheck("push")} 
-            />
+            {terms.map((term) => (
+              <TermItem 
+                key={term.id}
+                label={`${term.title} (${term.is_required ? "필수" : "선택"})`}
+                checked={agreements[term.code] || false} 
+                onCheck={() => handleCheck(term.code)}
+                onView={() => setSelectedTerm(term)}
+              />
+            ))}
           </div>
         </div>
 
@@ -156,6 +173,33 @@ export default function SignupTermsPage() {
           </Button>
         </div>
       </div>
+
+      {/* 약관 상세 모달 */}
+      {selectedTerm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white w-full max-w-lg rounded-2xl p-6 relative max-h-[80vh] flex flex-col animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-100">
+              <h3 className="text-lg font-bold pr-8">{selectedTerm.title} ({selectedTerm.is_required ? "필수" : "선택"})</h3>
+              <button onClick={() => setSelectedTerm(null)} className="absolute right-6 top-6">
+                <X className="h-6 w-6 text-gray-400" />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
+              {selectedTerm.content}
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-gray-100">
+              <Button 
+                className="w-full h-12 rounded-xl"
+                onClick={() => setSelectedTerm(null)}
+              >
+                확인
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -163,24 +207,29 @@ export default function SignupTermsPage() {
 function TermItem({ 
   label, 
   checked, 
-  onCheck 
+  onCheck,
+  onView
 }: { 
   label: string; 
   checked: boolean; 
   onCheck: () => void; 
+  onView: () => void;
 }) {
   return (
     <div className="flex items-center justify-between">
-      <div className="flex items-center space-x-2 cursor-pointer" onClick={onCheck}>
+      <div className="flex items-center space-x-3 cursor-pointer flex-1" onClick={onCheck}>
         <div className={cn(
-          "w-5 h-5 rounded-full border flex items-center justify-center transition-colors",
+          "w-5 h-5 rounded-full border flex-shrink-0 flex items-center justify-center transition-colors",
           checked ? "bg-primary border-primary" : "border-gray-300"
         )}>
           {checked && <Check className="h-3 w-3 text-white" />}
         </div>
         <span className="text-base text-gray-600">{label}</span>
       </div>
-      <button className="text-sm text-gray-400 underline decoration-gray-300 underline-offset-4">
+      <button 
+        onClick={(e) => { e.stopPropagation(); onView(); }}
+        className="text-sm text-gray-400 underline decoration-gray-300 underline-offset-4 ml-2 flex-shrink-0"
+      >
         보기
       </button>
     </div>
