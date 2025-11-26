@@ -13,7 +13,7 @@ export default function SignupVerifyPage() {
   
   // Form State
   const [name, setName] = useState("");
-  const [birthDate, setBirthDate] = useState("19830101"); // 디폴트: 1983년 1월 1일
+  const [birthDate, setBirthDate] = useState(""); // 빈 값으로 시작, 스피너는 1983년 디폴트
   const [gender, setGender] = useState<"male" | "female" | "">("");
   const [phone, setPhone] = useState("");
   const [verifyCode, setVerifyCode] = useState("");
@@ -154,7 +154,7 @@ export default function SignupVerifyPage() {
               onClick={() => setShowDatePicker(true)}
             >
               <span className={birthDate ? "text-gray-900" : "text-gray-400"}>
-                {birthDate ? `${birthDate.slice(0,4)}.${birthDate.slice(4,6)}.${birthDate.slice(6,8)}` : "0000123"}
+                {birthDate ? `${birthDate.slice(0,4)}.${birthDate.slice(4,6)}.${birthDate.slice(6,8)}` : "생년월일 선택"}
               </span>
             </div>
           </div>
