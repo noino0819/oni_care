@@ -1,88 +1,174 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { ChevronLeft } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 
 export default function SignupPage() {
+  const router = useRouter();
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    // 비밀번호 확인
+    if (formData.password !== formData.confirmPassword) {
+      setError("비밀번호가 일치하지 않습니다.");
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError("비밀번호는 최소 6자 이상이어야 합니다.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const supabase = createClient();
+
+      // Supabase Auth로 회원가입
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            name: formData.name,
+          },
+        },
+      });
+
+      if (signUpError) throw signUpError;
+
+      if (data.user) {
+        // users 테이블에 기본 정보 저장
+        const { error: insertError } = await supabase
+          .from("users")
+          .insert([
+            {
+              id: data.user.id,
+              email: formData.email,
+              name: formData.name,
+            },
+          ]);
+
+        if (insertError) throw insertError;
+
+        // 온보딩 페이지로 이동
+        router.push("/onboarding");
+      }
+    } catch (err: any) {
+      console.error("Signup error:", err);
+      setError(err.message || "회원가입 중 오류가 발생했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-background flex flex-col p-6">
-      <header className="flex items-center mb-10">
-        <Link href="/login">
+    <div className="min-h-screen bg-white flex flex-col">
+      {/* Header */}
+      <header className="flex items-center px-4 py-4 sticky top-0 bg-white z-10">
+        <Link href="/">
           <Button variant="ghost" size="icon" className="-ml-2">
             <ChevronLeft className="h-6 w-6" />
           </Button>
         </Link>
+        <h1 className="text-lg font-bold ml-2">회원가입</h1>
       </header>
 
-      <div className="flex-1 flex flex-col max-w-sm mx-auto w-full">
-        <div className="space-y-2 mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">회원가입</h1>
-          <p className="text-muted-foreground">
-            계정을 만들어 시작하세요.
-          </p>
-        </div>
+      <div className="flex-1 px-6 py-8">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {error && (
+            <div className="p-3 rounded-xl bg-red-50 border border-red-200">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
 
-        <form className="space-y-6">
           <div className="space-y-4">
             <div className="space-y-2">
-              <label
-                htmlFor="name"
-                className="text-sm font-medium leading-none"
-              >
-                이름
-              </label>
+              <label className="text-sm font-medium text-gray-700">이름</label>
               <Input
-                id="name"
-                placeholder="홍길동"
-                autoComplete="name"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                placeholder="이름을 입력해주세요"
+                className="h-12 rounded-xl bg-gray-50 border-none"
+                required
               />
             </div>
+
             <div className="space-y-2">
-              <label
-                htmlFor="email"
-                className="text-sm font-medium leading-none"
-              >
-                이메일
-              </label>
+              <label className="text-sm font-medium text-gray-700">이메일</label>
               <Input
-                id="email"
-                placeholder="name@example.com"
                 type="email"
-                autoCapitalize="none"
-                autoComplete="email"
-                autoCorrect="off"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="이메일을 입력해주세요"
+                className="h-12 rounded-xl bg-gray-50 border-none"
+                required
               />
             </div>
+
             <div className="space-y-2">
-              <label
-                htmlFor="password"
-                className="text-sm font-medium leading-none"
-              >
-                비밀번호
-              </label>
-              <Input id="password" type="password" placeholder="8자 이상" />
+              <label className="text-sm font-medium text-gray-700">비밀번호</label>
+              <Input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="비밀번호를 입력해주세요"
+                className="h-12 rounded-xl bg-gray-50 border-none"
+                required
+              />
             </div>
+
             <div className="space-y-2">
-              <label
-                htmlFor="confirm-password"
-                className="text-sm font-medium leading-none"
-              >
-                비밀번호 확인
-              </label>
-              <Input id="confirm-password" type="password" placeholder="비밀번호 재입력" />
+              <label className="text-sm font-medium text-gray-700">비밀번호 확인</label>
+              <Input
+                type="password"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                placeholder="비밀번호를 다시 입력해주세요"
+                className="h-12 rounded-xl bg-gray-50 border-none"
+                required
+              />
             </div>
           </div>
 
-          <Link href="/onboarding" className="block w-full mt-8">
-          <Button className="w-full h-12 text-lg font-bold rounded-xl bg-primary hover:bg-primary/90">
-            회원가입
+          <Button
+            type="submit"
+            disabled={loading}
+            className="w-full h-12 text-lg font-bold rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50"
+          >
+            {loading ? "처리 중..." : "회원가입"}
           </Button>
-        </Link>
         </form>
 
         <div className="text-center text-sm text-muted-foreground mt-6">
           이미 계정이 있으신가요?{" "}
-          <Link href="/login" className="font-semibold text-primary hover:underline">
+          <Link href="/" className="text-primary font-medium hover:underline">
             로그인
           </Link>
         </div>
