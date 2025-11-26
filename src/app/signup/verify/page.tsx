@@ -23,6 +23,7 @@ export default function SignupVerifyPage() {
   const [isVerified, setIsVerified] = useState(false);
   const [showGenderModal, setShowGenderModal] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [isComposing, setIsComposing] = useState(false); // 한글 입력 조합 중 상태
 
   // Validation
   const isNameValid = name.length >= 2;
@@ -32,19 +33,40 @@ export default function SignupVerifyPage() {
   
   // 이름 입력 검증 (한글 10자/영문 20자, 특수문자/숫자/띄어쓰기 불가)
   const validateNameInput = (value: string) => {
+    // 한글 IME 조합 중에는 검증을 건너뜀 (한글 입력 허용)
+    if (isComposing) {
+      return value;
+    }
+    
+    // 빈 문자열은 허용
+    if (value === "") {
+      return value;
+    }
+    
     // 한글, 영문만 허용 (특수문자, 숫자, 띄어쓰기 불가)
     const validChars = /^[가-힣a-zA-Z]*$/;
     if (!validChars.test(value)) {
-      return name; // 유효하지 않은 문자는 입력 거부
+      // 유효하지 않은 문자가 포함된 경우, 유효한 문자만 필터링
+      return value.replace(/[^가-힣a-zA-Z]/g, '');
     }
     
     // 한글/영문 개별 길이 체크
     const koreanCount = (value.match(/[가-힣]/g) || []).length;
     const englishCount = (value.match(/[a-zA-Z]/g) || []).length;
     
-    // 한글 10자 초과 또는 영문 20자 초과 시 입력 거부
-    if (koreanCount > 10 || englishCount > 20) {
-      return name;
+    // 한글 10자 초과 또는 영문 20자 초과 시 잘라내기
+    if (koreanCount > 10) {
+      const matches = value.match(/[가-힣]/g);
+      if (matches) {
+        return matches.slice(0, 10).join('');
+      }
+    }
+    
+    if (englishCount > 20) {
+      const matches = value.match(/[a-zA-Z]/g);
+      if (matches) {
+        return matches.slice(0, 20).join('');
+      }
     }
     
     return value;
@@ -191,6 +213,13 @@ export default function SignupVerifyPage() {
             placeholder="이름" 
             value={name}
             onChange={(e) => setName(validateNameInput(e.target.value))}
+            onCompositionStart={() => setIsComposing(true)}
+            onCompositionEnd={(e) => {
+              setIsComposing(false);
+              // 조합 완료 후 검증
+              const target = e.target as HTMLInputElement;
+              setName(validateNameInput(target.value));
+            }}
             className={cn(
               "h-14 rounded-xl text-lg border-none transition-colors cursor-text",
               isNameValid ? "bg-gray-100 text-gray-500" : "bg-gray-50 text-black"
