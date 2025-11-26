@@ -12,12 +12,19 @@ interface DateWheelPickerProps {
 export default function DateWheelPicker({ value, onChange, onClose }: DateWheelPickerProps) {
   // Parse initial value or default to 1983-01-01 (40세, 올해 기준 2025년)
   const getInitialDate = () => {
-    if (value && value.length === 8) {
-      return new Date(
-        value.slice(0, 4) + "-" + value.slice(4, 6) + "-" + value.slice(6, 8)
-      );
+    // 빈 값이거나 유효하지 않은 경우 1983년 1월 1일로 설정
+    if (!value || value.length !== 8) {
+      return new Date(1983, 0, 1);
     }
-    return new Date(1983, 0, 1); // 디폴트: 1983년 1월 1일
+    
+    try {
+      const year = parseInt(value.slice(0, 4));
+      const month = parseInt(value.slice(4, 6)) - 1;
+      const day = parseInt(value.slice(6, 8));
+      return new Date(year, month, day);
+    } catch {
+      return new Date(1983, 0, 1);
+    }
   };
   
   const initialDate = getInitialDate();
