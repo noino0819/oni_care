@@ -48,7 +48,8 @@ function NavHomeIcon({
   );
 }
 
-function NavNutritionIcon({
+// 식사 아이콘 (숟가락 + 포크)
+function NavMealIcon({
   className,
   isActive,
 }: {
@@ -63,116 +64,175 @@ function NavNutritionIcon({
       fill="none"
       className={className}
     >
-      {/* 잎사귀 형태의 영양 아이콘 */}
+      {isActive ? (
+        <>
+          {/* 포크 */}
+          <path
+            d="M6 3V11C6 12.1046 6.89543 13 8 13V21"
+            stroke="#9F85E3"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M6 3V8"
+            stroke="#9F85E3"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+          <path
+            d="M8 3V8"
+            stroke="#9F85E3"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+          <path
+            d="M10 3V8"
+            stroke="#9F85E3"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+          {/* 나이프 */}
+          <path
+            d="M18 3C18 3 20 5 20 8C20 11 18 13 18 13V21"
+            stroke="#9F85E3"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            fill="#9F85E3"
+            fillOpacity="0.3"
+          />
+        </>
+      ) : (
+        <>
+          {/* 포크 */}
+          <path
+            d="M6 3V11C6 12.1046 6.89543 13 8 13V21"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M6 3V8"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+          <path
+            d="M8 3V8"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+          <path
+            d="M10 3V8"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+          {/* 나이프 */}
+          <path
+            d="M18 3C18 3 20 5 20 8C20 11 18 13 18 13V21"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </>
+      )}
+    </svg>
+  );
+}
+
+// 영양제 아이콘 (알약)
+function NavSupplementIcon({
+  className,
+  isActive,
+}: {
+  className?: string;
+  isActive?: boolean;
+}) {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      className={className}
+    >
+      {isActive ? (
+        <>
+          <rect
+            x="7"
+            y="2"
+            width="10"
+            height="20"
+            rx="5"
+            fill="#9F85E3"
+            stroke="#9F85E3"
+            strokeWidth="2"
+          />
+          <line x1="7" y1="12" x2="17" y2="12" stroke="white" strokeWidth="2" />
+        </>
+      ) : (
+        <>
+          <rect
+            x="7"
+            y="2"
+            width="10"
+            height="20"
+            rx="5"
+            stroke="currentColor"
+            strokeWidth="2"
+          />
+          <line
+            x1="7"
+            y1="12"
+            x2="17"
+            y2="12"
+            stroke="currentColor"
+            strokeWidth="2"
+          />
+        </>
+      )}
+    </svg>
+  );
+}
+
+// 메뉴 아이콘 (햄버거 메뉴)
+function NavMenuIcon({
+  className,
+  isActive,
+}: {
+  className?: string;
+  isActive?: boolean;
+}) {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      className={className}
+    >
       <path
-        d="M12 2C6.5 2 2 6.5 2 12C2 14.5 3 16.8 4.6 18.4"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <path
-        d="M12 2C12 2 16 6 16 12C16 18 12 22 12 22"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        fill={isActive ? "#9F85E3" : "none"}
-      />
-      <path
-        d="M12 2C12 2 8 6 8 12C8 18 12 22 12 22"
-        stroke="currentColor"
+        d="M4 6H20"
+        stroke={isActive ? "#9F85E3" : "currentColor"}
         strokeWidth="2"
         strokeLinecap="round"
       />
       <path
         d="M4 12H20"
-        stroke="currentColor"
+        stroke={isActive ? "#9F85E3" : "currentColor"}
         strokeWidth="2"
         strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-function NavChallengeIcon({
-  className,
-  isActive,
-}: {
-  className?: string;
-  isActive?: boolean;
-}) {
-  return (
-    <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      className={className}
-    >
-      <path
-        d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill={isActive ? "#9F85E3" : "none"}
-      />
-      <line
-        x1="4"
-        y1="22"
-        x2="4"
-        y2="15"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function NavContentIcon({
-  className,
-  isActive,
-}: {
-  className?: string;
-  isActive?: boolean;
-}) {
-  return (
-    <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      className={className}
-    >
-      <path
-        d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill={isActive ? "#9F85E3" : "none"}
       />
       <path
-        d="M14 2V8H20"
-        stroke="currentColor"
+        d="M4 18H20"
+        stroke={isActive ? "#9F85E3" : "currentColor"}
         strokeWidth="2"
         strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M16 13H8"
-        stroke={isActive ? "white" : "currentColor"}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M16 17H8"
-        stroke={isActive ? "white" : "currentColor"}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
       />
     </svg>
   );
@@ -236,10 +296,11 @@ export function BottomNavigation() {
   ];
 
   const isHomeActive = pathname === "/home";
-  const isNutritionActive =
-    pathname === "/nutrition" || pathname === "/meal-record";
-  const isChallengeActive = pathname === "/challenge";
-  const isContentActive = pathname === "/content";
+  const isMealActive = pathname === "/record" || pathname === "/meal-record";
+  const isSupplementActive =
+    pathname === "/supplement" || pathname === "/supplement-record";
+  const isMenuPageActive =
+    pathname === "/menu" || pathname.startsWith("/menu/");
 
   return (
     <>
@@ -304,25 +365,25 @@ export function BottomNavigation() {
             </span>
           </Link>
 
-          {/* 영양 */}
+          {/* 식사 */}
           <Link
-            href="/nutrition"
+            href="/record"
             className="flex flex-col items-center justify-center flex-1 pt-2"
           >
-            <NavNutritionIcon
+            <NavMealIcon
               className={cn(
                 "w-6 h-6 transition-colors",
-                isNutritionActive ? "text-[#9F85E3]" : "text-gray-400"
+                isMealActive ? "text-[#9F85E3]" : "text-gray-400"
               )}
-              isActive={isNutritionActive}
+              isActive={isMealActive}
             />
             <span
               className={cn(
                 "text-[10px] font-medium mt-1 transition-colors",
-                isNutritionActive ? "text-[#9F85E3]" : "text-gray-500"
+                isMealActive ? "text-[#9F85E3]" : "text-gray-500"
               )}
             >
-              영양
+              식사
             </span>
           </Link>
 
@@ -347,47 +408,47 @@ export function BottomNavigation() {
             </button>
           </div>
 
-          {/* 챌린지 */}
+          {/* 영양제 */}
           <Link
-            href="/challenge"
+            href="/supplement"
             className="flex flex-col items-center justify-center flex-1 pt-2"
           >
-            <NavChallengeIcon
+            <NavSupplementIcon
               className={cn(
                 "w-6 h-6 transition-colors",
-                isChallengeActive ? "text-[#9F85E3]" : "text-gray-400"
+                isSupplementActive ? "text-[#9F85E3]" : "text-gray-400"
               )}
-              isActive={isChallengeActive}
+              isActive={isSupplementActive}
             />
             <span
               className={cn(
                 "text-[10px] font-medium mt-1 transition-colors",
-                isChallengeActive ? "text-[#9F85E3]" : "text-gray-500"
+                isSupplementActive ? "text-[#9F85E3]" : "text-gray-500"
               )}
             >
-              챌린지
+              영양제
             </span>
           </Link>
 
-          {/* 컨텐츠 */}
+          {/* 메뉴 */}
           <Link
-            href="/content"
+            href="/menu"
             className="flex flex-col items-center justify-center flex-1 pt-2"
           >
-            <NavContentIcon
+            <NavMenuIcon
               className={cn(
                 "w-6 h-6 transition-colors",
-                isContentActive ? "text-[#9F85E3]" : "text-gray-400"
+                isMenuPageActive ? "text-[#9F85E3]" : "text-gray-400"
               )}
-              isActive={isContentActive}
+              isActive={isMenuPageActive}
             />
             <span
               className={cn(
                 "text-[10px] font-medium mt-1 transition-colors",
-                isContentActive ? "text-[#9F85E3]" : "text-gray-500"
+                isMenuPageActive ? "text-[#9F85E3]" : "text-gray-500"
               )}
             >
-              컨텐츠
+              메뉴
             </span>
           </Link>
         </div>

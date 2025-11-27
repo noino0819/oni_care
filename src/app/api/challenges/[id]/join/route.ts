@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
+// 개발 테스트용 사용자 ID (실제 환경에서는 제거)
+const TEST_USER_ID = '00000000-0000-0000-0000-000000000001';
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -12,7 +15,10 @@ export async function POST(
     // 현재 사용자 정보
     const { data: { user } } = await supabase.auth.getUser();
     
-    if (!user) {
+    // 개발 환경에서는 테스트 사용자 ID 사용
+    const userId = user?.id || (process.env.NODE_ENV === 'development' ? TEST_USER_ID : null);
+    
+    if (!userId) {
       return NextResponse.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
     
@@ -47,7 +53,7 @@ export async function POST(
       .from('challenge_participants')
       .select('*')
       .eq('challenge_id', challengeId)
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .single();
     
     if (existingParticipation && existingParticipation.status === 'participating') {
@@ -59,7 +65,7 @@ export async function POST(
       const { data: sameTypeChallenges } = await supabase
         .from('challenge_participants')
         .select('*, challenges!inner(*)')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .eq('status', 'participating')
         .eq('challenges.challenge_type', challenge.challenge_type);
       
@@ -79,7 +85,7 @@ export async function POST(
     
     const participationData = {
       challenge_id: challengeId,
-      user_id: user.id,
+      user_id: userId,
       status: 'participating',
       start_date: startDate.toISOString().split('T')[0],
       end_date: endDate.toISOString().split('T')[0],
@@ -123,7 +129,7 @@ export async function POST(
           .from('challenge_stamps')
           .upsert({
             participant_id: participation.id,
-            user_id: user.id,
+            user_id: userId,
             challenge_id: challengeId,
             stamp_number: i,
             is_achieved: false,
@@ -162,7 +168,10 @@ export async function DELETE(
     // 현재 사용자 정보
     const { data: { user } } = await supabase.auth.getUser();
     
-    if (!user) {
+    // 개발 환경에서는 테스트 사용자 ID 사용
+    const userId = user?.id || (process.env.NODE_ENV === 'development' ? TEST_USER_ID : null);
+    
+    if (!userId) {
       return NextResponse.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     }
     
@@ -171,7 +180,7 @@ export async function DELETE(
       .from('challenge_participants')
       .select('*, challenges(*)')
       .eq('challenge_id', challengeId)
-      .eq('user_id', user.id)
+      .eq('user_id', userId)
       .single();
     
     if (participationError || !participation) {

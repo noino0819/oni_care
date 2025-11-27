@@ -15,7 +15,11 @@ interface Challenge {
   thumbnail_url: string | null;
   challenge_duration_days: number;
   daily_verification_count: number;
-  verification_time_slots: Array<{ start: string; end: string; label: string }> | null;
+  verification_time_slots: Array<{
+    start: string;
+    end: string;
+    label: string;
+  }> | null;
   reward_type: string;
   total_reward: string | null;
   total_stamp_count: number;
@@ -173,7 +177,9 @@ function TodayProgress({
   const slots = [];
 
   for (let i = 1; i <= dailyCount; i++) {
-    const verification = todayVerifications.find((v) => v.verification_slot === i);
+    const verification = todayVerifications.find(
+      (v) => v.verification_slot === i
+    );
     const isCompleted = verification?.is_verified || false;
     const timeSlot = timeSlots?.[i - 1];
 
@@ -184,7 +190,8 @@ function TodayProgress({
     if (timeSlot) {
       const now = new Date();
       const currentTime = now.toTimeString().slice(0, 5);
-      isCurrentSlot = currentTime >= timeSlot.start && currentTime <= timeSlot.end;
+      isCurrentSlot =
+        currentTime >= timeSlot.start && currentTime <= timeSlot.end;
       isLocked = currentTime < timeSlot.start;
     }
 
@@ -245,7 +252,8 @@ function ProgressBar({
       <h3 className="font-semibold text-gray-900 mb-3">달성 현황</h3>
       <div className="flex justify-between text-sm mb-2">
         <span className="text-gray-600">
-          <strong className="text-[#9F85E3]">{completedDays}일</strong> 인증 완료!
+          <strong className="text-[#9F85E3]">{completedDays}일</strong> 인증
+          완료!
         </span>
         <span className="text-gray-500">{remainingDays}일 남았어요</span>
       </div>
@@ -402,7 +410,9 @@ function QuizSection({
   slot: number;
   onComplete: () => void;
 }) {
-  const [selectedAnswer, setSelectedAnswer] = useState<number | string | null>(null);
+  const [selectedAnswer, setSelectedAnswer] = useState<number | string | null>(
+    null
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<{
     isCorrect: boolean;
@@ -446,7 +456,7 @@ function QuizSection({
   return (
     <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
       <h3 className="font-semibold text-gray-900 mb-4 text-center">퀴즈</h3>
-      
+
       <p className="text-gray-800 text-center text-lg mb-6 leading-relaxed">
         {quiz.question}
       </p>
@@ -495,7 +505,9 @@ function QuizSection({
         <div
           className={cn(
             "mb-4 p-4 rounded-xl text-center",
-            result.isCorrect ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
+            result.isCorrect
+              ? "bg-green-50 text-green-700"
+              : "bg-red-50 text-red-700"
           )}
         >
           {result.message}
@@ -511,7 +523,9 @@ function QuizSection({
         </button>
         <button
           onClick={handleSubmit}
-          disabled={selectedAnswer === null || isSubmitting || result?.isCorrect}
+          disabled={
+            selectedAnswer === null || isSubmitting || result?.isCorrect
+          }
           className={cn(
             "flex-1 py-3 rounded-xl font-medium transition-colors",
             selectedAnswer === null || result?.isCorrect
@@ -526,7 +540,10 @@ function QuizSection({
       {/* 힌트 팝업 */}
       {showHint && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setShowHint(false)} />
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setShowHint(false)}
+          />
           <div className="relative bg-white rounded-2xl p-6 w-full max-w-sm">
             <h4 className="text-lg font-bold text-center mb-4">[HINT]</h4>
             <p className="text-gray-600 text-center mb-6">{quiz.hint}</p>
@@ -565,7 +582,7 @@ function RouletteWheel({
 
     try {
       setIsSpinning(true);
-      
+
       const res = await fetch(`/api/challenges/${challengeId}/roulette`, {
         method: "POST",
       });
@@ -639,8 +656,10 @@ function RouletteWheel({
               // 텍스트 위치 계산
               const textAngle = startAngle + segmentAngle / 2;
               const textRadius = 35;
-              const textX = 50 + textRadius * Math.cos((Math.PI * textAngle) / 180);
-              const textY = 50 + textRadius * Math.sin((Math.PI * textAngle) / 180);
+              const textX =
+                50 + textRadius * Math.cos((Math.PI * textAngle) / 180);
+              const textY =
+                50 + textRadius * Math.sin((Math.PI * textAngle) / 180);
 
               return (
                 <g key={idx}>
@@ -686,9 +705,156 @@ function RouletteWheel({
 
       {todaySpun && (
         <p className="mt-4 text-gray-500 text-center">
-          오늘은 이미 룰렛을 돌렸어요!<br />
+          오늘은 이미 룰렛을 돌렸어요!
+          <br />
           내일 다시 만나요 :D
         </p>
+      )}
+    </div>
+  );
+}
+
+// 걸음수 챌린지 컴포넌트
+function StepsChallenge({
+  challengeId,
+  participation,
+  todayVerifications,
+  onVerified,
+}: {
+  challengeId: string;
+  participation: Participation;
+  todayVerifications: Verification[];
+  onVerified: () => void;
+}) {
+  const [currentSteps, setCurrentSteps] = useState(0);
+  const [goalSteps, setGoalSteps] = useState(10000);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isVerified, setIsVerified] = useState(false);
+
+  // 걸음수 데이터 로드
+  useEffect(() => {
+    const loadSteps = async () => {
+      try {
+        setIsLoading(true);
+        const res = await fetch(`/api/challenges/auto-verify?type=steps`);
+        const data = await res.json();
+
+        if (data.success) {
+          setCurrentSteps(data.currentSteps || 0);
+          setGoalSteps(data.goalSteps || 10000);
+
+          // 이미 오늘 인증되었는지 확인
+          const todayVerified = todayVerifications.length > 0;
+          setIsVerified(todayVerified);
+
+          // 목표 달성 & 미인증 시 자동 인증
+          if (
+            data.currentSteps >= (data.goalSteps || 10000) &&
+            !todayVerified
+          ) {
+            await autoVerify();
+          }
+        }
+      } catch (error) {
+        console.error("걸음수 로드 에러:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadSteps();
+
+    // 30초마다 갱신
+    const interval = setInterval(loadSteps, 30000);
+    return () => clearInterval(interval);
+  }, [todayVerifications]);
+
+  // 자동 인증
+  const autoVerify = async () => {
+    try {
+      const res = await fetch(`/api/challenges/auto-verify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "steps",
+          data: { currentSteps, targetSteps: goalSteps },
+        }),
+      });
+      const data = await res.json();
+
+      if (data.success && data.verifiedChallenges.includes(challengeId)) {
+        setIsVerified(true);
+        onVerified();
+      }
+    } catch (error) {
+      console.error("자동 인증 에러:", error);
+    }
+  };
+
+  const achievementRate = Math.min((currentSteps / goalSteps) * 100, 100);
+  const remainingSteps = Math.max(goalSteps - currentSteps, 0);
+
+  return (
+    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      <h3 className="font-semibold text-gray-900 mb-3">오늘의 달성 현황</h3>
+
+      {isLoading ? (
+        <div className="animate-pulse space-y-3">
+          <div className="h-4 bg-gray-200 rounded w-3/4" />
+          <div className="h-2 bg-gray-200 rounded" />
+          <div className="h-20 bg-gray-200 rounded-xl" />
+        </div>
+      ) : (
+        <>
+          {/* 응원 메시지 */}
+          <p className="text-sm text-gray-600 mb-3">
+            {getAchievementMessage(achievementRate)}
+          </p>
+
+          {/* 걸음수 표시 */}
+          <div className="bg-gradient-to-r from-[#9F85E3]/10 to-[#B8A5F0]/10 rounded-xl p-4 mb-3">
+            <div className="flex items-end justify-between mb-2">
+              <div>
+                <span className="text-3xl font-bold text-[#9F85E3]">
+                  {currentSteps.toLocaleString()}
+                </span>
+                <span className="text-gray-500 text-lg ml-1">
+                  / {goalSteps.toLocaleString()}걸음
+                </span>
+              </div>
+              {isVerified && (
+                <span className="px-3 py-1 bg-emerald-500 text-white text-sm font-medium rounded-full">
+                  달성완료 ✓
+                </span>
+              )}
+            </div>
+
+            {/* 진행 바 */}
+            <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+              <div
+                className={cn(
+                  "h-full rounded-full transition-all duration-500",
+                  isVerified
+                    ? "bg-emerald-500"
+                    : "bg-gradient-to-r from-[#9F85E3] to-[#B8A5F0]"
+                )}
+                style={{ width: `${achievementRate}%` }}
+              />
+            </div>
+
+            {!isVerified && remainingSteps > 0 && (
+              <p className="text-xs text-gray-500 mt-2 text-center">
+                목표까지 <strong>{remainingSteps.toLocaleString()}걸음</strong>{" "}
+                남았어요!
+              </p>
+            )}
+          </div>
+
+          {/* 안내 */}
+          <p className="text-xs text-gray-400 text-center">
+            🚶 걸음수는 자동으로 연동됩니다. 목표 달성 시 자동 인증!
+          </p>
+        </>
       )}
     </div>
   );
@@ -744,11 +910,16 @@ export default function ChallengeVerifyPage() {
   const router = useRouter();
 
   const [challenge, setChallenge] = useState<Challenge | null>(null);
-  const [participation, setParticipation] = useState<Participation | null>(null);
+  const [participation, setParticipation] = useState<Participation | null>(
+    null
+  );
   const [stamps, setStamps] = useState<Stamp[]>([]);
-  const [todayVerifications, setTodayVerifications] = useState<Verification[]>([]);
+  const [todayVerifications, setTodayVerifications] = useState<Verification[]>(
+    []
+  );
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
-  const [rouletteSettings, setRouletteSettings] = useState<RouletteSettings | null>(null);
+  const [rouletteSettings, setRouletteSettings] =
+    useState<RouletteSettings | null>(null);
   const [todaySpun, setTodaySpun] = useState(false);
   const [rankings, setRankings] = useState<Ranking[]>([]);
   const [remainingDays, setRemainingDays] = useState(0);
@@ -765,7 +936,7 @@ export default function ChallengeVerifyPage() {
   // 데이터 로드
   const loadData = useCallback(async () => {
     if (!challengeId) return;
-    
+
     try {
       setIsLoading(true);
 
@@ -779,7 +950,10 @@ export default function ChallengeVerifyPage() {
       }
 
       // 참여중이 아니면 상세 페이지로 리다이렉트
-      if (!challengeData.participation || challengeData.participation.status !== "participating") {
+      if (
+        !challengeData.participation ||
+        challengeData.participation.status !== "participating"
+      ) {
         router.push(`/challenge/${challengeId}`);
         return;
       }
@@ -796,7 +970,9 @@ export default function ChallengeVerifyPage() {
 
       // 랭킹 로드 (복수 인증 챌린지인 경우)
       if (challengeData.challenge.daily_verification_count > 1) {
-        const rankingRes = await fetch(`/api/challenges/${challengeId}/rankings`);
+        const rankingRes = await fetch(
+          `/api/challenges/${challengeId}/rankings`
+        );
         const rankingData = await rankingRes.json();
         setRankings(rankingData.rankings || []);
       }
@@ -862,7 +1038,10 @@ export default function ChallengeVerifyPage() {
     if (todayCount >= dailyCount) return null;
 
     // 시간대 설정이 없으면 다음 슬롯
-    if (!challenge.verification_time_slots || challenge.verification_time_slots.length === 0) {
+    if (
+      !challenge.verification_time_slots ||
+      challenge.verification_time_slots.length === 0
+    ) {
       return todayCount + 1;
     }
 
@@ -872,7 +1051,9 @@ export default function ChallengeVerifyPage() {
 
     for (let i = 0; i < challenge.verification_time_slots.length; i++) {
       const slot = challenge.verification_time_slots[i];
-      const isVerified = todayVerifications.some((v) => v.verification_slot === i + 1);
+      const isVerified = todayVerifications.some(
+        (v) => v.verification_slot === i + 1
+      );
 
       if (!isVerified && currentTime >= slot.start && currentTime <= slot.end) {
         return i + 1;
@@ -914,9 +1095,12 @@ export default function ChallengeVerifyPage() {
     }
 
     if (challenge.challenge_type === "quiz") {
-      const remaining = challenge.daily_verification_count - todayVerifications.length;
+      const remaining =
+        challenge.daily_verification_count - todayVerifications.length;
       if (remaining <= 0) return "인증완료";
-      return `퀴즈 풀기(${todayVerifications.length + 1}/${challenge.daily_verification_count})`;
+      return `퀴즈 풀기(${todayVerifications.length + 1}/${
+        challenge.daily_verification_count
+      })`;
     }
 
     const todayCount = todayVerifications.length;
@@ -925,7 +1109,9 @@ export default function ChallengeVerifyPage() {
     if (todayCount >= dailyMax) return "인증완료";
 
     if (dailyMax > 1) {
-      return `${challenge.verification_button_text} (${todayCount + 1}/${dailyMax})`;
+      return `${challenge.verification_button_text} (${
+        todayCount + 1
+      }/${dailyMax})`;
     }
 
     return challenge.verification_button_text;
@@ -1016,7 +1202,9 @@ export default function ChallengeVerifyPage() {
         {/* 룰렛 챌린지 */}
         {challenge.challenge_type === "attendance" && rouletteSettings && (
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <h3 className="font-semibold text-gray-900 mb-4 text-center">출석체크</h3>
+            <h3 className="font-semibold text-gray-900 mb-4 text-center">
+              출석체크
+            </h3>
             <RouletteWheel
               settings={rouletteSettings}
               challengeId={challenge.id}
@@ -1055,12 +1243,23 @@ export default function ChallengeVerifyPage() {
           </>
         )}
 
-        {/* 걸음수/영양제/식사기록 챌린지 - 자동인증 */}
-        {["steps", "supplement", "meal"].includes(challenge.challenge_type) && (
+        {/* 걸음수 챌린지 */}
+        {challenge.challenge_type === "steps" && (
+          <StepsChallenge
+            challengeId={challenge.id}
+            participation={participation}
+            todayVerifications={todayVerifications}
+            onVerified={loadData}
+          />
+        )}
+
+        {/* 식사기록 챌린지 */}
+        {challenge.challenge_type === "meal" && (
           <>
-            {/* 오늘의 달성 현황 */}
             <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-              <h3 className="font-semibold text-gray-900 mb-3">오늘의 달성 현황</h3>
+              <h3 className="font-semibold text-gray-900 mb-3">
+                오늘의 달성 현황
+              </h3>
               <p className="text-sm text-gray-600 mb-2">
                 {getAchievementMessage(dailyAchievementRate)}
               </p>
@@ -1072,13 +1271,50 @@ export default function ChallengeVerifyPage() {
                   />
                 </div>
                 <span className="text-sm font-medium text-gray-600">
-                  {todayVerifications.length}/{challenge.daily_verification_count}
-                  {challenge.challenge_type === "steps" ? "걸음" : "회"}
+                  {todayVerifications.length}/
+                  {challenge.daily_verification_count}회
                 </span>
               </div>
+              <p className="text-xs text-gray-400 mt-3">
+                💡 식사 기록 화면에서 식사를 기록하면 자동으로 인증됩니다.
+              </p>
             </div>
+            {challenge.daily_verification_count > 1 && (
+              <TodayProgress
+                dailyCount={challenge.daily_verification_count}
+                todayVerifications={todayVerifications}
+                timeSlots={challenge.verification_time_slots}
+              />
+            )}
+          </>
+        )}
 
-            {/* 복수 인증 - 오늘의 달성 현황 */}
+        {/* 영양제 챌린지 */}
+        {challenge.challenge_type === "supplement" && (
+          <>
+            <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+              <h3 className="font-semibold text-gray-900 mb-3">
+                오늘의 달성 현황
+              </h3>
+              <p className="text-sm text-gray-600 mb-2">
+                {getAchievementMessage(dailyAchievementRate)}
+              </p>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-[#9F85E3] rounded-full transition-all"
+                    style={{ width: `${dailyAchievementRate}%` }}
+                  />
+                </div>
+                <span className="text-sm font-medium text-gray-600">
+                  {todayVerifications.length}/
+                  {challenge.daily_verification_count}루틴
+                </span>
+              </div>
+              <p className="text-xs text-gray-400 mt-3">
+                💊 영양제 기록 화면에서 복용을 기록하면 자동으로 인증됩니다.
+              </p>
+            </div>
             {challenge.daily_verification_count > 1 && (
               <TodayProgress
                 dailyCount={challenge.daily_verification_count}
@@ -1106,14 +1342,18 @@ export default function ChallengeVerifyPage() {
         {/* 달성 현황 (진행률 바) */}
         <ProgressBar
           completedDays={completedDays}
-          totalDays={challenge.total_stamp_count || challenge.challenge_duration_days}
+          totalDays={
+            challenge.total_stamp_count || challenge.challenge_duration_days
+          }
           remainingDays={remainingDays}
         />
 
         {/* 스탬프 그리드 */}
         <StampGrid
           stamps={stamps}
-          totalCount={challenge.total_stamp_count || challenge.challenge_duration_days}
+          totalCount={
+            challenge.total_stamp_count || challenge.challenge_duration_days
+          }
           emptyImage={challenge.stamp_empty_image}
           filledImage={challenge.stamp_filled_image}
         />
@@ -1125,36 +1365,37 @@ export default function ChallengeVerifyPage() {
       </main>
 
       {/* 하단 버튼 */}
-      {challenge.challenge_type !== "attendance" && challenge.challenge_type !== "quiz" && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 pb-safe">
-          <button
-            onClick={() => {
-              if (challenge.verification_method === "auto") {
-                // 자동 인증: 해당 기록 화면으로 이동
-                if (challenge.challenge_type === "meal") {
-                  router.push("/meal-record");
-                } else if (challenge.challenge_type === "supplement") {
-                  router.push("/supplement-record");
-                } else if (challenge.challenge_type === "steps") {
-                  router.push("/steps");
+      {challenge.challenge_type !== "attendance" &&
+        challenge.challenge_type !== "quiz" && (
+          <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 pb-safe">
+            <button
+              onClick={() => {
+                if (challenge.verification_method === "auto") {
+                  // 자동 인증: 해당 기록 화면으로 이동
+                  if (challenge.challenge_type === "meal") {
+                    router.push("/meal-record");
+                  } else if (challenge.challenge_type === "supplement") {
+                    router.push("/supplement-record");
+                  } else if (challenge.challenge_type === "steps") {
+                    router.push("/steps");
+                  }
+                } else {
+                  // 수기 인증: 확인 팝업
+                  setShowVerifyPopup(true);
                 }
-              } else {
-                // 수기 인증: 확인 팝업
-                setShowVerifyPopup(true);
-              }
-            }}
-            disabled={isButtonDisabled()}
-            className={cn(
-              "w-full py-4 rounded-xl font-semibold transition-colors",
-              isButtonDisabled()
-                ? "bg-gray-200 text-gray-400"
-                : "bg-[#9F85E3] text-white hover:bg-[#8B74D1]"
-            )}
-          >
-            {getButtonText()}
-          </button>
-        </div>
-      )}
+              }}
+              disabled={isButtonDisabled()}
+              className={cn(
+                "w-full py-4 rounded-xl font-semibold transition-colors",
+                isButtonDisabled()
+                  ? "bg-gray-200 text-gray-400"
+                  : "bg-[#9F85E3] text-white hover:bg-[#8B74D1]"
+              )}
+            >
+              {getButtonText()}
+            </button>
+          </div>
+        )}
 
       {/* 인증 확인 팝업 */}
       <ConfirmPopup
@@ -1185,4 +1426,3 @@ export default function ChallengeVerifyPage() {
     </div>
   );
 }
-

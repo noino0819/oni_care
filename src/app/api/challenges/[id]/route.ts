@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
+// 개발 테스트용 사용자 ID
+const TEST_USER_ID = '00000000-0000-0000-0000-000000000001';
+
 // 챌린지 상태 계산 함수
 function getChallengeStatus(challenge: any, participation: any | null): string {
   const now = new Date();
