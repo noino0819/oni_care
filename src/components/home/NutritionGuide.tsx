@@ -29,14 +29,62 @@ interface NutritionGuideProps {
 }
 
 const defaultNutrients: Nutrient[] = [
-  { id: "fat", name: "fat", nameKo: "지방", status: "excessive", icon: FatIcon },
-  { id: "saturated_fat", name: "saturated_fat", nameKo: "포화지방", status: "excessive", icon: SaturatedFatIcon },
-  { id: "sugar", name: "sugar", nameKo: "당류", status: "excessive", icon: SugarIcon },
-  { id: "carbs", name: "carbs", nameKo: "탄수화물", status: "adequate", icon: CarbsIcon },
-  { id: "cholesterol", name: "cholesterol", nameKo: "콜레스테롤", status: "adequate", icon: CholesterolIcon },
-  { id: "sodium", name: "sodium", nameKo: "나트륨", status: "deficient", icon: SodiumIcon },
-  { id: "protein", name: "protein", nameKo: "단백질", status: "adequate", icon: ProteinIcon },
-  { id: "fiber", name: "fiber", nameKo: "식이섬유", status: "deficient", icon: FiberIcon },
+  {
+    id: "fat",
+    name: "fat",
+    nameKo: "지방",
+    status: "excessive",
+    icon: FatIcon,
+  },
+  {
+    id: "saturated_fat",
+    name: "saturated_fat",
+    nameKo: "포화지방",
+    status: "excessive",
+    icon: SaturatedFatIcon,
+  },
+  {
+    id: "sugar",
+    name: "sugar",
+    nameKo: "당류",
+    status: "excessive",
+    icon: SugarIcon,
+  },
+  {
+    id: "carbs",
+    name: "carbs",
+    nameKo: "탄수화물",
+    status: "adequate",
+    icon: CarbsIcon,
+  },
+  {
+    id: "cholesterol",
+    name: "cholesterol",
+    nameKo: "콜레스테롤",
+    status: "adequate",
+    icon: CholesterolIcon,
+  },
+  {
+    id: "sodium",
+    name: "sodium",
+    nameKo: "나트륨",
+    status: "deficient",
+    icon: SodiumIcon,
+  },
+  {
+    id: "protein",
+    name: "protein",
+    nameKo: "단백질",
+    status: "adequate",
+    icon: ProteinIcon,
+  },
+  {
+    id: "fiber",
+    name: "fiber",
+    nameKo: "식이섬유",
+    status: "deficient",
+    icon: FiberIcon,
+  },
 ];
 
 type TabType = "adequate" | "excessive" | "deficient";
@@ -95,7 +143,10 @@ export function NutritionGuide({
           <span className="font-semibold text-[#9F85E3]">{userName}</span>님은{" "}
           <span className="font-semibold">{condition}</span> 관리를 위해
           <br />
-          <span className="text-amber-600 font-medium">지방, 포화지방, 당류</span> 섭취를 특별히 주의해야해요!
+          <span className="text-amber-600 font-medium">
+            지방, 포화지방, 당류
+          </span>{" "}
+          섭취를 특별히 주의해야해요!
           <br />
           <span className="text-gray-500 text-xs">
             아래는 현재 식습관에서 관리가 필요한 영양소에요!
@@ -181,7 +232,9 @@ export function NutritionGuide({
         {filteredNutrients.length > 4 && (
           <div className="flex justify-center mt-2">
             <div className="flex gap-1">
-              {Array.from({ length: Math.ceil(filteredNutrients.length / 4) }).map((_, i) => (
+              {Array.from({
+                length: Math.ceil(filteredNutrients.length / 4),
+              }).map((_, i) => (
                 <div
                   key={i}
                   className={`w-1.5 h-1.5 rounded-full ${
@@ -196,4 +249,3 @@ export function NutritionGuide({
     </div>
   );
 }
-

@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS public.users (
   id UUID REFERENCES auth.users(id) PRIMARY KEY,
   email TEXT NOT NULL,
   name TEXT,
+  phone TEXT, -- 휴대폰 번호 (아이디 찾기용)
   gender TEXT CHECK (gender IN ('male', 'female', 'other')),
   birth_date DATE,
   height DECIMAL(5, 2), -- cm

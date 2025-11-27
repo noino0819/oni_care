@@ -24,9 +24,13 @@ export function TodayMeal({
   targetCalories = 2100,
   nutrients = defaultNutrients,
 }: TodayMealProps) {
-  const caloriePercentage = Math.min((currentCalories / targetCalories) * 100, 100);
+  const caloriePercentage = Math.min(
+    (currentCalories / targetCalories) * 100,
+    100
+  );
   const circumference = 2 * Math.PI * 45; // radius = 45
-  const strokeDashoffset = circumference - (caloriePercentage / 100) * circumference;
+  const strokeDashoffset =
+    circumference - (caloriePercentage / 100) * circumference;
 
   return (
     <div className="mx-4 bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
@@ -65,13 +69,19 @@ export function TodayMeal({
             />
             {/* 그라데이션 정의 */}
             <defs>
-              <linearGradient id="calorieGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <linearGradient
+                id="calorieGradient"
+                x1="0%"
+                y1="0%"
+                x2="100%"
+                y2="0%"
+              >
                 <stop offset="0%" stopColor="#9F85E3" />
                 <stop offset="100%" stopColor="#7CB342" />
               </linearGradient>
             </defs>
           </svg>
-          
+
           {/* 중앙 텍스트 */}
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <span className="text-2xl font-bold text-gray-800">
@@ -87,7 +97,10 @@ export function TodayMeal({
         {/* 영양소 바 차트 */}
         <div className="flex-1 space-y-3">
           {nutrients.map((nutrient) => {
-            const percentage = Math.min((nutrient.current / nutrient.target) * 100, 100);
+            const percentage = Math.min(
+              (nutrient.current / nutrient.target) * 100,
+              100
+            );
             return (
               <div key={nutrient.name}>
                 <div className="flex justify-between items-center mb-1">
@@ -115,4 +128,3 @@ export function TodayMeal({
     </div>
   );
 }
-

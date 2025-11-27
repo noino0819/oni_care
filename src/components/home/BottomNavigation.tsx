@@ -48,7 +48,11 @@ export function BottomNavigation() {
 
   const menuItems = [
     { href: "/meal-record", label: "식사 기록", icon: MealRecordMenuIcon },
-    { href: "/supplement-record", label: "영양제 기록", icon: SupplementRecordIcon },
+    {
+      href: "/supplement-record",
+      label: "영양제 기록",
+      icon: SupplementRecordIcon,
+    },
     { href: "/diagnosis", label: "영양진단", icon: NutritionDiagnosisIcon },
     { href: "/attendance", label: "출석체크", icon: AttendanceIcon },
     { href: "/steps", label: "걸음수", icon: StepsMenuIcon },
@@ -164,4 +168,3 @@ export function BottomNavigation() {
     </>
   );
 }
-

@@ -13,7 +13,7 @@ export function FloatingDoctorButton() {
       <div className="relative">
         {/* 그림자/글로우 효과 */}
         <div className="absolute inset-0 bg-[#9F85E3] rounded-full blur-lg opacity-30 group-hover:opacity-50 transition-opacity" />
-        
+
         {/* 버튼 본체 */}
         <div className="relative w-14 h-14 bg-gradient-to-br from-[#B39DDB] to-[#9F85E3] rounded-full shadow-lg flex items-center justify-center overflow-hidden border-2 border-white group-hover:scale-110 transition-transform">
           <DoctorCharacter size={50} className="-mt-1" />
@@ -35,4 +35,3 @@ export function FloatingDoctorButton() {
     </Link>
   );
 }
-

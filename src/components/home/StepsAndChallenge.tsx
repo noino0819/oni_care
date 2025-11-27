@@ -19,7 +19,8 @@ export function StepsAndChallenge({
 }: StepsAndChallengeProps) {
   const stepsPercentage = Math.min((currentSteps / targetSteps) * 100, 100);
   const circumference = 2 * Math.PI * 35; // radius = 35
-  const strokeDashoffset = circumference - (stepsPercentage / 100) * circumference;
+  const strokeDashoffset =
+    circumference - (stepsPercentage / 100) * circumference;
 
   return (
     <div className="mx-4 flex gap-3">
@@ -29,7 +30,7 @@ export function StepsAndChallenge({
           <span className="w-1 h-4 bg-[#03A9F4] rounded-full" />
           오늘의 걸음수
         </h4>
-        
+
         <div className="flex items-center gap-4">
           {/* 원형 프로그레스 */}
           <div className="relative flex-shrink-0">
@@ -56,16 +57,30 @@ export function StepsAndChallenge({
                 className="transition-all duration-500"
               />
             </svg>
-            
+
             {/* 걸음 아이콘 */}
             <div className="absolute inset-0 flex items-center justify-center">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <ellipse cx="9" cy="8" rx="4" ry="5" fill="#03A9F4" transform="rotate(-15 9 8)"/>
-                <ellipse cx="15" cy="16" rx="4" ry="5" fill="#03A9F4" transform="rotate(15 15 16)"/>
+                <ellipse
+                  cx="9"
+                  cy="8"
+                  rx="4"
+                  ry="5"
+                  fill="#03A9F4"
+                  transform="rotate(-15 9 8)"
+                />
+                <ellipse
+                  cx="15"
+                  cy="16"
+                  rx="4"
+                  ry="5"
+                  fill="#03A9F4"
+                  transform="rotate(15 15 16)"
+                />
               </svg>
             </div>
           </div>
-          
+
           {/* 숫자 */}
           <div>
             <div className="text-2xl font-bold text-gray-800">
@@ -82,7 +97,7 @@ export function StepsAndChallenge({
       <div className="flex-[4] bg-gradient-to-br from-purple-50 to-white rounded-2xl shadow-sm border border-purple-100 p-4 relative overflow-hidden">
         {/* 배경 장식 */}
         <div className="absolute top-0 right-0 w-20 h-20 bg-purple-100/50 rounded-full -translate-y-1/2 translate-x-1/2" />
-        
+
         <div className="relative">
           <div className="flex items-start justify-between mb-2">
             <div className="flex items-center gap-2">
@@ -122,4 +137,3 @@ export function StepsAndChallenge({
     </div>
   );
 }
-

@@ -25,12 +25,14 @@ export function Header({ points = 50 }: HeaderProps) {
           {/* 포인트 표시 */}
           <div className="flex items-center gap-1 bg-amber-50 px-3 py-1.5 rounded-full">
             <PointIcon size={16} />
-            <span className="text-sm font-semibold text-amber-700">{points.toLocaleString()}Point</span>
+            <span className="text-sm font-semibold text-amber-700">
+              {points.toLocaleString()}Point
+            </span>
           </div>
 
           {/* 프로필 아이콘 */}
-          <Link 
-            href="/profile" 
+          <Link
+            href="/profile"
             className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
           >
             <ProfileIcon size={20} className="text-gray-500" />
@@ -40,4 +42,3 @@ export function Header({ points = 50 }: HeaderProps) {
     </header>
   );
 }
-

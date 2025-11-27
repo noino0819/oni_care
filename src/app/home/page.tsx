@@ -34,10 +34,7 @@ export default function HomePage() {
 
         {/* 섹션 2-1: 종합 가이드 (영양 진단 있을 경우) */}
         {userData.hasNutritionDiagnosis && (
-          <NutritionGuide
-            userName={userData.name}
-            condition="고중성지방혈증"
-          />
+          <NutritionGuide userName={userData.name} condition="고중성지방혈증" />
         )}
 
         {/* 섹션 3: 식품 관련 명언 */}

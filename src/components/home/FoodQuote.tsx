@@ -6,16 +6,26 @@ import { PillIcon } from "@/components/icons";
 const defaultQuotes = [
   { quote: "약과 음식은 근원에서 같다.", author: "약식동원" },
   { quote: "You are what you eat.", author: null },
-  { quote: "음식으로는 못 고치는 병은 의사도 못 고친다", author: "히포크라테스" },
+  {
+    quote: "음식으로는 못 고치는 병은 의사도 못 고친다",
+    author: "히포크라테스",
+  },
   { quote: "잘 먹는 것은 결코 하찮은 기술이 아니다", author: null },
   { quote: "걷기는 사람에게 최고의 약이다", author: null },
   { quote: "당신의 음식이 당신의 약이 되게 하라", author: null },
   { quote: "음식에 대한 사랑보다 더 숨김없는 사랑은 없다", author: null },
   { quote: "자기가 먹는 음식이 자기의 운명을 좌우한다.", author: null },
   { quote: "먹는 것은 필수지만 현명하게 먹는 것은 예술이다.", author: null },
-  { quote: "무엇을 먹는지 말하라. 그러면 당신이 어떤 사람인지 알 수 있다.", author: null },
+  {
+    quote: "무엇을 먹는지 말하라. 그러면 당신이 어떤 사람인지 알 수 있다.",
+    author: null,
+  },
   { quote: "우리가 먹는 것이 곧 우리 자신이 된다.", author: null },
-  { quote: "잘 먹는 기술은 결코 하찮은 기술이 아니며, 그로 인한 기쁨은 작은 기쁨이 아니다.", author: null },
+  {
+    quote:
+      "잘 먹는 기술은 결코 하찮은 기술이 아니며, 그로 인한 기쁨은 작은 기쁨이 아니다.",
+    author: null,
+  },
   { quote: "좋은 음식은 좋은 생각을 낳는다.", author: null },
   { quote: "건강한 몸에 건강한 정신이 깃든다.", author: null },
   { quote: "식탁이 곧 약국이다.", author: null },
@@ -31,7 +41,10 @@ interface FoodQuoteProps {
   interval?: number; // ms
 }
 
-export function FoodQuote({ quotes = defaultQuotes, interval = 10000 }: FoodQuoteProps) {
+export function FoodQuote({
+  quotes = defaultQuotes,
+  interval = 10000,
+}: FoodQuoteProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [direction, setDirection] = useState<"up" | "down">("up");
@@ -40,7 +53,7 @@ export function FoodQuote({ quotes = defaultQuotes, interval = 10000 }: FoodQuot
     const timer = setInterval(() => {
       setDirection("up");
       setIsAnimating(true);
-      
+
       setTimeout(() => {
         setCurrentIndex((prev) => (prev + 1) % quotes.length);
         setIsAnimating(false);
@@ -72,9 +85,13 @@ export function FoodQuote({ quotes = defaultQuotes, interval = 10000 }: FoodQuot
             }`}
           >
             <p className="text-sm text-gray-700 truncate">
-              <span className="font-medium">&ldquo;{currentQuote.quote}&rdquo;</span>
+              <span className="font-medium">
+                &ldquo;{currentQuote.quote}&rdquo;
+              </span>
               {currentQuote.author && (
-                <span className="text-gray-500 ml-2">- {currentQuote.author}</span>
+                <span className="text-gray-500 ml-2">
+                  - {currentQuote.author}
+                </span>
               )}
             </p>
           </div>
@@ -83,4 +100,3 @@ export function FoodQuote({ quotes = defaultQuotes, interval = 10000 }: FoodQuot
     </div>
   );
 }
-

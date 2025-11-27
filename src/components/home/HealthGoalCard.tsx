@@ -25,13 +25,14 @@ export function HealthGoalCard({
   return (
     <div className="mx-4 rounded-3xl overflow-hidden relative">
       {/* 그라데이션 배경 */}
-      <div 
+      <div
         className="absolute inset-0"
         style={{
-          background: "linear-gradient(135deg, #f3e7ff 0%, #e8f5e9 50%, #fff8e1 100%)",
+          background:
+            "linear-gradient(135deg, #f3e7ff 0%, #e8f5e9 50%, #fff8e1 100%)",
         }}
       />
-      
+
       {/* 장식적 요소 */}
       <div className="absolute top-0 right-0 w-32 h-32 bg-purple-200/30 rounded-full -translate-y-1/2 translate-x-1/2" />
       <div className="absolute bottom-0 left-0 w-24 h-24 bg-green-200/30 rounded-full translate-y-1/2 -translate-x-1/2" />
@@ -51,7 +52,7 @@ export function HealthGoalCard({
             {subDescription && (
               <p className="text-xs text-gray-500 mb-3">{subDescription}</p>
             )}
-            
+
             {/* 태그 버튼들 */}
             <div className="flex flex-wrap gap-2">
               {tags.map((tag, index) => (
@@ -78,7 +79,7 @@ export function HealthGoalCard({
 function NoDiagnosisCard() {
   return (
     <Link href="/diagnosis" className="block mx-4">
-      <div 
+      <div
         className="rounded-3xl p-6 relative overflow-hidden"
         style={{
           background: "linear-gradient(135deg, #f8f9fa 0%, #e8f5e9 100%)",
@@ -90,12 +91,19 @@ function NoDiagnosisCard() {
             <p className="text-base font-semibold text-gray-800 leading-relaxed">
               식습관 파악하는 영양진단하고
               <br />
-              <span className="text-[#7CB342]">나만의 식습관 가이드</span> 확인하기!
+              <span className="text-[#7CB342]">나만의 식습관 가이드</span>{" "}
+              확인하기!
             </p>
           </div>
           <div className="text-gray-400">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M9 6L15 12L9 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path
+                d="M9 6L15 12L9 18"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </div>
         </div>
@@ -103,4 +111,3 @@ function NoDiagnosisCard() {
     </Link>
   );
 }
-
