@@ -2,25 +2,25 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createAdminClient } from '@/lib/supabase/server';
 
 export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+    request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
-    const { id: challengeId } = await params;
-    const supabase = await createClient();
-    const adminSupabase = createAdminClient();
-    const body = await request.json();
-    
-    const { quizId, selectedAnswer, slot = 1 } = body;
-    
-    // 현재 사용자 정보
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      return NextResponse.json({ error: '로그인이 필요합니다.' }, { status: 401 });
-    }
-    
-    const userId = user.id;
+    try {
+        const { id: challengeId } = await params;
+        const supabase = await createClient();
+        const adminSupabase = createAdminClient();
+        const body = await request.json();
+
+        const { quizId, selectedAnswer, slot = 1 } = body;
+
+        // 현재 사용자 정보
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            return NextResponse.json({ error: '로그인이 필요합니다.' }, { status: 401 });
+        }
+
+        const userId = user.id;
 
         // 퀴즈 정보 조회
         const { data: quiz, error: quizError } = await supabase

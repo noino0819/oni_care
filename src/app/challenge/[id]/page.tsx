@@ -128,13 +128,15 @@ export default function ChallengeDetailPage() {
   const params = useParams();
   const challengeId = params.id as string;
   const router = useRouter();
-  
+
   const [challenge, setChallenge] = useState<Challenge | null>(null);
-  const [participation, setParticipation] = useState<Participation | null>(null);
+  const [participation, setParticipation] = useState<Participation | null>(
+    null
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [isJoining, setIsJoining] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
-  
+
   // 팝업 상태
   const [showJoinPopup, setShowJoinPopup] = useState(false);
   const [showCancelPopup, setShowCancelPopup] = useState(false);
@@ -142,7 +144,7 @@ export default function ChallengeDetailPage() {
   // 데이터 로드
   const loadChallenge = useCallback(async () => {
     if (!challengeId) return;
-    
+
     try {
       setIsLoading(true);
       const res = await fetch(`/api/challenges/${challengeId}`);
@@ -213,9 +215,9 @@ export default function ChallengeDetailPage() {
 
   // 참여 중인지 확인
   const isParticipating = participation?.status === "participating";
-  
+
   // 버튼 비활성화 조건
-  const isButtonDisabled = 
+  const isButtonDisabled =
     challenge?.status === "before_recruitment" ||
     challenge?.status === "recruitment_closed" ||
     challenge?.status === "ended";
@@ -276,7 +278,9 @@ export default function ChallengeDetailPage() {
         {/* 제목 영역 */}
         <div className="px-4 py-4 border-b border-gray-100">
           <div className="flex items-start justify-between gap-3">
-            <h2 className="text-xl font-bold text-gray-900">{challenge.title}</h2>
+            <h2 className="text-xl font-bold text-gray-900">
+              {challenge.title}
+            </h2>
             <span
               className={cn(
                 "px-3 py-1 rounded-full text-sm font-medium flex-shrink-0",
@@ -286,7 +290,7 @@ export default function ChallengeDetailPage() {
               {challenge.statusTag.text}
             </span>
           </div>
-          
+
           {/* 챌린지 태그 */}
           <div className="flex flex-wrap gap-2 mt-3">
             <span className="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-600">
@@ -306,9 +310,11 @@ export default function ChallengeDetailPage() {
         {/* 컨텐츠 이미지 */}
         <div className="px-4 py-4 space-y-4">
           {challenge.description && (
-            <p className="text-gray-600 leading-relaxed">{challenge.description}</p>
+            <p className="text-gray-600 leading-relaxed">
+              {challenge.description}
+            </p>
           )}
-          
+
           {/* 썸네일 이미지 */}
           {challenge.thumbnail_url && (
             <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-gray-100">
@@ -378,9 +384,7 @@ export default function ChallengeDetailPage() {
                 : "bg-[#9F85E3] text-white hover:bg-[#8B74D1]"
             )}
           >
-            {isButtonDisabled
-              ? challenge.statusTag.text
-              : "참여하기"}
+            {isButtonDisabled ? challenge.statusTag.text : "참여하기"}
           </button>
         )}
       </div>
@@ -408,4 +412,3 @@ export default function ChallengeDetailPage() {
     </div>
   );
 }
-

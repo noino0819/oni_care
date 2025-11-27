@@ -61,9 +61,9 @@ export async function GET(
         const { id } = await params;
         const supabase = await createClient();
 
-    // 현재 사용자 정보
-    const { data: { user } } = await supabase.auth.getUser();
-    const userId = user?.id;
+        // 현재 사용자 정보
+        const { data: { user } } = await supabase.auth.getUser();
+        const userId = user?.id;
 
         // 챌린지 정보 조회
         const { data: challenge, error } = await supabase
