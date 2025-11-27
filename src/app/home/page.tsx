@@ -9,6 +9,15 @@ import { TodayMeal } from "@/components/home/TodayMeal";
 import { StepsAndChallenge } from "@/components/home/StepsAndChallenge";
 import { ContentBanners } from "@/components/home/ContentBanners";
 import { FloatingDoctorButton } from "@/components/home/FloatingDoctorButton";
+import { LoadingOverlay } from "@/components/ui/LoadingSpinner";
+import { ErrorState } from "@/components/ui/ErrorState";
+import {
+  NUTRIENT_NAME_MAP,
+  GOAL_TYPE_MAP,
+  DISEASE_MAP,
+  DEFAULT_NUTRITION_TARGETS,
+} from "@/lib/constants";
+import { getNutrientIcon } from "@/components/icons";
 
 interface HomeData {
   user: {
@@ -59,36 +68,6 @@ interface HomeData {
   } | null;
 }
 
-// 영양소 타입 매핑
-const nutrientNameMap: Record<string, string> = {
-  fat: "지방",
-  saturated_fat: "포화지방",
-  sugar: "당류",
-  carbs: "탄수화물",
-  cholesterol: "콜레스테롤",
-  sodium: "나트륨",
-  protein: "단백질",
-  fiber: "식이섬유",
-};
-
-// 건강 목표 타입 매핑
-const goalTypeMap: Record<string, string> = {
-  weight_management: "체중관리 필요형",
-  blood_sugar: "혈당관리 필요형",
-  muscle: "근력운동 필요형",
-  general: "일반 관리형",
-};
-
-// 질병 매핑
-const diseaseMap: Record<string, string> = {
-  diabetes: "당뇨병",
-  obesity: "비만",
-  hypertension: "고혈압",
-  fatty_liver: "지방간",
-  hyperlipidemia: "고지혈증",
-  hyperthyroidism: "갑상선항진증",
-};
-
 export default function HomePage() {
   const [homeData, setHomeData] = useState<HomeData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -123,30 +102,13 @@ export default function HomePage() {
 
   // 로딩 상태
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-[#9F85E3] border-t-transparent rounded-full animate-spin" />
-          <p className="text-gray-500">로딩 중...</p>
-        </div>
-      </div>
-    );
+    return <LoadingOverlay message="데이터를 불러오는 중..." />;
   }
 
   // 에러 상태 (데이터가 없어도 기본값으로 표시)
   if (error && !homeData) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-500 mb-4">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-[#9F85E3] text-white rounded-lg"
-          >
-            다시 시도
-          </button>
-        </div>
-      </div>
+      <ErrorState message={error} onRetry={() => window.location.reload()} />
     );
   }
 
@@ -170,7 +132,7 @@ export default function HomePage() {
 
   // 건강 목표 설명 생성
   const goalDescription = userData.healthGoal
-    ? `${goalTypeMap[userData.healthGoal.goalType] || "건강관리"} / ${
+    ? `${GOAL_TYPE_MAP[userData.healthGoal.goalType] || "건강관리"} / ${
         userData.healthGoal.tags.length > 0
           ? userData.healthGoal.tags.join(", ") + " 위주로 관리해요"
           : "건강한 생활을 위해 관리해요"
@@ -180,24 +142,30 @@ export default function HomePage() {
   // 태그 생성
   const tags = userData.healthGoal?.tags?.length
     ? userData.healthGoal.tags
-    : userData.healthGoal?.diseases?.map((d) => diseaseMap[d] || d) || [
+    : userData.healthGoal?.diseases?.map((d) => DISEASE_MAP[d] || d) || [
         "건강관리",
       ];
 
   // 질병 조건 확인
   const condition = userData.healthGoal?.diseases?.[0]
-    ? diseaseMap[userData.healthGoal.diseases[0]] ||
+    ? DISEASE_MAP[userData.healthGoal.diseases[0]] ||
       userData.healthGoal.diseases[0]
     : userData.nutritionDiagnosis?.diagnosisType || "고중성지방혈증";
 
   // 영양소 상태를 NutritionGuide 형식으로 변환
-  const nutrients = userData.nutritionStatus.map((n) => ({
-    id: n.nutrientType,
-    name: n.nutrientType,
-    nameKo: nutrientNameMap[n.nutrientType] || n.nutrientType,
-    status: n.status,
-    icon: null as any, // 아이콘은 NutritionGuide 내부에서 처리
-  }));
+  const nutrients = userData.nutritionStatus
+    .map((n) => {
+      const icon = getNutrientIcon(n.nutrientType);
+      if (!icon) return null;
+      return {
+        id: n.nutrientType,
+        name: n.nutrientType,
+        nameKo: NUTRIENT_NAME_MAP[n.nutrientType] || n.nutrientType,
+        status: n.status,
+        icon,
+      };
+    })
+    .filter((n): n is NonNullable<typeof n> => n !== null);
 
   // 챌린지 진행률 계산
   const challengeProgress = userData.challenge
@@ -238,24 +206,24 @@ export default function HomePage() {
         {/* 섹션 4: 오늘의 식사 */}
         <TodayMeal
           currentCalories={userData.todayMeal.totalCalories}
-          targetCalories={2100}
+          targetCalories={DEFAULT_NUTRITION_TARGETS.calories}
           nutrients={[
             {
               name: "탄수화물",
               current: userData.todayMeal.totalCarbs,
-              target: 300,
+              target: DEFAULT_NUTRITION_TARGETS.carbs,
               color: "#FFC107",
             },
             {
               name: "단백질",
               current: userData.todayMeal.totalProtein,
-              target: 100,
+              target: DEFAULT_NUTRITION_TARGETS.protein,
               color: "#9F85E3",
             },
             {
               name: "지방",
               current: userData.todayMeal.totalFat,
-              target: 70,
+              target: DEFAULT_NUTRITION_TARGETS.fat,
               color: "#FF9800",
             },
           ]}

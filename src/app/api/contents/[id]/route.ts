@@ -103,25 +103,43 @@ export async function GET(
         }
 
         // 미디어 정렬
-        const sortedMedia = content.media?.sort(
+        const mediaArray = content.media as Array<{
+            id: string;
+            media_type: string;
+            media_url: string;
+            display_order: number;
+            alt_text: string | null;
+        }> | null;
+        const sortedMedia = mediaArray?.sort(
             (a, b) => a.display_order - b.display_order
         );
+
+        // 타입 캐스팅 (Supabase 관계 쿼리 결과)
+        const categoryData = content.category as unknown as {
+            id: number;
+            category_name: string;
+            category_type: string;
+        } | null;
+        const subcategoryData = content.subcategory as unknown as {
+            id: number;
+            subcategory_name: string;
+        } | null;
 
         return NextResponse.json({
             id: content.id,
             title: content.title,
             thumbnail_url: content.thumbnail_url,
-            category: content.category
+            category: categoryData
                 ? {
-                    id: content.category.id,
-                    name: content.category.category_name,
-                    type: content.category.category_type,
+                    id: categoryData.id,
+                    name: categoryData.category_name,
+                    type: categoryData.category_type,
                 }
                 : null,
-            subcategory: content.subcategory
+            subcategory: subcategoryData
                 ? {
-                    id: content.subcategory.id,
-                    name: content.subcategory.subcategory_name,
+                    id: subcategoryData.id,
+                    name: subcategoryData.subcategory_name,
                 }
                 : null,
             media: sortedMedia || [],

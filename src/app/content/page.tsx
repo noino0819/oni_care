@@ -10,10 +10,15 @@ import {
   ChevronUpIcon,
   HeartIcon,
   CloseIcon,
-  QuestionCharacter,
 } from "@/components/icons";
 import { cn } from "@/lib/utils";
-import type { ContentCategory, ContentCard, CategoriesResponse } from "@/types/database";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { EmptyState } from "@/components/ui/EmptyState";
+import type {
+  ContentCategory,
+  ContentCard,
+  CategoriesResponse,
+} from "@/types/database";
 
 export default function ContentListPage() {
   const router = useRouter();
@@ -21,8 +26,11 @@ export default function ContentListPage() {
   const [contents, setContents] = useState<ContentCard[]>([]);
   const [categories, setCategories] = useState<CategoriesResponse | null>(null);
   const [searchKeyword, setSearchKeyword] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<ContentCategory | null>(null);
-  const [selectedSubcategory, setSelectedSubcategory] = useState<number | null>(null);
+  const [selectedCategory, setSelectedCategory] =
+    useState<ContentCategory | null>(null);
+  const [selectedSubcategory, setSelectedSubcategory] = useState<number | null>(
+    null
+  );
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [points, setPoints] = useState(50);
 
@@ -327,16 +335,11 @@ export default function ContentListPage() {
       <div className="px-4 py-4">
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="w-10 h-10 border-4 border-[#9F85E3] border-t-transparent rounded-full animate-spin" />
+            <LoadingSpinner size="lg" />
           </div>
         ) : contents.length === 0 ? (
           /* 빈 상태 화면 */
-          <div className="flex flex-col items-center justify-center py-16">
-            <QuestionCharacter size={180} className="mb-4" />
-            <p className="text-gray-500 text-center">
-              검색 결과에 해당하는 컨텐츠가 없어요...
-            </p>
-          </div>
+          <EmptyState description="검색 결과에 해당하는 컨텐츠가 없어요..." />
         ) : (
           /* 컨텐츠 카드 리스트 */
           <div className="space-y-4">
@@ -362,7 +365,11 @@ interface ContentCardItemProps {
   onLikeToggle: (e: React.MouseEvent) => void;
 }
 
-function ContentCardItem({ content, onClick, onLikeToggle }: ContentCardItemProps) {
+function ContentCardItem({
+  content,
+  onClick,
+  onLikeToggle,
+}: ContentCardItemProps) {
   const isStyleA = content.cardStyle === "A";
 
   if (isStyleA) {
@@ -393,10 +400,7 @@ function ContentCardItem({ content, onClick, onLikeToggle }: ContentCardItemProp
           )}
         </div>
         {/* 좋아요 버튼 */}
-        <button
-          onClick={onLikeToggle}
-          className="absolute top-4 right-4 p-2"
-        >
+        <button onClick={onLikeToggle} className="absolute top-4 right-4 p-2">
           <HeartIcon
             size={24}
             filled={content.isLiked}
@@ -432,10 +436,7 @@ function ContentCardItem({ content, onClick, onLikeToggle }: ContentCardItemProp
         </h3>
       </div>
       {/* 좋아요 버튼 */}
-      <button
-        onClick={onLikeToggle}
-        className="absolute top-4 right-4 p-2"
-      >
+      <button onClick={onLikeToggle} className="absolute top-4 right-4 p-2">
         <HeartIcon
           size={24}
           filled={content.isLiked}
@@ -445,4 +446,3 @@ function ContentCardItem({ content, onClick, onLikeToggle }: ContentCardItemProp
     </div>
   );
 }
-

@@ -13,6 +13,7 @@ import {
   CloseIcon,
 } from "@/components/icons";
 import { cn } from "@/lib/utils";
+import { HIDDEN_NAV_PATHS, HIDDEN_NAV_PREFIXES } from "@/lib/constants";
 
 // 하단 네비게이션용 아이콘들
 function NavHomeIcon({
@@ -267,18 +268,12 @@ export function BottomNavigation() {
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // 하단 메뉴를 숨길 경로 목록
-  const hiddenPaths = [
-    "/",
-    "/signup",
-    "/signup/terms",
-    "/signup/verify",
-    "/onboarding",
-    "/find-account",
-  ];
+  // 네비게이션을 숨겨야 하는지 확인
+  const shouldHideNav =
+    HIDDEN_NAV_PATHS.includes(pathname as (typeof HIDDEN_NAV_PATHS)[number]) ||
+    HIDDEN_NAV_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 
-  // 컨텐츠 상세 페이지에서도 네비게이션 숨김
-  if (hiddenPaths.includes(pathname) || pathname.startsWith("/content/")) {
+  if (shouldHideNav) {
     return null;
   }
 

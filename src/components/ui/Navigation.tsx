@@ -4,21 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, ClipboardList, PieChart, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { HIDDEN_NAV_PATHS } from "@/lib/constants";
 
-export default function Navigation() {
+export function Navigation() {
   const pathname = usePathname();
 
   // 하단 메뉴를 숨길 경로 목록
-  const hiddenPaths = [
-    "/",
-    "/signup",
-    "/signup/terms",
-    "/signup/verify",
-    "/onboarding",
-    "/find-account",
-  ];
-
-  if (hiddenPaths.includes(pathname)) {
+  if (HIDDEN_NAV_PATHS.includes(pathname as typeof HIDDEN_NAV_PATHS[number])) {
     return null;
   }
 

@@ -4,6 +4,13 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { ListSkeleton } from "@/components/ui/LoadingSpinner";
+import { EmptyState } from "@/components/ui/EmptyState";
+import {
+  CHALLENGE_FILTER_OPTIONS,
+  CHALLENGE_EMPTY_MESSAGES,
+  CHALLENGE_STATUS_MAP,
+} from "@/lib/constants";
 
 // 타입 정의
 interface Challenge {
@@ -23,30 +30,10 @@ interface Challenge {
   current_participants: number;
   status: string;
   statusTag: { text: string; color: string };
-  participation: any | null;
+  participation: unknown | null;
   dday: number | null;
   achievementRate: number;
 }
-
-// 필터 옵션
-const FILTER_OPTIONS = [
-  { value: "all", label: "전체" },
-  { value: "participating", label: "참여중" },
-  { value: "before_recruitment", label: "모집예정" },
-  { value: "recruiting", label: "모집중" },
-  { value: "recruitment_closed", label: "모집완료" },
-  { value: "ended", label: "종료" },
-];
-
-// 빈 상태 메시지
-const EMPTY_MESSAGES: Record<string, string> = {
-  all: "챌린지가 없어요...",
-  participating: "참여중인 챌린지가 없어요...\n챌린지에 참여하고 건강습관을 길러볼까요?",
-  before_recruitment: "모집예정인 챌린지가 없어요...",
-  recruiting: "모집중인 챌린지가 없어요...",
-  recruitment_closed: "모집완료인 챌린지가 없어요...",
-  ended: "종료된 챌린지가 없어요...",
-};
 
 // 상태 태그 색상
 function getStatusTagStyle(color: string) {
@@ -162,18 +149,30 @@ function ChallengeCard({
 // 챌린지 타입별 아이콘
 function ChallengeTypeIcon({ type }: { type: string }) {
   const iconClass = "w-12 h-12 text-gray-400";
-  
+
   switch (type) {
     case "attendance":
       return (
-        <svg className={iconClass} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <svg
+          className={iconClass}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+        >
           <circle cx="12" cy="12" r="10" />
           <path d="M12 6v6l4 2" strokeLinecap="round" />
         </svg>
       );
     case "steps":
       return (
-        <svg className={iconClass} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <svg
+          className={iconClass}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+        >
           <path d="M4 19.5A2.5 2.5 0 016.5 17H20" strokeLinecap="round" />
           <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
           <path d="M12 6l3 6-3 2-3-2 3-6z" fill="currentColor" />
@@ -181,7 +180,13 @@ function ChallengeTypeIcon({ type }: { type: string }) {
       );
     case "meal":
       return (
-        <svg className={iconClass} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <svg
+          className={iconClass}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+        >
           <path d="M18 8h1a4 4 0 010 8h-1" strokeLinecap="round" />
           <path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z" />
           <line x1="6" y1="1" x2="6" y2="4" strokeLinecap="round" />
@@ -191,7 +196,13 @@ function ChallengeTypeIcon({ type }: { type: string }) {
       );
     case "supplement":
       return (
-        <svg className={iconClass} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <svg
+          className={iconClass}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+        >
           <rect x="3" y="6" width="18" height="12" rx="3" />
           <line x1="12" y1="6" x2="12" y2="18" />
           <circle cx="7" cy="12" r="2" fill="currentColor" />
@@ -200,18 +211,37 @@ function ChallengeTypeIcon({ type }: { type: string }) {
       );
     case "quiz":
       return (
-        <svg className={iconClass} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <svg
+          className={iconClass}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+        >
           <circle cx="12" cy="12" r="10" />
-          <path d="M9 9a3 3 0 115.12 2.12A2.5 2.5 0 0012 14" strokeLinecap="round" />
+          <path
+            d="M9 9a3 3 0 115.12 2.12A2.5 2.5 0 0012 14"
+            strokeLinecap="round"
+          />
           <circle cx="12" cy="18" r="0.5" fill="currentColor" />
         </svg>
       );
     case "health_habit":
     default:
       return (
-        <svg className={iconClass} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <svg
+          className={iconClass}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+        >
           <path d="M22 11.08V12a10 10 0 11-5.93-9.14" strokeLinecap="round" />
-          <polyline points="22,4 12,14.01 9,11.01" strokeLinecap="round" strokeLinejoin="round" />
+          <polyline
+            points="22,4 12,14.01 9,11.01"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       );
   }
@@ -235,26 +265,16 @@ function ChevronDownIcon({ className }: { className?: string }) {
 }
 
 // 빈 상태 일러스트
-function EmptyState({ message }: { message: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-20 px-4">
-      <div className="w-24 h-24 mb-6 text-gray-300">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-          <circle cx="12" cy="12" r="10" />
-          <path d="M8 15s1.5 2 4 2 4-2 4-2" />
-          <line x1="9" y1="9" x2="9.01" y2="9" strokeWidth="2" />
-          <line x1="15" y1="9" x2="15.01" y2="9" strokeWidth="2" />
-        </svg>
-      </div>
-      <p className="text-gray-500 text-center whitespace-pre-line">{message}</p>
-    </div>
-  );
+function ChallengeEmptyState({ message }: { message: string }) {
+  return <EmptyState description={message} />;
 }
 
 export default function ChallengePage() {
   const router = useRouter();
   const [challenges, setChallenges] = useState<Challenge[]>([]);
-  const [participatingChallenges, setParticipatingChallenges] = useState<Challenge[]>([]);
+  const [participatingChallenges, setParticipatingChallenges] = useState<
+    Challenge[]
+  >([]);
   const [otherChallenges, setOtherChallenges] = useState<Challenge[]>([]);
   const [filter, setFilter] = useState("all");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -295,7 +315,8 @@ export default function ChallengePage() {
   };
 
   // 현재 필터 레이블
-  const currentFilterLabel = FILTER_OPTIONS.find((f) => f.value === filter)?.label || "전체";
+  const currentFilterLabel =
+    CHALLENGE_FILTER_OPTIONS.find((f) => f.value === filter)?.label || "전체";
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -303,7 +324,7 @@ export default function ChallengePage() {
       <header className="sticky top-0 z-40 bg-white border-b border-gray-100">
         <div className="flex items-center justify-between px-4 h-14">
           <h1 className="text-lg font-bold text-gray-900">챌린지</h1>
-          
+
           {/* 필터 드롭다운 */}
           <div className="relative">
             <button
@@ -311,10 +332,12 @@ export default function ChallengePage() {
               className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-gray-100 text-sm font-medium text-gray-700"
             >
               {currentFilterLabel}
-              <ChevronDownIcon className={cn(
-                "w-4 h-4 transition-transform",
-                isDropdownOpen && "rotate-180"
-              )} />
+              <ChevronDownIcon
+                className={cn(
+                  "w-4 h-4 transition-transform",
+                  isDropdownOpen && "rotate-180"
+                )}
+              />
             </button>
 
             {/* 드롭다운 메뉴 */}
@@ -325,7 +348,7 @@ export default function ChallengePage() {
                   onClick={() => setIsDropdownOpen(false)}
                 />
                 <div className="absolute right-0 top-full mt-1 w-32 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-20">
-                  {FILTER_OPTIONS.map((option) => (
+                  {CHALLENGE_FILTER_OPTIONS.map((option) => (
                     <button
                       key={option.value}
                       onClick={() => {
@@ -353,26 +376,14 @@ export default function ChallengePage() {
       <main className="p-4 space-y-6">
         {isLoading ? (
           // 로딩 스켈레톤
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-white rounded-2xl p-4 animate-pulse">
-                <div className="flex gap-4">
-                  <div className="w-[100px] h-[100px] bg-gray-200 rounded-xl" />
-                  <div className="flex-1 space-y-3">
-                    <div className="h-5 bg-gray-200 rounded w-3/4" />
-                    <div className="flex gap-2">
-                      <div className="h-5 bg-gray-200 rounded w-16" />
-                      <div className="h-5 bg-gray-200 rounded w-12" />
-                    </div>
-                    <div className="h-9 bg-gray-200 rounded" />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <ListSkeleton count={3} />
         ) : challenges.length === 0 ? (
           // 빈 상태
-          <EmptyState message={EMPTY_MESSAGES[filter]} />
+          <ChallengeEmptyState
+            message={
+              CHALLENGE_EMPTY_MESSAGES[filter] || CHALLENGE_EMPTY_MESSAGES.all
+            }
+          />
         ) : (
           <>
             {/* 참여중인 챌린지 섹션 */}
@@ -420,4 +431,3 @@ export default function ChallengePage() {
     </div>
   );
 }
-
