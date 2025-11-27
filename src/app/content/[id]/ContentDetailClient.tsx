@@ -221,13 +221,8 @@ export default function ContentDetailClient({ id }: ContentDetailClientProps) {
         {/* 컨텐츠 미디어 (카드뉴스 형태) */}
         <div className="px-4 py-4 space-y-4">
           {content.media && content.media.length > 0 ? (
-            content.media.map((media, index) => (
-              <MediaItem 
-                key={media.id} 
-                media={media} 
-                index={index}
-                total={content.media.length}
-              />
+            content.media.map((media) => (
+              <MediaItem key={media.id} media={media} />
             ))
           ) : (
             // 미디어가 없을 때 썸네일만 표시
@@ -347,35 +342,21 @@ export default function ContentDetailClient({ id }: ContentDetailClientProps) {
 }
 
 // 미디어 아이템 컴포넌트
-interface MediaItemProps {
-  media: ContentMedia;
-  index: number;
-  total: number;
-}
-
-function MediaItem({ media, index, total }: MediaItemProps) {
+function MediaItem({ media }: { media: ContentMedia }) {
   const [isPlaying, setIsPlaying] = useState(false);
 
   // 유튜브 영상인 경우
   if (media.media_type === "video" && isYouTubeUrl(media.media_url)) {
     const videoId = getYouTubeVideoId(media.media_url);
     return (
-      <div className="relative">
-        <div className="relative w-full aspect-video bg-gray-900 rounded-lg overflow-hidden shadow-md">
-          <iframe
-            src={`https://www.youtube.com/embed/${videoId}?rel=0`}
-            title={media.alt_text || "YouTube 영상"}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            className="w-full h-full"
-          />
-        </div>
-        {/* 카드뉴스 인디케이터 (여러 미디어가 있을 때만) */}
-        {total > 1 && (
-          <div className="absolute top-3 right-3 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
-            {index + 1} / {total}
-          </div>
-        )}
+      <div className="w-full aspect-video bg-gray-900 rounded-lg overflow-hidden shadow-md">
+        <iframe
+          src={`https://www.youtube.com/embed/${videoId}?rel=0`}
+          title={media.alt_text || "YouTube 영상"}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          className="w-full h-full"
+        />
       </div>
     );
   }
@@ -383,39 +364,30 @@ function MediaItem({ media, index, total }: MediaItemProps) {
   // 일반 비디오인 경우
   if (media.media_type === "video") {
     return (
-      <div className="relative">
-        <div className="relative w-full aspect-video bg-gray-900 rounded-lg overflow-hidden shadow-md">
-          {isPlaying ? (
+      <div className="relative w-full aspect-video bg-gray-900 rounded-lg overflow-hidden shadow-md">
+        {isPlaying ? (
+          <video
+            src={media.media_url}
+            controls
+            autoPlay
+            className="w-full h-full object-contain"
+          />
+        ) : (
+          <>
             <video
               src={media.media_url}
-              controls
-              autoPlay
-              className="w-full h-full object-contain"
+              className="w-full h-full object-cover"
+              preload="metadata"
             />
-          ) : (
-            <>
-              {/* 비디오 썸네일 또는 플레이스홀더 */}
-              <video
-                src={media.media_url}
-                className="w-full h-full object-cover"
-                preload="metadata"
-              />
-              <button
-                onClick={() => setIsPlaying(true)}
-                className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 transition-colors"
-              >
-                <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center shadow-lg">
-                  <PlayIcon size={32} className="text-gray-800 ml-1" />
-                </div>
-              </button>
-            </>
-          )}
-        </div>
-        {/* 카드뉴스 인디케이터 */}
-        {total > 1 && (
-          <div className="absolute top-3 right-3 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
-            {index + 1} / {total}
-          </div>
+            <button
+              onClick={() => setIsPlaying(true)}
+              className="absolute inset-0 flex items-center justify-center bg-black/30 hover:bg-black/40 transition-colors"
+            >
+              <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center shadow-lg">
+                <PlayIcon size={32} className="text-gray-800 ml-1" />
+              </div>
+            </button>
+          </>
         )}
       </div>
     );
@@ -423,20 +395,12 @@ function MediaItem({ media, index, total }: MediaItemProps) {
 
   // 이미지인 경우
   return (
-    <div className="relative">
-      <div className="w-full rounded-lg overflow-hidden shadow-md">
-        <img
-          src={media.media_url}
-          alt={media.alt_text || "컨텐츠 이미지"}
-          className="w-full"
-        />
-      </div>
-      {/* 카드뉴스 인디케이터 */}
-      {total > 1 && (
-        <div className="absolute top-3 right-3 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
-          {index + 1} / {total}
-        </div>
-      )}
+    <div className="w-full rounded-lg overflow-hidden shadow-md">
+      <img
+        src={media.media_url}
+        alt={media.alt_text || "컨텐츠 이미지"}
+        className="w-full"
+      />
     </div>
   );
 }
