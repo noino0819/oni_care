@@ -135,15 +135,16 @@ export interface ContentCard {
 export interface ContentDetail {
     id: string;
     title: string;
+    thumbnail_url?: string;
     category: {
         id: number;
         name: string;
         type: CategoryType;
-    };
+    } | null;
     subcategory?: {
         id: number;
         name: string;
-    };
+    } | null;
     media: ContentMedia[];
     userRating?: number;
     isLiked: boolean;
