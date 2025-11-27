@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -113,6 +112,15 @@ export default function FindAccountPage() {
   const [activeTab, setActiveTab] = useState<TabType>("id");
   const [screen, setScreen] = useState<ScreenType>("form");
   const [loading, setLoading] = useState(false);
+
+  // 뒤로가기 핸들러 (히스토리 기반, fallback으로 랜딩페이지)
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      router.back();
+    } else {
+      router.push("/");
+    }
+  };
 
   // ==================== 아이디 찾기 상태 ====================
   const [idName, setIdName] = useState("");
@@ -584,11 +592,9 @@ export default function FindAccountPage() {
     <div className="min-h-screen bg-white flex flex-col">
       {/* 헤더 */}
       <header className="flex items-center justify-center px-4 py-4 sticky top-0 bg-white z-10 border-b border-gray-200 relative">
-        <Link href="/login" className="absolute left-4">
-          <Button variant="ghost" size="icon" className="-ml-2">
-            <ChevronLeft className="h-6 w-6 text-gray-600" />
-          </Button>
-        </Link>
+        <button onClick={handleBack} className="absolute left-4 p-2 -ml-2">
+          <ChevronLeft className="h-6 w-6 text-gray-600" />
+        </button>
         <h1 className="text-lg font-bold text-gray-900">
           아이디/비밀번호 찾기
         </h1>
