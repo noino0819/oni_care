@@ -48,7 +48,13 @@ function NavHomeIcon({
   );
 }
 
-function NavMealRecordIcon({ className }: { className?: string }) {
+function NavNutritionIcon({
+  className,
+  isActive,
+}: {
+  className?: string;
+  isActive?: boolean;
+}) {
   return (
     <svg
       width="24"
@@ -57,75 +63,22 @@ function NavMealRecordIcon({ className }: { className?: string }) {
       fill="none"
       className={className}
     >
-      {/* 밥그릇 */}
-      <ellipse
-        cx="12"
-        cy="16"
-        rx="8"
-        ry="4"
+      {/* 잎사귀 형태의 영양 아이콘 */}
+      <path
+        d="M12 2C6.5 2 2 6.5 2 12C2 14.5 3 16.8 4.6 18.4"
         stroke="currentColor"
         strokeWidth="2"
-      />
-      <path
-        d="M4 16C4 16 4 12 12 12C20 12 20 16 20 16"
-        stroke="currentColor"
-        strokeWidth="2"
-      />
-      {/* 돋보기 */}
-      <circle cx="16" cy="8" r="3" stroke="currentColor" strokeWidth="1.5" />
-      <path
-        d="M18.5 10.5L20 12"
-        stroke="currentColor"
-        strokeWidth="1.5"
         strokeLinecap="round"
       />
-    </svg>
-  );
-}
-
-function NavSupplementIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      className={className}
-    >
-      {/* 알약 1 */}
-      <ellipse
-        cx="8"
-        cy="12"
-        rx="4"
-        ry="6"
+      <path
+        d="M12 2C12 2 16 6 16 12C16 18 12 22 12 22"
         stroke="currentColor"
         strokeWidth="2"
+        strokeLinecap="round"
+        fill={isActive ? "#9F85E3" : "none"}
       />
-      <path d="M4 12H12" stroke="currentColor" strokeWidth="1.5" />
-      {/* 알약 2 */}
-      <ellipse
-        cx="17"
-        cy="14"
-        rx="3"
-        ry="4.5"
-        stroke="currentColor"
-        strokeWidth="1.5"
-      />
-    </svg>
-  );
-}
-
-function NavMenuIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      className={className}
-    >
       <path
-        d="M4 6H20"
+        d="M12 2C12 2 8 6 8 12C8 18 12 22 12 22"
         stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
@@ -136,17 +89,17 @@ function NavMenuIcon({ className }: { className?: string }) {
         strokeWidth="2"
         strokeLinecap="round"
       />
-      <path
-        d="M4 18H20"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
     </svg>
   );
 }
 
-function RecordPencilIcon({ className }: { className?: string }) {
+function NavChallengeIcon({
+  className,
+  isActive,
+}: {
+  className?: string;
+  isActive?: boolean;
+}) {
   return (
     <svg
       width="24"
@@ -156,11 +109,95 @@ function RecordPencilIcon({ className }: { className?: string }) {
       className={className}
     >
       <path
-        d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125"
+        d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"
         stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
+        fill={isActive ? "#9F85E3" : "none"}
+      />
+      <line
+        x1="4"
+        y1="22"
+        x2="4"
+        y2="15"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function NavContentIcon({
+  className,
+  isActive,
+}: {
+  className?: string;
+  isActive?: boolean;
+}) {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      className={className}
+    >
+      <path
+        d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill={isActive ? "#9F85E3" : "none"}
+      />
+      <path
+        d="M14 2V8H20"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M16 13H8"
+        stroke={isActive ? "white" : "currentColor"}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M16 17H8"
+        stroke={isActive ? "white" : "currentColor"}
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function RecordPlusIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      className={className}
+    >
+      <path
+        d="M12 5V19"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+      <path
+        d="M5 12H19"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
       />
     </svg>
   );
@@ -180,7 +217,8 @@ export function BottomNavigation() {
     "/find-account",
   ];
 
-  if (hiddenPaths.includes(pathname)) {
+  // 컨텐츠 상세 페이지에서도 네비게이션 숨김
+  if (hiddenPaths.includes(pathname) || pathname.startsWith("/content/")) {
     return null;
   }
 
@@ -198,9 +236,10 @@ export function BottomNavigation() {
   ];
 
   const isHomeActive = pathname === "/home";
-  const isMealActive = pathname === "/meal-record";
-  const isSupplementActive = pathname === "/supplement";
-  const isMenuActive = pathname === "/menu";
+  const isNutritionActive =
+    pathname === "/nutrition" || pathname === "/meal-record";
+  const isChallengeActive = pathname === "/challenge";
+  const isContentActive = pathname === "/content";
 
   return (
     <>
@@ -214,9 +253,9 @@ export function BottomNavigation() {
 
       {/* 메뉴 팝업 */}
       {isMenuOpen && (
-        <div className="fixed bottom-28 left-0 right-0 z-50 px-4 pb-4">
-          <div className="bg-white rounded-3xl p-6 shadow-2xl animate-slide-up">
-            <div className="grid grid-cols-3 gap-4">
+        <div className="fixed bottom-24 left-0 right-0 z-[55] px-4">
+          <div className="bg-white rounded-3xl p-6 pt-8 pb-8 shadow-2xl mx-auto max-w-md">
+            <div className="grid grid-cols-3 gap-x-4 gap-y-6">
               {menuItems.map((item) => {
                 const IconComponent = item.icon;
                 return (
@@ -224,24 +263,18 @@ export function BottomNavigation() {
                     key={item.href}
                     href={item.href}
                     onClick={() => setIsMenuOpen(false)}
-                    className="flex flex-col items-center gap-2 p-3 rounded-2xl hover:bg-gray-50 transition-colors"
+                    className="flex flex-col items-center gap-2 hover:opacity-80 transition-opacity"
                   >
-                    <IconComponent size={48} />
-                    <span className="text-xs font-medium text-gray-700">
+                    <div className="w-16 h-16 flex items-center justify-center">
+                      <IconComponent size={56} />
+                    </div>
+                    <span className="text-sm font-medium text-gray-800">
                       {item.label}
                     </span>
                   </Link>
                 );
               })}
             </div>
-
-            {/* 닫기 버튼 */}
-            <button
-              onClick={() => setIsMenuOpen(false)}
-              className="mt-4 mx-auto flex items-center justify-center w-12 h-12 bg-[#9F85E3] rounded-full shadow-lg hover:bg-[#8B74D1] transition-colors"
-            >
-              <CloseIcon size={20} className="text-white" />
-            </button>
           </div>
         </div>
       )}
@@ -271,24 +304,25 @@ export function BottomNavigation() {
             </span>
           </Link>
 
-          {/* 식사기록 */}
+          {/* 영양 */}
           <Link
-            href="/meal-record"
+            href="/nutrition"
             className="flex flex-col items-center justify-center flex-1 pt-2"
           >
-            <NavMealRecordIcon
+            <NavNutritionIcon
               className={cn(
                 "w-6 h-6 transition-colors",
-                isMealActive ? "text-[#9F85E3]" : "text-gray-400"
+                isNutritionActive ? "text-[#9F85E3]" : "text-gray-400"
               )}
+              isActive={isNutritionActive}
             />
             <span
               className={cn(
                 "text-[10px] font-medium mt-1 transition-colors",
-                isMealActive ? "text-[#9F85E3]" : "text-gray-500"
+                isNutritionActive ? "text-[#9F85E3]" : "text-gray-500"
               )}
             >
-              식사기록
+              영양
             </span>
           </Link>
 
@@ -307,54 +341,53 @@ export function BottomNavigation() {
                 {isMenuOpen ? (
                   <CloseIcon size={24} className="text-white" />
                 ) : (
-                  <RecordPencilIcon className="text-white w-6 h-6" />
+                  <RecordPlusIcon className="text-white w-6 h-6" />
                 )}
               </div>
-              <span className="text-[10px] font-medium mt-1 text-[#9F85E3]">
-                기록하기
-              </span>
             </button>
           </div>
 
-          {/* 영양제 */}
+          {/* 챌린지 */}
           <Link
-            href="/supplement"
+            href="/challenge"
             className="flex flex-col items-center justify-center flex-1 pt-2"
           >
-            <NavSupplementIcon
+            <NavChallengeIcon
               className={cn(
                 "w-6 h-6 transition-colors",
-                isSupplementActive ? "text-[#9F85E3]" : "text-gray-400"
+                isChallengeActive ? "text-[#9F85E3]" : "text-gray-400"
               )}
+              isActive={isChallengeActive}
             />
             <span
               className={cn(
                 "text-[10px] font-medium mt-1 transition-colors",
-                isSupplementActive ? "text-[#9F85E3]" : "text-gray-500"
+                isChallengeActive ? "text-[#9F85E3]" : "text-gray-500"
               )}
             >
-              영양제
+              챌린지
             </span>
           </Link>
 
-          {/* 메뉴 */}
+          {/* 컨텐츠 */}
           <Link
-            href="/menu"
+            href="/content"
             className="flex flex-col items-center justify-center flex-1 pt-2"
           >
-            <NavMenuIcon
+            <NavContentIcon
               className={cn(
                 "w-6 h-6 transition-colors",
-                isMenuActive ? "text-[#9F85E3]" : "text-gray-400"
+                isContentActive ? "text-[#9F85E3]" : "text-gray-400"
               )}
+              isActive={isContentActive}
             />
             <span
               className={cn(
                 "text-[10px] font-medium mt-1 transition-colors",
-                isMenuActive ? "text-[#9F85E3]" : "text-gray-500"
+                isContentActive ? "text-[#9F85E3]" : "text-gray-500"
               )}
             >
-              메뉴
+              컨텐츠
             </span>
           </Link>
         </div>
