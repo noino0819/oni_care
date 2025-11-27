@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { createClient } from "@/lib/supabase/client";
 
 export default function SignupPage() {
@@ -158,7 +159,7 @@ export default function SignupPage() {
               <Input 
                 placeholder="아이디 입력 (4자 이상)" 
                 value={userId}
-                onChange={(e) => setUserId(e.target.value)}
+                onChange={(e: any) => setUserId(e.target.value)}
                 className="h-14 rounded-xl text-base bg-gray-50 border-none"
               />
               {userId && !isUserIdValid && (
@@ -174,7 +175,7 @@ export default function SignupPage() {
               type="password"
               placeholder="8자 이상 입력" 
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e: any) => setPassword(e.target.value)}
               className="h-14 rounded-xl text-base bg-gray-50 border-none"
             />
             {password && !isPasswordValid && (
@@ -189,7 +190,7 @@ export default function SignupPage() {
               type="password"
               placeholder="비밀번호 재입력" 
               value={passwordConfirm}
-              onChange={(e) => setPasswordConfirm(e.target.value)}
+              onChange={(e: any) => setPasswordConfirm(e.target.value)}
               className="h-14 rounded-xl text-base bg-gray-50 border-none"
             />
             {passwordConfirm && !isPasswordMatch && (
@@ -203,7 +204,7 @@ export default function SignupPage() {
             <Input 
               placeholder="코드 입력 (선택사항)" 
               value={companyCode}
-              onChange={(e) => setCompanyCode(e.target.value)}
+              onChange={(e: any) => setCompanyCode(e.target.value)}
               className="h-14 rounded-xl text-base bg-gray-50 border-none"
             />
           </div>
