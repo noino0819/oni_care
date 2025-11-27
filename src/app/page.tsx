@@ -53,11 +53,11 @@ export default function LoginPage() {
     }
   };
 
-  const handleSNSLogin = async (provider: "kakao" | "naver") => {
+  const handleSNSLogin = async (provider: "kakao" | "google" | "oidc") => {
     try {
       const supabase = createClient();
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: provider,
+        provider: provider as any,
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
         },
@@ -150,7 +150,7 @@ export default function LoginPage() {
         <div className="flex space-x-4">
           <button
             type="button"
-            onClick={() => handleSNSLogin("naver")}
+            onClick={() => handleSNSLogin("oidc")}
             className="w-12 h-12 rounded-full bg-[#03C75A] flex items-center justify-center text-white text-xl font-bold hover:opacity-90 transition-opacity"
           >
             N
