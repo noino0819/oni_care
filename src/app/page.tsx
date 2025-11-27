@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/Button";
@@ -17,6 +17,26 @@ export default function LoginPage() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Naver Login Init
+  useEffect(() => {
+    const initNaverLogin = () => {
+      if (window.naver && window.naver.LoginWithNaverId) {
+        const naverLogin = new window.naver.LoginWithNaverId({
+          clientId: process.env.NEXT_PUBLIC_NAVER_CLIENT_ID || "YOUR_NAVER_CLIENT_ID", // Env var needed
+          callbackUrl: `${window.location.origin}/auth/naver/callback`,
+          isPopup: false,
+          loginButton: { color: "green", type: 3, height: 60 },
+        });
+        naverLogin.init();
+      }
+    };
+    
+    // Script might not be loaded yet, retry if needed or use onLoad in Script (but Script is in layout)
+    // Simple timeout retry for now
+    const timer = setTimeout(initNaverLogin, 500);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -53,7 +73,15 @@ export default function LoginPage() {
     }
   };
 
-  const handleSNSLogin = async (provider: "kakao" | "google" | "oidc") => {
+  const handleSNSLogin = async (provider: "kakao" | "google" | "naver") => {
+    if (provider === "naver") {
+      const naverLoginBtn = document.getElementById("naverIdLogin")?.firstChild as HTMLElement;
+      if (naverLoginBtn) {
+        naverLoginBtn.click();
+      }
+      return;
+    }
+
     try {
       const supabase = createClient();
       const { error } = await supabase.auth.signInWithOAuth({
@@ -72,6 +100,9 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 bg-white">
+      {/* Hidden Naver Login Button */}
+      <div id="naverIdLogin" className="hidden" />
+
       {/* Logo Area */}
       <div className="mb-12 text-center flex flex-col items-center">
         <Image
@@ -150,7 +181,7 @@ export default function LoginPage() {
         <div className="flex space-x-4">
           <button
             type="button"
-            onClick={() => handleSNSLogin("oidc")}
+            onClick={() => handleSNSLogin("naver")}
             className="w-12 h-12 rounded-full bg-[#03C75A] flex items-center justify-center text-white text-xl font-bold hover:opacity-90 transition-opacity"
           >
             N

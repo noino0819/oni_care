@@ -59,10 +59,11 @@ export default function SignupPage() {
           if (passwordError) console.error("Password update error:", passwordError);
         }
 
-        // Update users table
+        // Update users table (Upsert to handle case where public.users row doesn't exist yet)
         const { error: updateError } = await supabase
           .from("users")
-          .update({
+          .upsert({
+            id: currentUser.id,
             name: verifyData.name,
             gender: verifyData.gender,
             birth_date: verifyData.birthDate,
@@ -71,9 +72,10 @@ export default function SignupPage() {
             greeting_id: verifyData.useGreetingId ? verifyData.greetingId : null,
             is_greeting_connected: verifyData.useGreetingId,
             marketing_agreed: termsData?.marketing || false,
+            email: currentUser.email || "", // Ensure email is present for new row
             // login_id: userId // If you have a column for this
           })
-          .eq("id", currentUser.id);
+          .select(); // Select to ensure return value if needed, though we check error
 
         if (updateError) throw updateError;
 

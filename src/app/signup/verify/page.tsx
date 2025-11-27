@@ -143,10 +143,12 @@ export default function SignupVerifyPage() {
       const tData = sessionStorage.getItem("signup_terms");
       const terms = tData ? JSON.parse(tData) : {};
 
-      // 사용자 정보 업데이트
+      // 사용자 정보 업데이트 (Upsert to handle case where public.users row doesn't exist yet)
       const { error: updateError } = await supabase
         .from("users")
-        .update({
+        .upsert({
+          id: user.id,
+          email: user.email || "", // Ensure email is present
           name,
           gender,
           birth_date: birthDate,
@@ -155,7 +157,7 @@ export default function SignupVerifyPage() {
           is_greeting_connected: true,
           marketing_agreed: terms.marketing || false,
         })
-        .eq("id", user.id);
+        .select();
 
       if (updateError) throw updateError;
 
