@@ -216,9 +216,9 @@ export default function SignupPage() {
           className="w-full h-14 text-base font-bold rounded-xl"
           size="lg"
           onClick={handleSubmit}
-          disabled={!canSubmit}
+          disabled={!canSubmit || loading}
         >
-          가입하기
+          {loading ? "가입 처리 중..." : "가입하기"}
         </Button>
       </div>
     </div>
