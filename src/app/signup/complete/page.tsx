@@ -8,14 +8,19 @@ import { Button } from "@/components/ui/Button";
 export default function SignupCompletePage() {
   const router = useRouter();
   const [signupData, setSignupData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const data = sessionStorage.getItem("signup_data");
     if (!data) {
-      router.push("/signup/verify");
+      // 데이터가 없으면 리다이렉트
+      router.replace("/signup/verify");
       return;
     }
-    setSignupData(JSON.parse(data));
+    
+    const parsed = JSON.parse(data);
+    setSignupData(parsed);
+    setLoading(false);
     
     // 가입 완료 후 세션 스토리지 클리어
     sessionStorage.removeItem("signup_verify");
@@ -27,7 +32,13 @@ export default function SignupCompletePage() {
     router.push("/");
   };
 
-  if (!signupData) return null;
+  if (loading || !signupData) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-gray-500">로딩 중...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6">
