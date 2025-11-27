@@ -26,6 +26,12 @@ export default function SignupVerifyPage() {
   const [isComposing, setIsComposing] = useState(false);
   const [verifyError, setVerifyError] = useState("");
   const [timer, setTimer] = useState(0);
+  
+  // 그리팅몰 연동 상태
+  const [showGreetingModal, setShowGreetingModal] = useState(false);
+  const [showGreetingInfoModal, setShowGreetingInfoModal] = useState(false);
+  const [greetingAgree, setGreetingAgree] = useState(false);
+  const [greetingData, setGreetingData] = useState<{id: string, joinDate: string} | null>(null);
 
   // Validation
   const isNameValid = name.length >= 2;
@@ -90,15 +96,45 @@ export default function SignupVerifyPage() {
       setIsVerified(true);
       setVerifyError("");
       setTimer(0);
+      // 인증 완료 후 자동으로 그리팅몰 연동 팝업 표시
+      setTimeout(() => {
+        setShowGreetingModal(true);
+      }, 500);
     } else {
       setVerifyError("인증번호가 일치하지 않습니다. 인증번호를 확인해주세요.");
     }
   };
-
-  const handleNext = () => {
-    if (!canSubmit) return;
-
-    const verifyData = { name, birthDate, gender, phone };
+  
+  // Mock 그리팅몰 API 호출
+  const handleGreetingConnect = async () => {
+    // Mock API 응답
+    const mockResponse = {
+      success: true,
+      data: {
+        id: "kimsample",
+        joinDate: "2025.02.10"
+      }
+    };
+    
+    setGreetingData(mockResponse.data);
+    setShowGreetingModal(false);
+    setShowGreetingInfoModal(true);
+  };
+  
+  // 일반 가입하기
+  const handleNormalSignup = () => {
+    const verifyData = { name, birthDate, gender, phone, useGreetingId: false };
+    sessionStorage.setItem("signup_verify", JSON.stringify(verifyData));
+    router.push("/signup");
+  };
+  
+  // 그리팅몰 ID로 가입하기
+  const handleGreetingSignup = () => {
+    const verifyData = { 
+      name, birthDate, gender, phone, 
+      useGreetingId: true,
+      greetingId: greetingData?.id 
+    };
     sessionStorage.setItem("signup_verify", JSON.stringify(verifyData));
     router.push("/signup");
   };
@@ -245,19 +281,6 @@ export default function SignupVerifyPage() {
         </div>
       )}
 
-      {isVerified && (
-        <div className="fixed bottom-0 left-0 right-0 p-6 bg-white border-t border-gray-100">
-          <Button
-            className="w-full h-14 text-base font-bold rounded-xl"
-            size="lg"
-            onClick={handleNext}
-            disabled={!canSubmit}
-          >
-            다 음
-          </Button>
-        </div>
-      )}
-
       {/* Date Wheel Picker Modal */}
       {showDatePicker && (
         <DateWheelPicker 
@@ -290,6 +313,115 @@ export default function SignupVerifyPage() {
               >
                 남성
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 그리팅몰 연동 안내 Modal */}
+      {showGreetingModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-6">
+          <div className="bg-white w-full max-w-sm rounded-2xl p-6 animate-in fade-in zoom-in-95 duration-300">
+            <div className="flex flex-col items-center">
+              <div className="w-16 h-16 bg-gray-200 rounded-2xl flex items-center justify-center mb-4">
+                <span className="text-2xl">🎁</span>
+              </div>
+              <h3 className="text-xl font-bold mb-2">그리팅몰 연동안내</h3>
+              <p className="text-sm text-gray-600 text-center mb-6">
+                그리팅몰 계정을 연동하시면 식단정보, 식사기록 등을 연계하여 더 쉽고 편리한 웰스케어 서비스를 제공받으실 수 있습니다.
+              </p>
+              
+              <div className="w-full bg-gray-50 rounded-lg p-4 mb-4">
+                <h4 className="text-sm font-bold mb-2">조회정보</h4>
+                <p className="text-xs text-gray-600">이름, 성별, 생년월일, 휴대폰번호</p>
+              </div>
+              
+              <label className="flex items-center space-x-2 mb-6 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={greetingAgree}
+                  onChange={(e) => setGreetingAgree(e.target.checked)}
+                  className="w-4 h-4 rounded border-gray-300"
+                />
+                <span className="text-sm">위 내용에 동의 합니다.</span>
+              </label>
+              
+              <div className="flex space-x-3 w-full">
+                <button 
+                  className="flex-1 h-12 bg-gray-200 hover:bg-gray-300 rounded-xl font-medium transition-colors"
+                  onClick={() => {
+                    setShowGreetingModal(false);
+                    handleNormalSignup();
+                  }}
+                >
+                  취소
+                </button>
+                <button 
+                  className={cn(
+                    "flex-1 h-12 rounded-xl font-medium transition-colors",
+                    greetingAgree 
+                      ? "bg-primary hover:bg-primary/90 text-white" 
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  )}
+                  disabled={!greetingAgree}
+                  onClick={handleGreetingConnect}
+                >
+                  확인
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 그리팅몰 정보 Modal */}
+      {showGreetingInfoModal && greetingData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-6">
+          <div className="bg-white w-full max-w-sm rounded-2xl p-6 animate-in fade-in zoom-in-95 duration-300">
+            <div className="flex flex-col">
+              <div className="mb-6">
+                <div className="w-full h-48 bg-gray-100 rounded-xl flex items-center justify-center mb-4">
+                  <div className="text-center">
+                    <h2 className="text-2xl font-bold mb-2">{name}님,</h2>
+                    <p className="text-lg">이미 그리팅 고객이시군요!</p>
+                    <div className="mt-4 space-y-2">
+                      <div className="flex items-center justify-center space-x-2">
+                        <span className="text-green-600">✓</span>
+                        <span className="text-sm">나의 건강 정보를</span>
+                      </div>
+                      <div className="flex items-center justify-center space-x-2">
+                        <span className="text-yellow-600">💰</span>
+                        <span className="text-sm">나에게 맞는 상품을</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm text-gray-600">아이디:</p>
+                    <p className="text-lg font-bold">{greetingData.id}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">가입일: {greetingData.joinDate}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                <button 
+                  className="w-full h-12 bg-gray-200 hover:bg-gray-300 rounded-xl font-medium transition-colors"
+                  onClick={handleNormalSignup}
+                >
+                  일반 가입하기
+                </button>
+                <button 
+                  className="w-full h-12 bg-primary hover:bg-primary/90 text-white rounded-xl font-medium transition-colors"
+                  onClick={handleGreetingSignup}
+                >
+                  그리팅몰 ID로 가입하기
+                </button>
+              </div>
             </div>
           </div>
         </div>
