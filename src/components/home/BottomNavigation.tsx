@@ -26,7 +26,6 @@ export function BottomNavigation() {
   // 하단 메뉴를 숨길 경로 목록
   const hiddenPaths = [
     "/",
-    "/login",
     "/signup",
     "/signup/terms",
     "/signup/verify",

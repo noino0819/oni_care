@@ -31,9 +31,9 @@ export async function updateSession(request: NextRequest) {
     } = await supabase.auth.getUser()
 
     // 인증이 필요한 페이지 보호 (필요시 주석 해제)
-    // if (!user && !request.nextUrl.pathname.startsWith('/login')) {
+    // if (!user && request.nextUrl.pathname !== '/') {
     //   const url = request.nextUrl.clone()
-    //   url.pathname = '/login'
+    //   url.pathname = '/'
     //   return NextResponse.redirect(url)
     // }
 
