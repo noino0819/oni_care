@@ -4,11 +4,13 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
+import { createClient } from "@/lib/supabase/client";
 
 export default function SignupPage() {
   const router = useRouter();
   const [verifyData, setVerifyData] = useState<any>(null);
+  const [termsData, setTermsData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
   
   // Form State
   const [userId, setUserId] = useState("");
@@ -17,17 +19,21 @@ export default function SignupPage() {
   const [companyCode, setCompanyCode] = useState("");
 
   useEffect(() => {
-    const data = sessionStorage.getItem("signup_verify");
-    if (!data) {
+    const vData = sessionStorage.getItem("signup_verify");
+    const tData = sessionStorage.getItem("signup_terms");
+    
+    if (!vData) {
       router.push("/signup/verify");
       return;
     }
-    const parsed = JSON.parse(data);
-    setVerifyData(parsed);
+    
+    const parsedVerify = JSON.parse(vData);
+    setVerifyData(parsedVerify);
+    if (tData) setTermsData(JSON.parse(tData));
     
     // 그리팅몰 ID 사용 시 자동 입력
-    if (parsed.useGreetingId && parsed.greetingId) {
-      setUserId(parsed.greetingId);
+    if (parsedVerify.useGreetingId && parsedVerify.greetingId) {
+      setUserId(parsedVerify.greetingId);
     }
   }, [router]);
 
@@ -36,19 +42,64 @@ export default function SignupPage() {
   const isUserIdValid = userId.length >= 4;
   const canSubmit = isPasswordValid && isPasswordMatch && (verifyData?.useGreetingId || isUserIdValid);
 
-  const handleSubmit = () => {
-    if (!canSubmit) return;
+  const handleSubmit = async () => {
+    if (!canSubmit || loading) return;
+    setLoading(true);
 
-    const signupData = {
-      ...verifyData,
-      userId,
-      password,
-      companyCode: companyCode || null,
-    };
+    try {
+      const supabase = createClient();
+      
+      // 1. Supabase Auth SignUp
+      // userId가 이메일 형식이 아닐 수 있으므로 가짜 도메인 추가 (실제 운영 시엔 이메일 필수 여부 확인 필요)
+      const email = userId.includes("@") ? userId : `${userId}@example.com`;
+      
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name: verifyData.name,
+          },
+        },
+      });
 
-    // Mock 회원가입 API 호출 (실제로는 서버에 저장)
-    sessionStorage.setItem("signup_data", JSON.stringify(signupData));
-    router.push("/signup/complete");
+      if (authError) throw authError;
+
+      if (authData.user) {
+        // 2. users 테이블 업데이트
+        const { error: updateError } = await supabase
+          .from("users")
+          .update({
+            name: verifyData.name,
+            gender: verifyData.gender,
+            birth_date: verifyData.birthDate,
+            phone: verifyData.phone,
+            company_code: companyCode || null,
+            greeting_id: verifyData.useGreetingId ? verifyData.greetingId : null,
+            is_greeting_connected: verifyData.useGreetingId,
+            marketing_agreed: termsData?.marketing || false,
+          })
+          .eq("id", authData.user.id);
+
+        if (updateError) {
+          console.error("User update error:", updateError);
+          // 업데이트 실패해도 가입은 진행? 일단 진행
+        }
+
+        const signupData = {
+          ...verifyData,
+          userId,
+          companyCode
+        };
+        sessionStorage.setItem("signup_data", JSON.stringify(signupData));
+        router.push("/signup/complete");
+      }
+    } catch (error: any) {
+      console.error("Signup error:", error);
+      alert(error.message || "회원가입 중 오류가 발생했습니다.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!verifyData) return null;

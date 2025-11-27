@@ -391,7 +391,7 @@ export default function SignupVerifyPage() {
                     <p className="text-lg">이미 그리팅 고객이시군요!</p>
                     <div className="mt-4 space-y-2">
                       <div className="flex items-center justify-center space-x-2">
-                        <span className="text-green-600">✓</span>
+                        <span className="text-primary">✓</span>
                         <span className="text-sm">나의 건강 정보를</span>
                       </div>
                       <div className="flex items-center justify-center space-x-2">
@@ -421,7 +421,7 @@ export default function SignupVerifyPage() {
                   일반 가입하기
                 </button>
                 <button 
-                  className="w-full h-12 bg-primary hover:bg-primary/90 text-white rounded-xl font-medium transition-colors"
+                  className="w-full h-12 bg-[#00A651] hover:bg-[#008c44] text-white rounded-xl font-medium transition-colors"
                   onClick={handleGreetingSignup}
                 >
                   그리팅몰 ID로 가입하기
