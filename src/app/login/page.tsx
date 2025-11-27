@@ -27,21 +27,42 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <form className="space-y-6">
+          <form className="space-y-6" onSubmit={async (e) => {
+            e.preventDefault();
+            const emailInput = (document.getElementById("email") as HTMLInputElement).value;
+            const passwordInput = (document.getElementById("password") as HTMLInputElement).value;
+            
+            // ID 로그인 지원: 이메일 형식이 아니면 @gmail.com 추가
+            const email = emailInput.includes("@") ? emailInput : `${emailInput}@gmail.com`;
+            
+            try {
+              const { createClient } = await import("@/lib/supabase/client");
+              const supabase = createClient();
+              const { error } = await supabase.auth.signInWithPassword({
+                email,
+                password: passwordInput,
+              });
+              
+              if (error) throw error;
+              
+              window.location.href = "/home";
+            } catch (error: any) {
+              alert(error.message || "로그인에 실패했습니다.");
+            }
+          }}>
             <div className="space-y-4">
               <div className="space-y-2">
                 <label
                   htmlFor="email"
                   className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                 >
-                  이메일
+                  아이디 또는 이메일
                 </label>
                 <Input
                   id="email"
-                  placeholder="name@example.com"
-                  type="email"
+                  placeholder="아이디 또는 이메일"
+                  type="text"
                   autoCapitalize="none"
-                  autoComplete="email"
                   autoCorrect="off"
                   className="h-12"
                 />
@@ -65,11 +86,9 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <Link href="/home" className="w-full block">
-              <Button className="w-full h-12 text-base font-semibold rounded-xl" size="lg">
-                로그인
-              </Button>
-            </Link>
+            <Button className="w-full h-12 text-base font-semibold rounded-xl" size="lg" type="submit">
+              로그인
+            </Button>
           </form>
 
           {/* Divider */}

@@ -132,47 +132,99 @@ export default function SignupVerifyPage() {
   // 그리팅몰 ID로 가입하기
   const handleGreetingSignup = async () => {
     try {
+      console.log("Starting Greeting ID Signup...");
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Greeting ID로 자동 회원가입/로그인 처리 (테스트용)
+      const greetingId = greetingData?.id || 'guest';
+      const email = `${greetingId}@gmail.com`;
+      const password = "greeting_password_1234"; // Default password for mock users
+
+      console.log("Attempting auth with:", { email, greetingId });
+
+      // 1. Try to sign up
+      let { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      let user = authData.user;
+
+      // 2. If already registered, try to sign in
+      if (authError && authError.message.includes("already registered")) {
+         console.log("User already registered, signing in...");
+         const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password
+         });
+         if (signInError) throw signInError;
+         user = signInData.user;
+      } else if (authError) {
+         throw authError;
+      }
 
       if (!user) {
-        throw new Error("로그인 정보가 없습니다.");
+        throw new Error("회원가입 처리에 실패했습니다. (User creation failed)");
       }
+
+      console.log("Auth successful, user:", user.id);
 
       // 약관 동의 정보 가져오기
       const tData = sessionStorage.getItem("signup_terms");
       const terms = tData ? JSON.parse(tData) : {};
 
+      const userDataToSave = {
+        id: user.id,
+        email: user.email || email,
+        name,
+        gender,
+        birth_date: birthDate,
+        phone,
+        greeting_id: greetingId,
+        is_greeting_connected: true,
+        marketing_agreed: terms.marketing || false,
+      };
+
+      console.log("Saving user data to public.users:", userDataToSave);
+
       // 사용자 정보 업데이트 (Upsert to handle case where public.users row doesn't exist yet)
-      const { error: updateError } = await supabase
+      const { data: upsertData, error: updateError } = await supabase
         .from("users")
-        .upsert({
-          id: user.id,
-          email: user.email || "", // Ensure email is present
-          name,
-          gender,
-          birth_date: birthDate,
-          phone,
-          greeting_id: greetingData?.id,
-          is_greeting_connected: true,
-          marketing_agreed: terms.marketing || false,
-        })
+        .upsert(userDataToSave)
         .select();
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error("DB Upsert Error:", updateError);
+        throw new Error(`데이터 저장 실패: ${updateError.message}`);
+      }
+
+      console.log("User data saved successfully:", upsertData);
 
       // 완료 페이지를 위한 데이터 저장
       const signupData = {
         name,
-        userId: greetingData?.id,
+        userId: greetingId,
         joinDate: greetingData?.joinDate
       };
       sessionStorage.setItem("signup_data", JSON.stringify(signupData));
       
-      router.push("/signup/complete");
+      // router.push 대신 window.location.href 사용으로 확실한 이동 보장
+      // window.location.href = "/signup/complete";
+      
+      // Next.js Router 사용 (부드러운 전환)
+      setTimeout(() => {
+        router.replace("/signup/complete");
+      }, 100);
     } catch (error: any) {
       console.error("Signup error:", error);
-      alert(error.message || "가입 처리 중 오류가 발생했습니다.");
+      
+      let errorMessage = error.message || "가입 처리 중 오류가 발생했습니다.";
+      
+      if (errorMessage.includes("invalid") || errorMessage.includes("Email address")) {
+        errorMessage += "\n\n[확인 필요] Supabase 설정 > Authentication > Providers > Email이 'Enabled' 상태인지 확인해주세요.";
+      }
+      
+      alert(errorMessage);
     }
   };
 

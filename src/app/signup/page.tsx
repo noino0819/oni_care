@@ -90,8 +90,24 @@ export default function SignupPage() {
       }
 
       // 2. New User (Email Signup)
-      // userId가 이메일 형식이 아닐 수 있으므로 가짜 도메인 추가 (실제 운영 시엔 이메일 필수 여부 확인 필요)
-      const email = userId.includes("@") ? userId : `${userId}@example.com`;
+      // userId가 이메일 형식이 아닐 수 있으므로 가짜 도메인 추가
+      let sanitizedId = userId.trim();
+      const isEmail = sanitizedId.includes("@");
+      
+      if (!isEmail) {
+        // 영문, 숫자, 언더바, 하이픈, 점만 허용
+        sanitizedId = sanitizedId.replace(/[^a-zA-Z0-9._-]/g, "");
+      }
+      
+      // 빈 문자열이면 에러 처리
+      if (!sanitizedId) {
+        alert("아이디를 올바르게 입력해주세요.");
+        setLoading(false);
+        return;
+      }
+
+      const email = isEmail ? sanitizedId : `${sanitizedId}@gmail.com`;
+      console.log("Signup attempt with:", email);
       
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
