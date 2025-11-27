@@ -6,17 +6,26 @@ import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { User, Lock } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // URL에서 이메일 파라미터 받아오기 (아이디 찾기에서 넘어온 경우)
+  useEffect(() => {
+    const emailParam = searchParams.get("email");
+    if (emailParam) {
+      setFormData(prev => ({ ...prev, email: emailParam }));
+    }
+  }, [searchParams]);
 
   // Naver Login Init
   useEffect(() => {

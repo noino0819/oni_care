@@ -935,7 +935,13 @@ export default function FindAccountPage() {
                   <>
                     <Button
                       variant="outline"
-                      onClick={() => router.push("/login")}
+                      onClick={() =>
+                        router.push(
+                          `/?email=${encodeURIComponent(
+                            findIdResult.fullEmail || ""
+                          )}`
+                        )
+                      }
                       className="flex-1 h-12 rounded-lg border-gray-300 text-gray-900"
                     >
                       로그인
@@ -965,7 +971,7 @@ export default function FindAccountPage() {
                     </Button>
                     <Button
                       variant="outline"
-                      onClick={() => router.push("/login")}
+                      onClick={() => router.push("/")}
                       className="flex-1 h-12 rounded-lg border-gray-300 text-gray-900"
                     >
                       로그인
@@ -1170,7 +1176,9 @@ export default function FindAccountPage() {
             {/* 하단 버튼 */}
             <div className="mt-auto pb-4">
               <Button
-                onClick={() => router.push("/login")}
+                onClick={() =>
+                  router.push(`/?email=${encodeURIComponent(pwUserId)}`)
+                }
                 className="w-full h-14 text-lg font-bold rounded-full bg-[#B8D070] hover:bg-[#a5bd5f] text-white"
               >
                 로그인
