@@ -358,8 +358,8 @@ export default function ChallengeDetailPage() {
         </div>
       </main>
 
-      {/* 하단 버튼 */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 pb-safe">
+      {/* 하단 버튼 - 네비게이션 바 위에 위치 */}
+      <div className="fixed bottom-20 left-0 right-0 bg-white border-t border-gray-100 p-4 z-30">
         {isParticipating ? (
           <button
             onClick={() => setShowCancelPopup(true)}
