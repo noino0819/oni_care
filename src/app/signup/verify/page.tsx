@@ -162,7 +162,12 @@ export default function SignupVerifyPage() {
       </div>
 
       <div className="flex-1 px-6 pb-24">
-        <h1 className="text-2xl font-bold mb-8">휴대폰번호를 입력해 주세요.</h1>
+        <h1 className="text-2xl font-bold mb-8">
+          {!isNameValid && "이름을 입력해 주세요. (필수)"}
+          {isNameValid && !isBirthDateValid && "생년월일을 입력해 주세요. (필수)"}
+          {isBirthDateValid && !isGenderValid && "성별을 선택해 주세요. (필수)"}
+          {isGenderValid && "휴대폰번호를 입력해 주세요."}
+        </h1>
         
         <div className="space-y-6">
           {/* 4. 휴대폰 번호 */}

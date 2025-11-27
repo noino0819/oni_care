@@ -105,7 +105,7 @@ export default function DateWheelPicker({ value, onChange, onClose }: DateWheelP
 
         <button
           onClick={handleConfirm}
-          className="w-full h-14 bg-gray-300 hover:bg-gray-400 text-white text-lg font-bold rounded-xl transition-colors"
+          className="w-full h-14 bg-primary hover:bg-primary/90 text-white text-lg font-bold rounded-xl transition-colors"
         >
           다 음
         </button>

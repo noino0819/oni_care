@@ -21,7 +21,17 @@ export default function SignupTermsPage() {
   const [terms, setTerms] = useState<Term[]>([]);
   const [agreements, setAgreements] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
-  const [selectedTerm, setSelectedTerm] = useState<Term | null>(null); // For modal
+  const [selectedTerm, setSelectedTerm] = useState<Term | null>(null);
+  const [showToast, setShowToast] = useState(false);
+
+  // 페이지 진입 시 토스트 표시
+  useEffect(() => {
+    setShowToast(true);
+    const timer = setTimeout(() => {
+      setShowToast(false);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const fetchTerms = async () => {
@@ -155,13 +165,6 @@ export default function SignupTermsPage() {
           </div>
         </div>
 
-        {/* 마케팅 동의 배너 */}
-        <div className="mt-8 bg-gray-50 p-4 rounded-xl text-center">
-          <p className="text-sm text-gray-600">
-            마케팅 수신 동의 시 <span className="font-bold text-primary">500포인트</span>를 지급해 드려요!
-          </p>
-        </div>
-
         <div className="mt-auto pt-6">
           <Button
             className="w-full h-14 text-base font-bold rounded-xl"
@@ -173,6 +176,17 @@ export default function SignupTermsPage() {
           </Button>
         </div>
       </div>
+
+      {/* 토스트 메시지 */}
+      {showToast && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className="bg-gray-800 text-white px-6 py-3 rounded-full shadow-lg">
+            <p className="text-sm whitespace-nowrap">
+              마케팅 수신 동의 시 <span className="font-bold text-primary">500포인트</span>를 지급해 드려요!
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* 약관 상세 모달 */}
       {selectedTerm && (
