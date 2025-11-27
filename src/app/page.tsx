@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import { User, Lock } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -51,7 +53,7 @@ export default function LoginPage() {
     }
   };
 
-  const handleSNSLogin = async (provider: "kakao" | "google") => {
+  const handleSNSLogin = async (provider: "kakao" | "naver") => {
     try {
       const supabase = createClient();
       const { error } = await supabase.auth.signInWithOAuth({
@@ -71,8 +73,15 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 bg-white">
       {/* Logo Area */}
-      <div className="mb-12 text-center">
-        <h1 className="text-3xl font-bold text-primary tracking-tight">Greating Care</h1>
+      <div className="mb-12 text-center flex flex-col items-center">
+        <Image
+          src="/logo.png"
+          alt="GREATING Care"
+          width={240}
+          height={80}
+          priority
+          className="h-auto w-auto object-contain"
+        />
       </div>
 
       {/* Login Form */}
@@ -84,35 +93,42 @@ export default function LoginPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">이메일</label>
+          <div className="space-y-3">
             <Input
               type="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
-              placeholder="이메일을 입력해주세요"
-              className="h-12 rounded-xl bg-gray-50 border-none focus:ring-1 focus:ring-primary"
+              placeholder="아이디 입력"
+              className="h-12 rounded-full bg-white border-gray-200 focus:border-[#9F85E3] focus:ring-[#9F85E3]"
+              startIcon={<User className="w-5 h-5 text-gray-300" />}
               required
             />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700">비밀번호</label>
             <Input
               type="password"
               name="password"
               value={formData.password}
               onChange={handleChange}
-              placeholder="비밀번호를 입력해주세요"
-              className="h-12 rounded-xl bg-gray-50 border-none focus:ring-1 focus:ring-primary"
+              placeholder="비밀번호 입력"
+              className="h-12 rounded-full bg-white border-gray-200 focus:border-[#9F85E3] focus:ring-[#9F85E3]"
+              startIcon={<Lock className="w-5 h-5 text-gray-300" />}
               required
             />
+          </div>
+
+          <div className="flex items-center space-x-2 px-1">
+            <input 
+              type="checkbox" 
+              id="auto-login" 
+              className="w-4 h-4 rounded border-gray-300 text-[#9F85E3] focus:ring-[#9F85E3]"
+            />
+            <label htmlFor="auto-login" className="text-sm text-gray-500">자동로그인 설정</label>
           </div>
 
           <Button
             type="submit"
             disabled={loading}
-            className="w-full h-12 text-lg font-bold rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50"
+            className="w-full h-12 text-lg font-medium rounded-full bg-[#9F85E3] hover:bg-[#8A72D1] disabled:opacity-50 text-white mt-4"
           >
             {loading ? "로그인 중..." : "로그인"}
           </Button>
@@ -120,44 +136,35 @@ export default function LoginPage() {
       </div>
 
       {/* Find ID/PW & Signup Links */}
-      <div className="flex items-center justify-center space-x-4 mt-4 text-sm text-gray-500">
+      <div className="flex items-center justify-center space-x-4 mt-6 text-sm text-gray-500">
+        <Link href="/find-account" className="hover:text-gray-900">아이디 찾기</Link>
+        <span className="h-3 w-px bg-gray-300" />
         <Link href="/find-account" className="hover:text-gray-900">비밀번호 찾기</Link>
         <span className="h-3 w-px bg-gray-300" />
-        <Link href="/signup/terms" className="hover:text-gray-900">회원가입</Link>
-      </div>
-
-      {/* Divider */}
-      <div className="relative w-full my-8">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-gray-200" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-white px-2 text-gray-400">또는</span>
-        </div>
+        <Link href="/signup/terms" className="hover:text-gray-900 font-medium">회원가입</Link>
       </div>
 
       {/* SNS Login Buttons */}
-      <div className="w-full space-y-3">
-        <Button
-          type="button"
-          onClick={() => handleSNSLogin("kakao")}
-          variant="outline"
-          className="w-full h-12 rounded-xl border-[#FEE500] bg-[#FEE500] text-[#3C1E1E] hover:bg-[#FEE500]/90 font-medium relative"
-        >
-          {/* Kakao Icon Placeholder */}
-          <span className="absolute left-4">💬</span>
-          카카오로 시작하기
-        </Button>
-        <Button
-          type="button"
-          onClick={() => handleSNSLogin("google")}
-          variant="outline"
-          className="w-full h-12 rounded-xl border-[#03C75A] bg-[#03C75A] text-white hover:bg-[#03C75A]/90 font-medium relative"
-        >
-          {/* Naver Icon Placeholder */}
-          <span className="absolute left-4">N</span>
-          네이버로 시작하기
-        </Button>
+      <div className="mt-12 w-full flex flex-col items-center">
+        <p className="text-sm text-gray-500 mb-4">SNS계정으로 간편하게 로그인하세요.</p>
+        <div className="flex space-x-4">
+          <button
+            type="button"
+            onClick={() => handleSNSLogin("naver")}
+            className="w-12 h-12 rounded-full bg-[#03C75A] flex items-center justify-center text-white text-xl font-bold hover:opacity-90 transition-opacity"
+          >
+            N
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSNSLogin("kakao")}
+            className="w-12 h-12 rounded-full bg-[#FEE500] flex items-center justify-center text-[#3C1E1E] hover:opacity-90 transition-opacity"
+          >
+            <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current">
+              <path d="M12 3c-4.97 0-9 3.185-9 7.115 0 2.557 1.707 4.8 4.27 6.054-.188.702-.682 2.545-.78 2.94-.122.49.178.483.376.351.279-.186 4.418-2.997 5.166-3.515.63.09 1.28.138 1.948.138 4.97 0 9-3.185 9-7.115C23 6.185 18.97 3 12 3z"/>
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -1,7 +1,6 @@
 import { HomeHeader } from "@/components/home/HomeHeader";
 import { DailySummary } from "@/components/home/DailySummary";
 import { MealSection } from "@/components/home/MealSection";
-import { Navigation } from "@/components/ui/Navigation";
 
 export default function HomePage() {
   return (

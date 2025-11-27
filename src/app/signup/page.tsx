@@ -49,8 +49,45 @@ export default function SignupPage() {
 
     try {
       const supabase = createClient();
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
       
-      // 1. Supabase Auth SignUp
+      // 1. Social Login User (Update existing account)
+      if (currentUser) {
+        // Update password if provided
+        if (password) {
+          const { error: passwordError } = await supabase.auth.updateUser({ password });
+          if (passwordError) console.error("Password update error:", passwordError);
+        }
+
+        // Update users table
+        const { error: updateError } = await supabase
+          .from("users")
+          .update({
+            name: verifyData.name,
+            gender: verifyData.gender,
+            birth_date: verifyData.birthDate,
+            phone: verifyData.phone,
+            company_code: companyCode || null,
+            greeting_id: verifyData.useGreetingId ? verifyData.greetingId : null,
+            is_greeting_connected: verifyData.useGreetingId,
+            marketing_agreed: termsData?.marketing || false,
+            // login_id: userId // If you have a column for this
+          })
+          .eq("id", currentUser.id);
+
+        if (updateError) throw updateError;
+
+        const signupData = {
+          ...verifyData,
+          userId,
+          companyCode
+        };
+        sessionStorage.setItem("signup_data", JSON.stringify(signupData));
+        router.push("/signup/complete");
+        return;
+      }
+
+      // 2. New User (Email Signup)
       // userId가 이메일 형식이 아닐 수 있으므로 가짜 도메인 추가 (실제 운영 시엔 이메일 필수 여부 확인 필요)
       const email = userId.includes("@") ? userId : `${userId}@example.com`;
       

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import DateWheelPicker from "@/components/ui/DateWheelPicker";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 
 export default function SignupVerifyPage() {
   const router = useRouter();
@@ -129,14 +130,48 @@ export default function SignupVerifyPage() {
   };
   
   // 그리팅몰 ID로 가입하기
-  const handleGreetingSignup = () => {
-    const verifyData = { 
-      name, birthDate, gender, phone, 
-      useGreetingId: true,
-      greetingId: greetingData?.id 
-    };
-    sessionStorage.setItem("signup_verify", JSON.stringify(verifyData));
-    router.push("/signup");
+  const handleGreetingSignup = async () => {
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        throw new Error("로그인 정보가 없습니다.");
+      }
+
+      // 약관 동의 정보 가져오기
+      const tData = sessionStorage.getItem("signup_terms");
+      const terms = tData ? JSON.parse(tData) : {};
+
+      // 사용자 정보 업데이트
+      const { error: updateError } = await supabase
+        .from("users")
+        .update({
+          name,
+          gender,
+          birth_date: birthDate,
+          phone,
+          greeting_id: greetingData?.id,
+          is_greeting_connected: true,
+          marketing_agreed: terms.marketing || false,
+        })
+        .eq("id", user.id);
+
+      if (updateError) throw updateError;
+
+      // 완료 페이지를 위한 데이터 저장
+      const signupData = {
+        name,
+        userId: greetingData?.id,
+        joinDate: greetingData?.joinDate
+      };
+      sessionStorage.setItem("signup_data", JSON.stringify(signupData));
+      
+      router.push("/signup/complete");
+    } catch (error: any) {
+      console.error("Signup error:", error);
+      alert(error.message || "가입 처리 중 오류가 발생했습니다.");
+    }
   };
 
   return (
