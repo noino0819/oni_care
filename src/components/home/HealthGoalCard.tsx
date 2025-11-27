@@ -1,6 +1,6 @@
 "use client";
 
-import { MainCharacter, SaladBowlIcon } from "@/components/icons";
+import { MainCharacter } from "@/components/icons";
 import Link from "next/link";
 
 interface HealthGoalCardProps {
@@ -80,34 +80,123 @@ function NoDiagnosisCard() {
   return (
     <Link href="/diagnosis" className="block mx-4">
       <div
-        className="rounded-3xl p-6 relative overflow-hidden"
+        className="rounded-3xl p-5 relative overflow-hidden"
         style={{
-          background: "linear-gradient(135deg, #f8f9fa 0%, #e8f5e9 100%)",
+          background:
+            "linear-gradient(135deg, #7C4DFF 0%, #E040FB 50%, #FF80AB 100%)",
         }}
       >
-        <div className="flex items-center gap-4">
-          <SaladBowlIcon size={80} />
+        {/* 장식 요소 */}
+        <div className="absolute top-0 left-0 w-16 h-16 opacity-20">
+          <svg viewBox="0 0 100 100" fill="none">
+            <circle cx="20" cy="20" r="3" fill="white" />
+            <circle cx="40" cy="10" r="2" fill="white" />
+            <circle cx="10" cy="40" r="2" fill="white" />
+            <circle cx="60" cy="30" r="2" fill="white" />
+            <circle cx="30" cy="60" r="2" fill="white" />
+          </svg>
+        </div>
+        <div className="absolute bottom-0 right-20 w-16 h-16 opacity-20">
+          <svg viewBox="0 0 100 100" fill="none">
+            <circle cx="80" cy="80" r="3" fill="white" />
+            <circle cx="60" cy="90" r="2" fill="white" />
+            <circle cx="90" cy="60" r="2" fill="white" />
+            <circle cx="40" cy="70" r="2" fill="white" />
+            <circle cx="70" cy="40" r="2" fill="white" />
+          </svg>
+        </div>
+
+        <div className="flex items-center gap-4 relative z-10">
           <div className="flex-1">
-            <p className="text-base font-semibold text-gray-800 leading-relaxed">
+            <p className="text-base font-semibold text-white leading-relaxed">
               식습관 파악하는 영양진단하고
               <br />
-              <span className="text-[#7CB342]">나만의 식습관 가이드</span>{" "}
+              <span className="text-yellow-300 font-bold">
+                나만의 식습관 가이드
+              </span>{" "}
               확인하기!
             </p>
           </div>
-          <div className="text-gray-400">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M9 6L15 12L9 18"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+
+          {/* 영양박사 캐릭터 (엄지척 포즈) */}
+          <div className="flex-shrink-0 w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-lg">
+            <DoctorThumbsUpCharacter size={70} />
           </div>
         </div>
       </div>
     </Link>
+  );
+}
+
+// 엄지척 영양박사 캐릭터
+function DoctorThumbsUpCharacter({ size = 70 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 70 70" fill="none">
+      {/* 몸체 */}
+      <ellipse cx="35" cy="48" rx="18" ry="16" fill="#9F85E3" />
+      <ellipse cx="35" cy="50" rx="16" ry="13" fill="#B39DDB" />
+
+      {/* 얼굴 */}
+      <ellipse cx="35" cy="32" rx="15" ry="17" fill="#9F85E3" />
+
+      {/* 눈 */}
+      <ellipse cx="30" cy="30" rx="4" ry="5" fill="#FFFFFF" />
+      <ellipse cx="40" cy="30" rx="4" ry="5" fill="#FFFFFF" />
+      <circle cx="31" cy="31" r="2" fill="#333333" />
+      <circle cx="41" cy="31" r="2" fill="#333333" />
+
+      {/* 볼 */}
+      <ellipse cx="24" cy="36" rx="3" ry="2" fill="#FFB6C1" opacity="0.6" />
+      <ellipse cx="46" cy="36" rx="3" ry="2" fill="#FFB6C1" opacity="0.6" />
+
+      {/* 입 (미소) */}
+      <path
+        d="M31 40 Q35 44 39 40"
+        stroke="#333333"
+        strokeWidth="1.5"
+        fill="none"
+        strokeLinecap="round"
+      />
+
+      {/* 박사 모자 */}
+      <rect x="22" y="12" width="26" height="5" fill="#1a1a2e" />
+      <path d="M25 12 L35 4 L45 12" fill="#1a1a2e" />
+      <circle cx="35" cy="6" r="3" fill="#FFD700" />
+
+      {/* 왼쪽 팔 (서류 들고 있음) */}
+      <ellipse
+        cx="18"
+        cy="45"
+        rx="6"
+        ry="10"
+        fill="#9F85E3"
+        transform="rotate(-15 18 45)"
+      />
+      <rect x="8" y="38" width="12" height="16" rx="1" fill="#FFFFFF" />
+      <rect x="10" y="41" width="8" height="1" fill="#E0E0E0" />
+      <rect x="10" y="44" width="6" height="1" fill="#E0E0E0" />
+      <rect x="10" y="47" width="7" height="1" fill="#E0E0E0" />
+
+      {/* 오른쪽 팔 (엄지척) */}
+      <ellipse
+        cx="54"
+        cy="42"
+        rx="6"
+        ry="10"
+        fill="#9F85E3"
+        transform="rotate(20 54 42)"
+      />
+      {/* 엄지 */}
+      <ellipse
+        cx="58"
+        cy="32"
+        rx="3"
+        ry="6"
+        fill="#B39DDB"
+        transform="rotate(-30 58 32)"
+      />
+      {/* 주먹 */}
+      <ellipse cx="56" cy="40" rx="5" ry="4" fill="#B39DDB" />
+    </svg>
   );
 }

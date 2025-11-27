@@ -26,7 +26,7 @@ export function Header({ points = 50 }: HeaderProps) {
           <div className="flex items-center gap-1 bg-amber-50 px-3 py-1.5 rounded-full">
             <PointIcon size={16} />
             <span className="text-sm font-semibold text-amber-700">
-              {points.toLocaleString()}Point
+              P {points.toLocaleString()}Point
             </span>
           </div>
 

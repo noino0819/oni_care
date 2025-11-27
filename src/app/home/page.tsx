@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Header } from "@/components/home/Header";
 import { HealthGoalCard } from "@/components/home/HealthGoalCard";
 import { NutritionGuide } from "@/components/home/NutritionGuide";
@@ -7,56 +8,265 @@ import { FoodQuote } from "@/components/home/FoodQuote";
 import { TodayMeal } from "@/components/home/TodayMeal";
 import { StepsAndChallenge } from "@/components/home/StepsAndChallenge";
 import { ContentBanners } from "@/components/home/ContentBanners";
-import { BottomNavigation } from "@/components/home/BottomNavigation";
 import { FloatingDoctorButton } from "@/components/home/FloatingDoctorButton";
 
-export default function HomePage() {
-  // TODO: Supabase에서 사용자 데이터 가져오기
-  const userData = {
-    name: "김건강",
-    points: 50,
-    hasNutritionDiagnosis: true,
+interface HomeData {
+  user: {
+    name: string;
+    email: string;
+    points: number;
   };
+  healthGoal: {
+    goalType: string;
+    diseases: string[];
+    tags: string[];
+    description: string;
+  } | null;
+  hasNutritionDiagnosis: boolean;
+  nutritionDiagnosis: {
+    diagnosisType: string;
+    warningNutrients: string[];
+    recommendations: string[];
+  } | null;
+  nutritionStatus: Array<{
+    nutrientType: string;
+    status: "adequate" | "excessive" | "deficient";
+    currentValue: number;
+    recommendedMin: number;
+    recommendedMax: number;
+    score: number;
+  }>;
+  quotes: Array<{
+    quote: string;
+    author: string | null;
+  }>;
+  todayMeal: {
+    totalCalories: number;
+    totalCarbs: number;
+    totalProtein: number;
+    totalFat: number;
+  };
+  steps: {
+    currentSteps: number;
+    goalSteps: number;
+  };
+  challenge: {
+    id: string;
+    title: string;
+    currentProgress: number;
+    targetCount: number;
+    isCompleted: boolean;
+  } | null;
+}
+
+// 영양소 타입 매핑
+const nutrientNameMap: Record<string, string> = {
+  fat: "지방",
+  saturated_fat: "포화지방",
+  sugar: "당류",
+  carbs: "탄수화물",
+  cholesterol: "콜레스테롤",
+  sodium: "나트륨",
+  protein: "단백질",
+  fiber: "식이섬유",
+};
+
+// 건강 목표 타입 매핑
+const goalTypeMap: Record<string, string> = {
+  weight_management: "체중관리 필요형",
+  blood_sugar: "혈당관리 필요형",
+  muscle: "근력운동 필요형",
+  general: "일반 관리형",
+};
+
+// 질병 매핑
+const diseaseMap: Record<string, string> = {
+  diabetes: "당뇨병",
+  obesity: "비만",
+  hypertension: "고혈압",
+  fatty_liver: "지방간",
+  hyperlipidemia: "고지혈증",
+  hyperthyroidism: "갑상선항진증",
+};
+
+export default function HomePage() {
+  const [homeData, setHomeData] = useState<HomeData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchHomeData() {
+      try {
+        const response = await fetch("/api/home");
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            // 로그인 페이지로 리다이렉트
+            window.location.href = "/";
+            return;
+          }
+          throw new Error("데이터를 불러오는데 실패했습니다.");
+        }
+
+        const data = await response.json();
+        setHomeData(data);
+      } catch (err) {
+        console.error("Home data fetch error:", err);
+        setError(err instanceof Error ? err.message : "오류가 발생했습니다.");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchHomeData();
+  }, []);
+
+  // 로딩 상태
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-[#9F85E3] border-t-transparent rounded-full animate-spin" />
+          <p className="text-gray-500">로딩 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 에러 상태 (데이터가 없어도 기본값으로 표시)
+  if (error && !homeData) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-500 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-[#9F85E3] text-white rounded-lg"
+          >
+            다시 시도
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // 데이터 가공
+  const userData = homeData || {
+    user: { name: "사용자", email: "", points: 0 },
+    healthGoal: null,
+    hasNutritionDiagnosis: false,
+    nutritionDiagnosis: null,
+    nutritionStatus: [],
+    quotes: [],
+    todayMeal: {
+      totalCalories: 0,
+      totalCarbs: 0,
+      totalProtein: 0,
+      totalFat: 0,
+    },
+    steps: { currentSteps: 0, goalSteps: 10000 },
+    challenge: null,
+  };
+
+  // 건강 목표 설명 생성
+  const goalDescription = userData.healthGoal
+    ? `${goalTypeMap[userData.healthGoal.goalType] || "건강관리"} / ${
+        userData.healthGoal.tags.length > 0
+          ? userData.healthGoal.tags.join(", ") + " 위주로 관리해요"
+          : "건강한 생활을 위해 관리해요"
+      }`
+    : "체중관리 필요형 / 혈당관리, 근력운동 위주로 관리해요";
+
+  // 태그 생성
+  const tags = userData.healthGoal?.tags?.length
+    ? userData.healthGoal.tags
+    : userData.healthGoal?.diseases?.map((d) => diseaseMap[d] || d) || [
+        "건강관리",
+      ];
+
+  // 질병 조건 확인
+  const condition = userData.healthGoal?.diseases?.[0]
+    ? diseaseMap[userData.healthGoal.diseases[0]] ||
+      userData.healthGoal.diseases[0]
+    : userData.nutritionDiagnosis?.diagnosisType || "고중성지방혈증";
+
+  // 영양소 상태를 NutritionGuide 형식으로 변환
+  const nutrients = userData.nutritionStatus.map((n) => ({
+    id: n.nutrientType,
+    name: n.nutrientType,
+    nameKo: nutrientNameMap[n.nutrientType] || n.nutrientType,
+    status: n.status,
+    icon: null as any, // 아이콘은 NutritionGuide 내부에서 처리
+  }));
+
+  // 챌린지 진행률 계산
+  const challengeProgress = userData.challenge
+    ? Math.round(
+        (userData.challenge.currentProgress / userData.challenge.targetCount) *
+          100
+      )
+    : 0;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
       {/* 섹션 1: 헤더 */}
-      <Header points={userData.points} userName={userData.name} />
+      <Header points={userData.user.points} userName={userData.user.name} />
 
       <main className="space-y-5 pt-2">
         {/* 섹션 2: 건강목표 카드 */}
         <HealthGoalCard
-          userName={userData.name}
-          goalDescription="체중관리 필요형 / 혈당관리, 근력운동 위주로 관리해요"
-          tags={["비만", "당뇨병", "근력운동"]}
+          userName={userData.user.name}
+          goalDescription={goalDescription}
+          tags={tags}
           hasNutritionDiagnosis={userData.hasNutritionDiagnosis}
         />
 
         {/* 섹션 2-1: 종합 가이드 (영양 진단 있을 경우) */}
         {userData.hasNutritionDiagnosis && (
-          <NutritionGuide userName={userData.name} condition="고중성지방혈증" />
+          <NutritionGuide
+            userName={userData.user.name}
+            condition={condition}
+            nutrients={nutrients.length > 0 ? nutrients : undefined}
+          />
         )}
 
         {/* 섹션 3: 식품 관련 명언 */}
-        <FoodQuote />
+        <FoodQuote
+          quotes={userData.quotes.length > 0 ? userData.quotes : undefined}
+        />
 
         {/* 섹션 4: 오늘의 식사 */}
         <TodayMeal
-          currentCalories={1528}
+          currentCalories={userData.todayMeal.totalCalories}
           targetCalories={2100}
           nutrients={[
-            { name: "탄수화물", current: 180, target: 300, color: "#FFC107" },
-            { name: "단백질", current: 65, target: 100, color: "#9F85E3" },
-            { name: "지방", current: 45, target: 70, color: "#FF9800" },
+            {
+              name: "탄수화물",
+              current: userData.todayMeal.totalCarbs,
+              target: 300,
+              color: "#FFC107",
+            },
+            {
+              name: "단백질",
+              current: userData.todayMeal.totalProtein,
+              target: 100,
+              color: "#9F85E3",
+            },
+            {
+              name: "지방",
+              current: userData.todayMeal.totalFat,
+              target: 70,
+              color: "#FF9800",
+            },
           ]}
         />
 
         {/* 섹션 5: 걸음수 + 챌린지 */}
         <StepsAndChallenge
-          currentSteps={3560}
-          targetSteps={10000}
-          challengeTitle="매일 한잔 물마시기"
-          challengeProgress={50}
+          currentSteps={userData.steps.currentSteps}
+          targetSteps={userData.steps.goalSteps}
+          challengeTitle={userData.challenge?.title || "매일 한잔 물마시기"}
+          challengeProgress={challengeProgress}
           onVerify={() => {
             // TODO: 챌린지 인증 로직
             console.log("챌린지 인증");
@@ -69,9 +279,6 @@ export default function HomePage() {
 
       {/* 영양박사 플로팅 버튼 */}
       <FloatingDoctorButton />
-
-      {/* 섹션 7: 하단 네비게이션 */}
-      <BottomNavigation />
     </div>
   );
 }
