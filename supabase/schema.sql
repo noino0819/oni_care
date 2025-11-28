@@ -1655,7 +1655,7 @@ INSERT INTO public.functional_ingredients (ingredient_code, category, internal_n
   ('ZINC', '미네랄', '아연', '아연', NULL, 'mg', 8.5, 35, '정상적인 면역기능, 세포분열'),
   ('IRON', '미네랄', '철분', '철분', NULL, 'mg', 12, 45, '산소 운반, 에너지 생성'),
   ('OMEGA3', '지방산', '오메가-3', '오메가-3', 'EPA+DHA', 'mg', 500, 3000, '혈행개선, 중성지질 개선'),
-  ('PROBIOTICS', '유산균', '프로바이오틱스', '프로바이오틱스', 'Lactobacillus', 'CFU', 1000000000, NULL, '장 건강, 면역 기능'),
+  ('PROBIOTICS', '유산균', '프로바이오틱스', '프로바이오틱스', 'Lactobacillus', '억CFU', 10, NULL, '장 건강, 면역 기능'),
   ('COLLAGEN', '단백질', '콜라겐', '콜라겐', NULL, 'mg', 2000, NULL, '피부 탄력, 관절 건강'),
   ('BIOTIN', '비타민', '비오틴', '비오틴', NULL, 'mcg', 30, NULL, '모발, 피부, 손톱 건강')
 ON CONFLICT (ingredient_code) DO NOTHING;
@@ -1671,7 +1671,9 @@ INSERT INTO public.supplement_products_master (product_report_number, product_na
   ('PRD007', '비타매틱 매스틱검', '비타매틱', '정', '1', 'AM 8:00', '/images/supplements/mastic.png'),
   ('PRD008', '오쏘몰 이뮨 플러스', '오쏘몰', '정', '2', 'AM 9:00', '/images/supplements/immune.png'),
   ('PRD009', '뼈관절엔 칼마디', '종근당', '정', '2', 'PM 8:00', '/images/supplements/joint.png'),
-  ('PRD010', '당뇨엔 바나바', '대웅제약', '정', '1', 'PM 1:00', '/images/supplements/banaba.png')
+  ('PRD010', '당뇨엔 바나바', '대웅제약', '정', '1', 'PM 1:00', '/images/supplements/banaba.png'),
+  ('PRD011', '살아있는 프로바이오틱스 골드', '그리팅', '알', '1', 'AM 8:00', '/images/supplements/probiotics.png'),
+  ('PRD012', '비비콜라겐 플러스 업', '비비랩', '정', '1', 'AM 9:00', '/images/supplements/collagen.png')
 ON CONFLICT (product_report_number) DO NOTHING;
 
 -- 상품-성분 매핑 샘플 데이터
@@ -1715,6 +1717,22 @@ SELECT spm.id, fi.id, 1000, 'mg'
 FROM public.supplement_products_master spm
 CROSS JOIN public.functional_ingredients fi
 WHERE spm.product_name = '초임계 오메가3' AND fi.ingredient_code = 'OMEGA3'
+ON CONFLICT DO NOTHING;
+
+-- 살아있는 프로바이오틱스 골드 - 100억CFU
+INSERT INTO public.product_ingredient_mapping (product_id, ingredient_id, content_amount, content_unit)
+SELECT spm.id, fi.id, 100, '억CFU'
+FROM public.supplement_products_master spm
+CROSS JOIN public.functional_ingredients fi
+WHERE spm.product_name = '살아있는 프로바이오틱스 골드' AND fi.ingredient_code = 'PROBIOTICS'
+ON CONFLICT DO NOTHING;
+
+-- 비비콜라겐 플러스 업 - 2000mg
+INSERT INTO public.product_ingredient_mapping (product_id, ingredient_id, content_amount, content_unit)
+SELECT spm.id, fi.id, 2000, 'mg'
+FROM public.supplement_products_master spm
+CROSS JOIN public.functional_ingredients fi
+WHERE spm.product_name = '비비콜라겐 플러스 업' AND fi.ingredient_code = 'COLLAGEN'
 ON CONFLICT DO NOTHING;
 
 -- 성분 상호작용 샘플 데이터

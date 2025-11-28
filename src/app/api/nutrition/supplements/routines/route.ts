@@ -17,15 +17,7 @@ export async function GET() {
         // 모든 활성화된 영양제 루틴 조회
         const { data: routines, error: routinesError } = await supabase
             .from("supplement_routines")
-            .select(`
-                *,
-                supplement_products (
-                    id,
-                    name,
-                    brand,
-                    ingredients
-                )
-            `)
+            .select("*")
             .eq("user_id", user.id)
             .eq("is_active", true)
             .order("created_at", { ascending: true });
@@ -35,20 +27,50 @@ export async function GET() {
             return NextResponse.json({ error: routinesError.message }, { status: 500 });
         }
 
+        // 제품 마스터 정보 조회 시도
+        let productsMaster: Record<string, {
+            product_name: string;
+            manufacturer?: string;
+            form_unit?: string;
+            default_intake_amount?: string;
+        }> = {};
+        
+        try {
+            const { data: products } = await supabase
+                .from("supplement_products_master")
+                .select("*")
+                .eq("is_active", true);
+            
+            if (products) {
+                products.forEach((p) => {
+                    productsMaster[p.id] = p;
+                });
+            }
+        } catch {
+            console.log("supplement_products_master table not found, skipping");
+        }
+
         // 데이터 변환
-        const formattedRoutines = (routines || []).map((routine) => ({
-            id: routine.id,
-            name: routine.name,
-            brand: routine.brand || routine.supplement_products?.brand,
-            dosage: routine.dosage,
-            dosagePerServing: routine.dosage_per_serving,
-            daysOfWeek: routine.days_of_week || ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'],
-            scheduledTimes: routine.scheduled_times || [
-                { time: "09:00", period: "AM", dosage: routine.dosage || "1정" }
-            ],
-            isActive: routine.is_active,
-            supplementProductId: routine.supplement_product_id,
-        }));
+        const formattedRoutines = (routines || []).map((routine) => {
+            const product = routine.supplement_product_id 
+                ? productsMaster[routine.supplement_product_id] 
+                : null;
+            
+            return {
+                id: routine.id,
+                name: routine.name,
+                brand: routine.brand || product?.manufacturer,
+                dosage: routine.dosage,
+                dosagePerServing: routine.dosage_per_serving,
+                formUnit: product?.form_unit || "정",
+                daysOfWeek: routine.days_of_week || ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'],
+                scheduledTimes: routine.scheduled_times || [
+                    { time: "09:00", period: "AM", dosage: routine.dosage || "1정" }
+                ],
+                isActive: routine.is_active,
+                supplementProductId: routine.supplement_product_id,
+            };
+        });
 
         return NextResponse.json({
             routines: formattedRoutines,
@@ -93,23 +115,27 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 루틴 생성
+        // 루틴 생성 (제품 ID와 단위 정보 포함)
         const routinesToInsert = products.map((product: {
-            supplementProductId?: string;
+            id?: string;
             name: string;
             brand?: string;
             dosagePerServing?: string;
-        }) => ({
-            user_id: user.id,
-            supplement_product_id: product.supplementProductId || null,
-            name: product.name,
-            brand: product.brand || null,
-            dosage: "1정",
-            dosage_per_serving: product.dosagePerServing || null,
-            days_of_week: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'],
-            scheduled_times: [{ time: "09:00", period: "AM", dosage: "1정" }],
-            is_active: true,
-        }));
+            formUnit?: string;
+        }) => {
+            const formUnit = product.formUnit || "정";
+            return {
+                user_id: user.id,
+                supplement_product_id: product.id || null,  // 제품 마스터 ID
+                name: product.name,
+                brand: product.brand || null,
+                dosage: `1${formUnit}`,
+                dosage_per_serving: product.dosagePerServing || null,
+                days_of_week: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'],
+                scheduled_times: [{ time: "09:00", period: "AM", dosage: `1${formUnit}` }],
+                is_active: true,
+            };
+        });
 
         const { data, error } = await supabase
             .from("supplement_routines")
@@ -209,7 +235,7 @@ export async function DELETE(request: NextRequest) {
             );
         }
 
-        // 루틴 삭제 (또는 비활성화)
+        // 루틴 삭제 (비활성화)
         const { error } = await supabase
             .from("supplement_routines")
             .update({ is_active: false })
@@ -230,4 +256,3 @@ export async function DELETE(request: NextRequest) {
         );
     }
 }
-

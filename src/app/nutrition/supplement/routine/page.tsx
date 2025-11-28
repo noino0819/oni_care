@@ -129,6 +129,9 @@ export default function SupplementRoutinePage() {
   const [showSearchAlert, setShowSearchAlert] = useState(false);
   const [showChangeWarning, setShowChangeWarning] = useState(false);
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
+  
+  // 삭제된 루틴 ID 추적
+  const [deletedRoutineIds, setDeletedRoutineIds] = useState<string[]>([]);
 
   const { data, error, isLoading } = useSWR(
     "/api/nutrition/supplements/routines",
@@ -144,6 +147,7 @@ export default function SupplementRoutinePage() {
     if (data?.routines) {
       setLocalRoutines(data.routines);
       setHasChanges(false);
+      setDeletedRoutineIds([]); // 삭제 목록 초기화
     }
   }, [data]);
 
@@ -179,14 +183,25 @@ export default function SupplementRoutinePage() {
     }
 
     try {
-      // 변경사항 저장
-      await fetch("/api/nutrition/supplements/routines", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ routines: localRoutines }),
-      });
+      // 삭제된 루틴 처리
+      for (const routineId of deletedRoutineIds) {
+        await fetch(`/api/nutrition/supplements/routines?routineId=${routineId}`, {
+          method: "DELETE",
+        });
+      }
+
+      // 변경사항 저장 (남아있는 루틴만)
+      if (localRoutines.length > 0) {
+        await fetch("/api/nutrition/supplements/routines", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ routines: localRoutines }),
+        });
+      }
 
       mutate("/api/nutrition/supplements/routines");
+      mutate("/api/nutrition/supplements"); // 섭취 기록도 갱신
+      setDeletedRoutineIds([]); // 삭제 목록 초기화
       setHasChanges(false);
       setIsEditMode(false);
     } catch (error) {
@@ -198,6 +213,7 @@ export default function SupplementRoutinePage() {
   // 루틴 삭제
   const deleteRoutine = useCallback((routineId: string) => {
     setLocalRoutines((prev) => prev.filter((r) => r.id !== routineId));
+    setDeletedRoutineIds((prev) => [...prev, routineId]); // 삭제된 ID 추적
     setHasChanges(true);
   }, []);
 

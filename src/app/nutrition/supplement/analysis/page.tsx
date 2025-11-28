@@ -176,8 +176,8 @@ export default function SupplementAnalysisPage() {
     );
   }
 
-  // 데이터가 없을 때
-  if (allIngredients.length === 0) {
+  // 데이터가 없을 때 (등록된 영양제가 없을 때)
+  if (supplements.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 pb-8">
         <header className="sticky top-0 bg-white z-10 border-b border-gray-100">

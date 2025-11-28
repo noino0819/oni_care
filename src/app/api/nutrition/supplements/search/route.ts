@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-// GET: 영양제 검색
+// GET: 영양제 검색 (제품 마스터 테이블에서 검색)
 export async function GET(request: NextRequest) {
     try {
         const supabase = await createClient();
@@ -11,13 +11,19 @@ export async function GET(request: NextRequest) {
         const limit = parseInt(searchParams.get("limit") || "50");
 
         if (!query.trim()) {
-            // 검색어가 없으면 인기 상품 반환
+            // 검색어가 없으면 전체 제품 반환 (최신순)
             const { data: products, error } = await supabase
-                .from("supplement_products")
-                .select("*")
+                .from("supplement_products_master")
+                .select(`
+                    *,
+                    ingredients:product_ingredient_mapping(
+                        content_amount,
+                        content_unit,
+                        ingredient:functional_ingredients(external_name)
+                    )
+                `)
                 .eq("is_active", true)
-                .order("is_popular", { ascending: false })
-                .order("display_order", { ascending: true })
+                .order("created_at", { ascending: false })
                 .limit(limit);
 
             if (error) {
@@ -25,24 +31,24 @@ export async function GET(request: NextRequest) {
                 return NextResponse.json({ error: error.message }, { status: 500 });
             }
 
-            const formattedProducts = (products || []).map((product) => ({
-                id: product.id,
-                name: product.name,
-                brand: product.brand,
-                dosagePerServing: `1정 | ${product.description?.substring(0, 20) || "1000mg"}`,
-                ingredients: product.ingredients,
-            }));
-
+            const formattedProducts = formatProducts(products || []);
             return NextResponse.json({ products: formattedProducts });
         }
 
-        // 이름 또는 성분으로 검색
+        // 제품명 또는 제조사로 검색
         const { data: products, error } = await supabase
-            .from("supplement_products")
-            .select("*")
+            .from("supplement_products_master")
+            .select(`
+                *,
+                ingredients:product_ingredient_mapping(
+                    content_amount,
+                    content_unit,
+                    ingredient:functional_ingredients(external_name)
+                )
+            `)
             .eq("is_active", true)
-            .or(`name.ilike.%${query}%,brand.ilike.%${query}%`)
-            .order("name", { ascending: true })
+            .or(`product_name.ilike.%${query}%,manufacturer.ilike.%${query}%`)
+            .order("product_name", { ascending: true })
             .limit(limit);
 
         if (error) {
@@ -50,13 +56,21 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: error.message }, { status: 500 });
         }
 
-        // 성분 기반 검색도 수행
+        // 성분명으로도 검색
         const { data: ingredientProducts, error: ingredientError } = await supabase
-            .from("supplement_products")
-            .select("*")
-            .eq("is_active", true)
-            .contains("ingredients", [query])
-            .limit(limit);
+            .from("product_ingredient_mapping")
+            .select(`
+                product:supplement_products_master(
+                    *,
+                    ingredients:product_ingredient_mapping(
+                        content_amount,
+                        content_unit,
+                        ingredient:functional_ingredients(external_name)
+                    )
+                ),
+                ingredient:functional_ingredients(external_name)
+            `)
+            .ilike("ingredient.external_name", `%${query}%`);
 
         if (ingredientError) {
             console.error("Ingredient search error:", ingredientError);
@@ -66,24 +80,21 @@ export async function GET(request: NextRequest) {
         const allProducts = [...(products || [])];
         const productIds = new Set(allProducts.map((p) => p.id));
         
-        (ingredientProducts || []).forEach((p) => {
-            if (!productIds.has(p.id)) {
-                allProducts.push(p);
+        (ingredientProducts || []).forEach((item) => {
+            const product = item.product;
+            if (product && !productIds.has(product.id)) {
+                allProducts.push(product);
+                productIds.add(product.id);
             }
         });
 
         // 데이터 변환 및 정렬 (이름 일치도순)
-        const formattedProducts = allProducts
+        const formattedProducts = formatProducts(allProducts)
             .map((product) => ({
-                id: product.id,
-                name: product.name,
-                brand: product.brand,
-                dosagePerServing: `1정 | ${product.description?.substring(0, 20) || "1000mg"}`,
-                ingredients: product.ingredients,
+                ...product,
                 matchScore: product.name.toLowerCase().indexOf(query.toLowerCase()),
             }))
             .sort((a, b) => {
-                // 이름에서 먼저 일치하는 것이 우선
                 if (a.matchScore !== -1 && b.matchScore !== -1) {
                     return a.matchScore - b.matchScore;
                 }
@@ -107,3 +118,44 @@ export async function GET(request: NextRequest) {
     }
 }
 
+// 제품 데이터 포맷팅
+function formatProducts(products: Array<{
+    id: string;
+    product_name: string;
+    manufacturer?: string;
+    form_unit?: string;
+    single_dose?: number;
+    dosage_unit?: string;
+    default_intake_amount?: string;
+    ingredients?: Array<{
+        content_amount: number;
+        content_unit: string;
+        ingredient?: { external_name: string };
+    }>;
+}>) {
+    return products.map((product) => {
+        // 성분 정보 추출
+        const ingredientNames = (product.ingredients || [])
+            .map((ing) => ing.ingredient?.external_name)
+            .filter(Boolean);
+
+        // 용량 정보 생성
+        const dosageInfo = product.single_dose && product.dosage_unit
+            ? `${product.single_dose}${product.dosage_unit}`
+            : null;
+
+        const intakeAmount = product.default_intake_amount || "1";
+        const formUnit = product.form_unit || "정";
+
+        return {
+            id: product.id,
+            name: product.product_name,
+            brand: product.manufacturer || "",
+            formUnit: formUnit,
+            dosagePerServing: dosageInfo 
+                ? `${intakeAmount}${formUnit} | ${dosageInfo}` 
+                : `${intakeAmount}${formUnit}`,
+            ingredients: ingredientNames,
+        };
+    });
+}

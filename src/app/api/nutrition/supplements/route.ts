@@ -27,6 +27,31 @@ export async function GET(request: NextRequest) {
             .eq("user_id", user.id)
             .eq("is_active", true)
             .order("created_at", { ascending: true });
+        
+        // 제품 마스터 정보 조회 시도 (테이블이 없어도 에러 없이 진행)
+        let productsMaster: Record<string, {
+            product_name: string;
+            manufacturer?: string;
+            form_unit?: string;
+            default_intake_amount?: string;
+            default_intake_time?: string;
+        }> = {};
+        
+        try {
+            const { data: products } = await supabase
+                .from("supplement_products_master")
+                .select("*")
+                .eq("is_active", true);
+            
+            if (products) {
+                products.forEach((p) => {
+                    productsMaster[p.id] = p;
+                });
+            }
+        } catch {
+            // 테이블이 없으면 무시
+            console.log("supplement_products_master table not found, skipping join");
+        }
 
         if (routinesError) {
             console.error("Routines fetch error:", routinesError);
@@ -51,21 +76,43 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: logsError.message }, { status: 500 });
         }
 
-        // 루틴과 로그 병합
+        // 루틴과 로그 병합 (제품 마스터 정보 포함)
         const supplementsWithStatus = todayRoutines.map((routine) => {
             const log = (logs || []).find((l) => l.routine_id === routine.id);
-            const scheduledTimes = routine.scheduled_times || [
-                { time: "09:00", period: "AM", dosage: routine.dosage || "1정" }
-            ];
+            
+            // 제품 마스터에서 정보 가져오기
+            const product = routine.supplement_product_id 
+                ? productsMaster[routine.supplement_product_id] 
+                : null;
+            
+            const formUnit = product?.form_unit || "정";
+            const defaultDosage = `1${formUnit}`;
+            
+            // 스케줄 시간이 없으면 제품 마스터의 기본 시간 사용
+            let scheduledTimes = routine.scheduled_times;
+            if (!scheduledTimes || scheduledTimes.length === 0) {
+                const defaultTime = product?.default_intake_time || "09:00";
+                const [time, periodStr] = defaultTime.includes("AM") || defaultTime.includes("PM") 
+                    ? [defaultTime.replace(/(AM|PM)/g, "").trim(), defaultTime.includes("PM") ? "PM" : "AM"]
+                    : [defaultTime, "AM"];
+                
+                scheduledTimes = [{ 
+                    time: time, 
+                    period: periodStr as "AM" | "PM", 
+                    dosage: routine.dosage || defaultDosage 
+                }];
+            }
             
             return {
                 id: routine.id,
                 name: routine.name,
-                brand: routine.brand,
-                dosage: routine.dosage,
+                brand: routine.brand || product?.manufacturer,
+                dosage: routine.dosage || defaultDosage,
+                formUnit: formUnit,
                 scheduledTimes,
                 isTaken: log?.is_taken || false,
                 takenAt: log?.taken_at,
+                supplementProductId: routine.supplement_product_id,
             };
         });
 
