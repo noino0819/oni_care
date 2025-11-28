@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   ChevronRight,
@@ -102,7 +102,20 @@ export default function NutritionPage() {
   );
   const [isLoading, setIsLoading] = useState(true);
 
-  // 주간 날짜 계산
+  // 날짜 리스트 계산 (한달 기준, 스크롤 가능)
+  const scrollDates = useMemo(() => {
+    const dates: Date[] = [];
+    const today = new Date();
+    // 오늘 기준 앞뒤로 14일씩 (총 29일)
+    for (let i = -14; i <= 14; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      dates.push(date);
+    }
+    return dates;
+  }, []);
+
+  // 주간 날짜 계산 (기존 호환용)
   const weekDates = useMemo(() => {
     const dates: Date[] = [];
     const startOfWeek = new Date(selectedDate);
@@ -116,6 +129,28 @@ export default function NutritionPage() {
     }
     return dates;
   }, [selectedDate]);
+
+  // 스크롤 ref
+  const dateScrollRef = useRef<HTMLDivElement>(null);
+
+  // 선택된 날짜로 스크롤
+  useEffect(() => {
+    if (dateScrollRef.current) {
+      const selectedIdx = scrollDates.findIndex(
+        (d) => d.toDateString() === selectedDate.toDateString()
+      );
+      if (selectedIdx !== -1) {
+        const itemWidth = 48; // 각 날짜 아이템 너비
+        const containerWidth = dateScrollRef.current.offsetWidth;
+        const scrollPosition =
+          selectedIdx * itemWidth - containerWidth / 2 + itemWidth / 2;
+        dateScrollRef.current.scrollTo({
+          left: scrollPosition,
+          behavior: "smooth",
+        });
+      }
+    }
+  }, [selectedDate, scrollDates]);
 
   // 데이터 로드
   useEffect(() => {
@@ -311,35 +346,41 @@ export default function NutritionPage() {
                 </span>
               </button>
 
-              {/* 주간 캘린더 */}
-              <div className="flex justify-between">
-                {weekDates.map((date, idx) => {
+              {/* 주간 캘린더 - 가로 스크롤 */}
+              <div
+                ref={dateScrollRef}
+                className="flex gap-1 overflow-x-auto scrollbar-hide pb-1"
+                style={{ scrollSnapType: "x mandatory" }}
+              >
+                {scrollDates.map((date, idx) => {
                   const isSelected =
                     date.toDateString() === selectedDate.toDateString();
                   const isToday =
                     date.toDateString() === new Date().toDateString();
+                  const dayOfWeek = date.getDay();
 
                   return (
                     <button
                       key={idx}
                       onClick={() => setSelectedDate(date)}
-                      className="flex flex-col items-center gap-1"
+                      className="flex flex-col items-center gap-1 flex-shrink-0 w-12"
+                      style={{ scrollSnapAlign: "center" }}
                     >
                       <span
                         className={cn(
                           "text-xs",
-                          idx === 0
+                          dayOfWeek === 0
                             ? "text-red-400"
-                            : idx === 6
+                            : dayOfWeek === 6
                             ? "text-blue-400"
                             : "text-gray-400"
                         )}
                       >
-                        {WEEKDAYS[idx]}
+                        {WEEKDAYS[dayOfWeek]}
                       </span>
                       <span
                         className={cn(
-                          "w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium transition-colors",
+                          "w-9 h-9 flex items-center justify-center rounded-full text-sm font-medium transition-colors",
                           isSelected
                             ? "bg-[#7B9B5C] text-white"
                             : isToday
@@ -471,18 +512,21 @@ export default function NutritionPage() {
                       <button
                         onClick={() => {
                           if (isRecorded) {
+                            // 기록된 식사 → 상세 페이지 (MF_NU_0107)
                             router.push(
-                              `/nutrition/meal/${meal.type}/edit?date=${
+                              `/nutrition/meal/detail?type=${meal.type}&date=${
                                 selectedDate.toISOString().split("T")[0]
                               }`
                             );
                           } else if (isSkipped) {
+                            // 안먹음 → 수정 페이지
                             router.push(
                               `/nutrition/meal/${meal.type}/edit?date=${
                                 selectedDate.toISOString().split("T")[0]
                               }`
                             );
                           } else {
+                            // 기록 없음 → 새 기록 페이지
                             router.push(`/nutrition/meal/${meal.type}`);
                           }
                         }}

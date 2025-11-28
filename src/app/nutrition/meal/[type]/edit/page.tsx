@@ -106,12 +106,12 @@ export default function MealEditPage() {
   const totalProtein = activeFoods.reduce((sum, f) => sum + f.protein * f.quantity, 0);
   const totalFat = activeFoods.reduce((sum, f) => sum + f.fat * f.quantity, 0);
 
-  // 수량 변경
+  // 수량 변경 (0.1 단위)
   const updateQuantity = (foodId: string, delta: number) => {
     setFoods((prev) =>
       prev.map((f) =>
         f.id === foodId
-          ? { ...f, quantity: Math.max(1, f.quantity + delta) }
+          ? { ...f, quantity: Math.max(0.1, Math.round((f.quantity + delta) * 10) / 10) }
           : f
       )
     );
@@ -228,21 +228,21 @@ export default function MealEditPage() {
                   <div className="flex-1">
                     <p className="font-medium text-gray-800">{food.name}</p>
                     <p className="text-xs text-gray-500">
-                      {food.calories * food.quantity}kcal · {food.servingSize}
+                      {Math.round(food.calories * food.quantity)}kcal · {food.servingSize}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => updateQuantity(food.id, -1)}
+                      onClick={() => updateQuantity(food.id, -0.1)}
                       className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center"
                     >
                       <span className="text-gray-600">-</span>
                     </button>
-                    <span className="w-6 text-center text-sm font-medium">
-                      {food.quantity}
+                    <span className="w-10 text-center text-sm font-medium">
+                      {food.quantity.toFixed(1)}
                     </span>
                     <button
-                      onClick={() => updateQuantity(food.id, 1)}
+                      onClick={() => updateQuantity(food.id, 0.1)}
                       className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center"
                     >
                       <span className="text-gray-600">+</span>
