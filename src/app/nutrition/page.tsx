@@ -14,6 +14,7 @@ import {
 import { Header } from "@/components/home/Header";
 import { BottomNavigation } from "@/components/home/BottomNavigation";
 import { cn } from "@/lib/utils";
+import { NutritionPageSkeleton } from "@/components/ui/LoadingSpinner";
 
 // 타입 정의
 interface MealStatus {
@@ -286,11 +287,7 @@ export default function NutritionPage() {
   const guidance = getGuidanceMessage();
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#9F85E3]" />
-      </div>
-    );
+    return <NutritionPageSkeleton />;
   }
 
   return (
@@ -922,8 +919,38 @@ function SupplementTab() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#9F85E3]" />
+      <div className="px-4 py-4 space-y-4">
+        <div className="bg-white rounded-2xl p-6 shadow-sm animate-pulse">
+          <div className="flex items-center justify-between mb-4">
+            <div className="h-4 w-20 bg-gray-200 rounded" />
+            <div className="h-4 w-24 bg-gray-200 rounded" />
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="w-24 h-24 bg-gray-200 rounded-full" />
+            <div className="flex-1 h-12 bg-gray-200 rounded-xl" />
+          </div>
+        </div>
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+            <div className="h-5 w-24 bg-gray-200 rounded animate-pulse" />
+            <div className="h-5 w-5 bg-gray-200 rounded animate-pulse" />
+          </div>
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="flex items-center justify-between p-4 animate-pulse"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gray-200 rounded-full" />
+                <div>
+                  <div className="h-5 w-24 bg-gray-200 rounded mb-1" />
+                  <div className="h-4 w-32 bg-gray-200 rounded" />
+                </div>
+              </div>
+              <div className="w-8 h-8 bg-gray-200 rounded-full" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -1562,8 +1589,38 @@ function TodayMenuTab({ selectedDate }: { selectedDate: Date }) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#7B9B5C]" />
+      <div className="px-4 py-4 space-y-4">
+        {/* 끼니 선택 스켈레톤 */}
+        <div className="flex gap-2">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="flex-1 h-12 bg-gray-200 rounded-xl animate-pulse"
+            />
+          ))}
+        </div>
+        {/* 메뉴 스켈레톤 */}
+        {[1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className="bg-white rounded-2xl shadow-sm overflow-hidden animate-pulse"
+          >
+            <div className="h-32 bg-gray-200" />
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="h-5 w-16 bg-gray-200 rounded-full" />
+                <div className="h-5 w-20 bg-gray-200 rounded" />
+              </div>
+              <div className="h-6 w-40 bg-gray-200 rounded mb-3" />
+              <div className="flex flex-wrap gap-1 mb-4">
+                {[1, 2, 3, 4].map((j) => (
+                  <div key={j} className="h-5 w-12 bg-gray-200 rounded" />
+                ))}
+              </div>
+              <div className="h-12 bg-gray-200 rounded-xl" />
+            </div>
+          </div>
+        ))}
       </div>
     );
   }

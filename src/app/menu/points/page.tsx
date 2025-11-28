@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, Home, ChevronDown } from "lucide-react";
 import { ConfirmModal, BottomSheet } from "@/components/ui/Modal";
+import { PointsPageSkeleton } from "@/components/ui/LoadingSpinner";
 
 type TabType = "coupon" | "point";
 type CouponFilter = "all" | "greating" | "cafeteria";
@@ -377,8 +378,23 @@ export default function PointsPage() {
 
         {/* 내역 리스트 */}
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#9F85E3]" />
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="animate-pulse">
+                <div className="h-4 w-32 bg-gray-200 rounded mb-2" />
+                <div className="bg-white rounded-xl border border-gray-100 p-4">
+                  {[1, 2].map((j) => (
+                    <div key={j} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                      <div>
+                        <div className="h-5 w-32 bg-gray-200 rounded mb-1" />
+                        <div className="h-4 w-24 bg-gray-200 rounded" />
+                      </div>
+                      <div className="h-6 w-16 bg-gray-200 rounded" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         ) : activeTab === "point" ? (
           pointHistory.length === 0 ? (

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AnalysisPageSkeleton } from "@/components/ui/LoadingSpinner";
 
 interface NutrientData {
   name: string;
@@ -27,7 +28,9 @@ interface AnalysisData {
 
 export default function NutritionAnalysisPage() {
   const router = useRouter();
-  const [analysisPeriod, setAnalysisPeriod] = useState<"daily" | "weekly" | "monthly">("daily");
+  const [analysisPeriod, setAnalysisPeriod] = useState<
+    "daily" | "weekly" | "monthly"
+  >("daily");
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -114,15 +117,15 @@ export default function NutritionAnalysisPage() {
   };
 
   const consumptionRate = analysisData
-    ? Math.round((analysisData.dailyCalories.consumed / analysisData.dailyCalories.target) * 100)
+    ? Math.round(
+        (analysisData.dailyCalories.consumed /
+          analysisData.dailyCalories.target) *
+          100
+      )
     : 0;
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#9F85E3]" />
-      </div>
-    );
+    return <AnalysisPageSkeleton />;
   }
 
   return (
@@ -148,7 +151,9 @@ export default function NutritionAnalysisPage() {
           ].map((period) => (
             <button
               key={period.key}
-              onClick={() => setAnalysisPeriod(period.key as typeof analysisPeriod)}
+              onClick={() =>
+                setAnalysisPeriod(period.key as typeof analysisPeriod)
+              }
               className={cn(
                 "px-3 py-1.5 rounded-full text-xs font-medium transition-colors",
                 analysisPeriod === period.key
@@ -166,7 +171,9 @@ export default function NutritionAnalysisPage() {
           <button onClick={goToPreviousDay} className="p-2">
             <ChevronLeft className="w-5 h-5 text-gray-600" />
           </button>
-          <span className="text-lg font-semibold text-center">{getDateRangeText()}</span>
+          <span className="text-lg font-semibold text-center">
+            {getDateRangeText()}
+          </span>
           <button onClick={goToNextDay} className="p-2">
             <ChevronRight className="w-5 h-5 text-gray-600" />
           </button>
@@ -193,7 +200,9 @@ export default function NutritionAnalysisPage() {
                   strokeWidth="8"
                   fill="none"
                   strokeLinecap="round"
-                  strokeDasharray={`${Math.min(consumptionRate, 100) * 2.51} 251`}
+                  strokeDasharray={`${
+                    Math.min(consumptionRate, 100) * 2.51
+                  } 251`}
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -211,7 +220,11 @@ export default function NutritionAnalysisPage() {
             <div className="flex items-center gap-1 mt-4 text-sm text-gray-500">
               <Info className="w-4 h-4" />
               <span>
-                권장열량 대비 {consumptionRate < 100 ? `${100 - consumptionRate}% 부족하게` : `${consumptionRate - 100}% 과다하게`} 섭취했어요.
+                권장열량 대비{" "}
+                {consumptionRate < 100
+                  ? `${100 - consumptionRate}% 부족하게`
+                  : `${consumptionRate - 100}% 과다하게`}{" "}
+                섭취했어요.
               </span>
             </div>
           </div>
@@ -225,39 +238,58 @@ export default function NutritionAnalysisPage() {
 
           {/* 영양소 분석 */}
           <div className="space-y-4">
-            {(!analysisData?.nutrients || analysisData.nutrients.length === 0) && !analysisData?.message ? (
+            {(!analysisData?.nutrients ||
+              analysisData.nutrients.length === 0) &&
+            !analysisData?.message ? (
               <div className="text-center py-8 text-gray-400">
                 <p>🥗 식사기록을 시작해주세요</p>
               </div>
             ) : (
               analysisData?.nutrients.map((nutrient) => {
-                const percentage = Math.min((nutrient.value / nutrient.max) * 100, 100);
+                const percentage = Math.min(
+                  (nutrient.value / nutrient.max) * 100,
+                  100
+                );
                 const isExcessive = nutrient.status === "excessive";
                 const isDeficient = nutrient.status === "deficient";
 
                 return (
-                  <div key={nutrient.name} className="border-b border-gray-100 pb-4 last:border-0">
+                  <div
+                    key={nutrient.name}
+                    className="border-b border-gray-100 pb-4 last:border-0"
+                  >
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium">{nutrient.nameKo}</span>
-                      <span className={cn(
-                        "text-xs px-2 py-0.5 rounded-full",
-                        isExcessive ? "bg-red-100 text-red-600" :
-                          isDeficient ? "bg-blue-100 text-blue-600" :
-                            "bg-green-100 text-green-600"
-                      )}>
+                      <span className="text-sm font-medium">
+                        {nutrient.nameKo}
+                      </span>
+                      <span
+                        className={cn(
+                          "text-xs px-2 py-0.5 rounded-full",
+                          isExcessive
+                            ? "bg-red-100 text-red-600"
+                            : isDeficient
+                            ? "bg-blue-100 text-blue-600"
+                            : "bg-green-100 text-green-600"
+                        )}
+                      >
                         {isExcessive ? "과다" : isDeficient ? "부족" : "적정"}
                       </span>
                     </div>
 
                     <div className="flex items-center gap-3">
-                      <span className="text-xs text-gray-500 w-12">{nutrient.value}{nutrient.unit}</span>
+                      <span className="text-xs text-gray-500 w-12">
+                        {nutrient.value}
+                        {nutrient.unit}
+                      </span>
                       <div className="flex-1 relative h-2 bg-gray-200 rounded-full overflow-hidden">
                         <div
                           className={cn(
                             "absolute left-0 top-0 h-full rounded-full transition-all",
-                            isExcessive ? "bg-red-400" :
-                              isDeficient ? "bg-blue-400" :
-                                "bg-green-400"
+                            isExcessive
+                              ? "bg-red-400"
+                              : isDeficient
+                              ? "bg-blue-400"
+                              : "bg-green-400"
                           )}
                           style={{ width: `${percentage}%` }}
                         />
@@ -266,7 +298,10 @@ export default function NutritionAnalysisPage() {
                           className="absolute top-0 h-full bg-gray-400/30"
                           style={{
                             left: `${(nutrient.min / nutrient.max) * 100}%`,
-                            width: `${((nutrient.max - nutrient.min) / nutrient.max) * 100}%`,
+                            width: `${
+                              ((nutrient.max - nutrient.min) / nutrient.max) *
+                              100
+                            }%`,
                           }}
                         />
                       </div>
@@ -274,7 +309,10 @@ export default function NutritionAnalysisPage() {
 
                     <div className="flex justify-between mt-1 text-xs text-gray-400">
                       <span>부족</span>
-                      <span>적정 ({nutrient.min}-{nutrient.max}{nutrient.unit})</span>
+                      <span>
+                        적정 ({nutrient.min}-{nutrient.max}
+                        {nutrient.unit})
+                      </span>
                       <span>과다</span>
                     </div>
                   </div>
@@ -287,4 +325,3 @@ export default function NutritionAnalysisPage() {
     </div>
   );
 }
-

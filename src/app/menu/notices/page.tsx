@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { ChevronLeft } from "lucide-react";
+import { NoticesPageSkeleton } from "@/components/ui/LoadingSpinner";
 import { Notice } from "@/types/menu";
 
 // 7일 이내 등록 여부 확인
@@ -63,8 +64,18 @@ export default function NoticesPage() {
       </header>
 
       {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#9F85E3]"></div>
+        <div className="px-4">
+          <div className="py-4">
+            <div className="h-6 w-20 bg-gray-200 rounded animate-pulse mb-1" />
+          </div>
+          <div className="divide-y divide-gray-100">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="py-4 animate-pulse">
+                <div className="h-5 w-3/4 bg-gray-200 rounded mb-2" />
+                <div className="h-4 w-24 bg-gray-200 rounded" />
+              </div>
+            ))}
+          </div>
         </div>
       ) : notices.length === 0 ? (
         /* Empty State */

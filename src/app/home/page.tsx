@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Header } from "@/components/home/Header";
 import { HealthGoalCard } from "@/components/home/HealthGoalCard";
 import { NutritionGuide } from "@/components/home/NutritionGuide";
@@ -10,8 +9,9 @@ import { StepsAndChallenge } from "@/components/home/StepsAndChallenge";
 import { ContentBanners } from "@/components/home/ContentBanners";
 import { FloatingDoctorButton } from "@/components/home/FloatingDoctorButton";
 import { BottomNavigation } from "@/components/home/BottomNavigation";
-import { LoadingOverlay } from "@/components/ui/LoadingSpinner";
+import { HomePageSkeleton } from "@/components/ui/LoadingSpinner";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { useFetch } from "@/hooks/useFetch";
 import {
   NUTRIENT_NAME_MAP,
   GOAL_TYPE_MAP,
@@ -70,47 +70,21 @@ interface HomeData {
 }
 
 export default function HomePage() {
-  const [homeData, setHomeData] = useState<HomeData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    data: homeData,
+    isLoading,
+    error,
+    refetch,
+  } = useFetch<HomeData>("/api/home");
 
-  useEffect(() => {
-    async function fetchHomeData() {
-      try {
-        const response = await fetch("/api/home");
-
-        if (!response.ok) {
-          if (response.status === 401) {
-            // 로그인 페이지로 리다이렉트
-            window.location.href = "/";
-            return;
-          }
-          throw new Error("데이터를 불러오는데 실패했습니다.");
-        }
-
-        const data = await response.json();
-        setHomeData(data);
-      } catch (err) {
-        console.error("Home data fetch error:", err);
-        setError(err instanceof Error ? err.message : "오류가 발생했습니다.");
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchHomeData();
-  }, []);
-
-  // 로딩 상태
+  // 로딩 상태 - 스켈레톤 UI 표시
   if (isLoading) {
-    return <LoadingOverlay message="데이터를 불러오는 중..." />;
+    return <HomePageSkeleton />;
   }
 
   // 에러 상태 (데이터가 없어도 기본값으로 표시)
   if (error && !homeData) {
-    return (
-      <ErrorState message={error} onRetry={() => window.location.reload()} />
-    );
+    return <ErrorState message={error} onRetry={() => refetch()} />;
   }
 
   // 데이터 가공

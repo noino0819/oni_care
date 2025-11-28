@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { ChevronLeft, ChevronDown, ChevronUp, MessageCircle, Star, User, Ticket } from "lucide-react";
+import { InquiryPageSkeleton } from "@/components/ui/LoadingSpinner";
 import { FAQ, FAQCategory, Inquiry } from "@/types/menu";
 
 // FAQ 카테고리 아이콘 매핑
@@ -97,11 +98,7 @@ export default function InquiryPage() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#9F85E3]"></div>
-      </div>
-    );
+    return <InquiryPageSkeleton />;
   }
 
   return (

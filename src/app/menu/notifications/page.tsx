@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { ChevronLeft } from "lucide-react";
+import { NotificationsPageSkeleton } from "@/components/ui/LoadingSpinner";
 import { Notification } from "@/types/menu";
 
 // 날짜 포맷 (오늘이면 "오늘", 아니면 "MM월 DD일")
@@ -103,8 +104,24 @@ export default function NotificationsPage() {
       </header>
 
       {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#9F85E3]"></div>
+        <div className="px-4 py-4">
+          <div className="h-6 w-12 bg-gray-200 rounded animate-pulse mb-4" />
+          <div className="space-y-3">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="bg-gray-50 rounded-xl p-4 animate-pulse">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-gray-200 rounded-full" />
+                  <div className="flex-1">
+                    <div className="h-5 w-full bg-gray-200 rounded mb-2" />
+                    <div className="h-4 w-3/4 bg-gray-200 rounded" />
+                  </div>
+                </div>
+                <div className="flex justify-end mt-2">
+                  <div className="h-4 w-12 bg-gray-200 rounded" />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       ) : notifications.length === 0 ? (
         /* Empty State */

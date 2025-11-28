@@ -1,112 +1,104 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import useSWR, { SWRConfiguration, mutate as globalMutate } from "swr";
 import { apiGet, isApiError, getErrorMessage } from "@/lib/api";
 
-interface UseFetchOptions<T> {
-  // 초기값
-  initialData?: T;
+// SWR fetcher
+const fetcher = async <T>(url: string): Promise<T> => {
+  return apiGet<T>(url);
+};
+
+interface UseFetchOptions<T> extends SWRConfiguration<T> {
   // 자동 실행 여부 (기본: true)
   enabled?: boolean;
-  // 의존성 배열 (변경 시 재요청)
-  deps?: unknown[];
   // 성공 콜백
   onSuccess?: (data: T) => void;
   // 에러 콜백
   onError?: (error: unknown) => void;
-  // 캐시 시간 (ms)
-  cacheTime?: number;
 }
 
 interface UseFetchReturn<T> {
   data: T | undefined;
   isLoading: boolean;
+  isValidating: boolean;
   error: string | null;
-  refetch: () => Promise<void>;
-  mutate: (data: T | ((prev: T | undefined) => T)) => void;
+  refetch: () => Promise<T | undefined>;
+  mutate: (data?: T | Promise<T> | ((currentData?: T) => T)) => Promise<T | undefined>;
 }
 
+/**
+ * SWR 기반 데이터 fetching 훅
+ * - 자동 캐싱
+ * - 백그라운드 재검증
+ * - 포커스 시 재검증
+ * - 에러 재시도
+ */
 export function useFetch<T>(
-  url: string,
+  url: string | null,
   params?: Record<string, string | number | boolean | undefined>,
   options: UseFetchOptions<T> = {}
 ): UseFetchReturn<T> {
   const {
-    initialData,
     enabled = true,
-    deps = [],
     onSuccess,
     onError,
+    ...swrOptions
   } = options;
 
-  const [data, setData] = useState<T | undefined>(initialData);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  
-  // 요청 취소를 위한 AbortController
-  const abortControllerRef = useRef<AbortController | null>(null);
-
-  const fetchData = useCallback(async () => {
-    // 이전 요청 취소
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-    abortControllerRef.current = new AbortController();
-
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      const response = await apiGet<T>(url, params);
-      setData(response);
-      onSuccess?.(response);
-    } catch (err) {
-      // 요청 취소로 인한 에러는 무시
-      if (err instanceof Error && err.name === "AbortError") {
-        return;
+  // URL 파라미터 처리
+  let finalUrl = url;
+  if (url && params) {
+    const searchParams = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        searchParams.append(key, String(value));
       }
-
-      const errorMessage = getErrorMessage(err, "데이터를 불러오는데 실패했습니다.");
-      setError(errorMessage);
-      onError?.(err);
-
-      // 인증 에러 처리
-      if (isApiError(err) && err.isUnauthorized) {
-        // 로그인 페이지로 리다이렉트 등의 처리
-        window.location.href = "/";
-      }
-    } finally {
-      setIsLoading(false);
+    });
+    const queryString = searchParams.toString();
+    if (queryString) {
+      finalUrl = `${url}?${queryString}`;
     }
-  }, [url, params, onSuccess, onError]);
+  }
 
-  // 의존성 변경 시 재요청
-  useEffect(() => {
-    if (enabled) {
-      fetchData();
+  const { data, error, isLoading, isValidating, mutate } = useSWR<T>(
+    enabled && finalUrl ? finalUrl : null,
+    fetcher,
+    {
+      // 기본 설정
+      revalidateOnFocus: true, // 포커스 시 재검증
+      revalidateOnReconnect: true, // 재연결 시 재검증
+      dedupingInterval: 2000, // 2초 내 중복 요청 방지
+      errorRetryCount: 3, // 에러 시 3번 재시도
+      errorRetryInterval: 1000, // 재시도 간격 1초
+      
+      // 캐시 설정
+      refreshInterval: 0, // 자동 새로고침 비활성화 (필요 시 활성화)
+      
+      // 콜백
+      onSuccess: (data) => {
+        onSuccess?.(data);
+      },
+      onError: (err) => {
+        // 인증 에러 처리
+        if (isApiError(err) && err.isUnauthorized) {
+          window.location.href = "/";
+        }
+        onError?.(err);
+      },
+      
+      // 사용자 옵션 오버라이드
+      ...swrOptions,
     }
+  );
 
-    return () => {
-      // 컴포넌트 언마운트 시 요청 취소
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled, ...deps]);
-
-  // 수동으로 데이터 업데이트
-  const mutate = useCallback((newData: T | ((prev: T | undefined) => T)) => {
-    setData((prev) =>
-      typeof newData === "function" ? (newData as (prev: T | undefined) => T)(prev) : newData
-    );
-  }, []);
+  const errorMessage = error ? getErrorMessage(error, "데이터를 불러오는데 실패했습니다.") : null;
 
   return {
     data,
     isLoading,
-    error,
-    refetch: fetchData,
+    isValidating,
+    error: errorMessage,
+    refetch: async () => mutate(),
     mutate,
   };
 }
@@ -187,3 +179,26 @@ export function useMutation<TData, TVariables>(
   };
 }
 
+// 추가 imports
+import { useState, useCallback } from "react";
+
+// 캐시 무효화 유틸리티
+export function invalidateCache(key: string | RegExp) {
+  if (typeof key === "string") {
+    globalMutate(key);
+  } else {
+    // 정규식 패턴으로 캐시 무효화
+    globalMutate(
+      (cacheKey) => typeof cacheKey === "string" && key.test(cacheKey),
+      undefined,
+      { revalidate: true }
+    );
+  }
+}
+
+// 특정 키의 캐시 프리페치
+export async function prefetchData<T>(url: string): Promise<T> {
+  const data = await fetcher<T>(url);
+  globalMutate(url, data, { revalidate: false });
+  return data;
+}

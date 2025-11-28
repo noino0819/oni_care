@@ -12,8 +12,9 @@ import {
   CloseIcon,
 } from "@/components/icons";
 import { cn } from "@/lib/utils";
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { ContentPageSkeleton } from "@/components/ui/LoadingSpinner";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { useFetch } from "@/hooks/useFetch";
 import type {
   ContentCategory,
   ContentCard,
@@ -22,9 +23,6 @@ import type {
 
 export default function ContentListPage() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
-  const [contents, setContents] = useState<ContentCard[]>([]);
-  const [categories, setCategories] = useState<CategoriesResponse | null>(null);
   const [searchKeyword, setSearchKeyword] = useState("");
   const [selectedCategory, setSelectedCategory] =
     useState<ContentCategory | null>(null);
@@ -32,27 +30,23 @@ export default function ContentListPage() {
     null
   );
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
-  const [points, setPoints] = useState(50);
+  const [contents, setContents] = useState<ContentCard[]>([]);
+  const [isContentsLoading, setIsContentsLoading] = useState(true);
 
-  // 카테고리 데이터 로드
-  useEffect(() => {
-    async function fetchCategories() {
-      try {
-        const response = await fetch("/api/content-categories");
-        if (response.ok) {
-          const data = await response.json();
-          setCategories(data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch categories:", error);
-      }
-    }
-    fetchCategories();
-  }, []);
+  // 카테고리 데이터 로드 (SWR 캐싱)
+  const { data: categories } = useFetch<CategoriesResponse>(
+    "/api/content-categories"
+  );
+
+  // 포인트 데이터 로드 (SWR 캐싱)
+  const { data: homeData } = useFetch<{ user?: { points?: number } }>(
+    "/api/home"
+  );
+  const points = homeData?.user?.points || 50;
 
   // 컨텐츠 데이터 로드
   const fetchContents = useCallback(async () => {
-    setIsLoading(true);
+    setIsContentsLoading(true);
     try {
       const params = new URLSearchParams();
       if (selectedCategory) {
@@ -73,29 +67,13 @@ export default function ContentListPage() {
     } catch (error) {
       console.error("Failed to fetch contents:", error);
     } finally {
-      setIsLoading(false);
+      setIsContentsLoading(false);
     }
   }, [selectedCategory, selectedSubcategory, searchKeyword]);
 
   useEffect(() => {
     fetchContents();
   }, [fetchContents]);
-
-  // 포인트 데이터 로드
-  useEffect(() => {
-    async function fetchPoints() {
-      try {
-        const response = await fetch("/api/home");
-        if (response.ok) {
-          const data = await response.json();
-          setPoints(data.user?.points || 50);
-        }
-      } catch (error) {
-        console.error("Failed to fetch points:", error);
-      }
-    }
-    fetchPoints();
-  }, []);
 
   // 검색 실행
   const handleSearch = () => {
@@ -157,6 +135,11 @@ export default function ContentListPage() {
 
   // 세분류 태그 목록
   const subcategories = selectedCategory?.subcategories || [];
+
+  // 초기 로딩 상태 (카테고리와 컨텐츠 둘 다 로딩 중)
+  if (!categories && isContentsLoading) {
+    return <ContentPageSkeleton />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
@@ -333,9 +316,22 @@ export default function ContentListPage() {
 
       {/* 컨텐츠 리스트 */}
       <div className="px-4 py-4">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <LoadingSpinner size="lg" />
+        {isContentsLoading ? (
+          /* 컨텐츠 로딩 스켈레톤 */
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="bg-white rounded-2xl overflow-hidden animate-pulse"
+              >
+                <div className="h-40 bg-gray-200" />
+                <div className="p-4">
+                  <div className="h-4 bg-gray-200 rounded w-20 mb-2" />
+                  <div className="h-5 bg-gray-200 rounded w-full mb-1" />
+                  <div className="h-5 bg-gray-200 rounded w-3/4" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : contents.length === 0 ? (
           /* 빈 상태 화면 */

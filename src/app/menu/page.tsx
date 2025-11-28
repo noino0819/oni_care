@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { ChevronLeft, Bell, ChevronRight, User } from "lucide-react";
+import { MenuPageSkeleton } from "@/components/ui/LoadingSpinner";
 
 // 아이콘 컴포넌트들
 const NoticeIcon = () => (
@@ -103,11 +104,7 @@ export default function MenuPage() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#9F85E3]"></div>
-      </div>
-    );
+    return <MenuPageSkeleton />;
   }
 
   const quickMenuItems = [

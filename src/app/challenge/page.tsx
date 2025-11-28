@@ -7,7 +7,10 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { Header } from "@/components/home/Header";
 import { BottomNavigation } from "@/components/home/BottomNavigation";
-import { ListSkeleton } from "@/components/ui/LoadingSpinner";
+import {
+  ChallengePageSkeleton,
+  ListSkeleton,
+} from "@/components/ui/LoadingSpinner";
 import { EmptyState } from "@/components/ui/EmptyState";
 import {
   CHALLENGE_FILTER_OPTIONS,
@@ -384,8 +387,28 @@ export default function ChallengePage() {
       {/* 콘텐츠 */}
       <main className="p-4 space-y-6">
         {isLoading ? (
-          // 로딩 스켈레톤
-          <ListSkeleton count={3} />
+          // 로딩 스켈레톤 - 챌린지 카드 형태
+          <div className="space-y-4">
+            <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="bg-white rounded-2xl p-4 shadow-sm animate-pulse"
+              >
+                <div className="flex gap-4">
+                  <div className="w-[100px] h-[100px] bg-gray-200 rounded-xl" />
+                  <div className="flex-1 space-y-3">
+                    <div className="h-5 bg-gray-200 rounded w-3/4" />
+                    <div className="flex gap-2">
+                      <div className="h-5 bg-gray-200 rounded-full w-20" />
+                      <div className="h-5 bg-gray-200 rounded-full w-16" />
+                    </div>
+                    <div className="h-10 bg-gray-200 rounded-xl" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         ) : challenges.length === 0 ? (
           // 빈 상태
           <ChallengeEmptyState
