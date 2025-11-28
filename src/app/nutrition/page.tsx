@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight, ChevronDown, Star, Info, Plus, Check, Salad } from "lucide-react";
+import { ChevronRight, ChevronDown, Star, Info, Plus, Check, Salad } from "lucide-react";
+import { Header } from "@/components/home/Header";
 import { BottomNavigation } from "@/components/home/BottomNavigation";
 import { cn } from "@/lib/utils";
 
@@ -180,29 +181,12 @@ export default function NutritionPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-28">
-      {/* 헤더 */}
-      <header className="sticky top-0 bg-white z-20 border-b border-gray-100">
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-2">
-            <span className="text-lg font-bold text-[#7B9B5C]">GREATING</span>
-            <span className="text-lg font-light text-[#7B9B5C]">Care</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-full">
-              <span className="text-xs font-medium text-[#9F85E3]">P</span>
-              <span className="text-xs font-medium">{nutritionData?.user.points || 0}Point</span>
-            </div>
-            <button
-              onClick={() => router.push("/menu")}
-              className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
-            >
-              <div className="w-5 h-5 rounded-full bg-gray-300" />
-            </button>
-          </div>
-        </div>
+      {/* 공통 헤더 */}
+      <Header points={nutritionData?.user.points || 0} />
 
-        {/* 탭 */}
-        <div className="flex border-b border-gray-100">
+      {/* 탭 네비게이션 */}
+      <div className="sticky top-[56px] z-10 bg-white border-b border-gray-100">
+        <div className="flex">
           <button
             onClick={() => setActiveTab("meal")}
             className={cn(
@@ -228,7 +212,7 @@ export default function NutritionPage() {
             )}
           </button>
         </div>
-      </header>
+      </div>
 
       {activeTab === "meal" ? (
         <div className="space-y-4 pt-4">

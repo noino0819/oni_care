@@ -5,6 +5,8 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { Header } from "@/components/home/Header";
+import { BottomNavigation } from "@/components/home/BottomNavigation";
 import { ListSkeleton } from "@/components/ui/LoadingSpinner";
 import { EmptyState } from "@/components/ui/EmptyState";
 import {
@@ -324,9 +326,12 @@ export default function ChallengePage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
-      {/* 헤더 */}
-      <header className="sticky top-0 z-40 bg-white border-b border-gray-100">
-        <div className="flex items-center justify-between px-4 h-14">
+      {/* 공통 헤더 */}
+      <Header />
+
+      {/* 서브 헤더 (제목 + 필터) */}
+      <div className="sticky top-[56px] z-40 bg-white border-b border-gray-100">
+        <div className="flex items-center justify-between px-4 h-12">
           <h1 className="text-lg font-bold text-gray-900">챌린지</h1>
 
           {/* 필터 드롭다운 */}
@@ -374,7 +379,7 @@ export default function ChallengePage() {
             )}
           </div>
         </div>
-      </header>
+      </div>
 
       {/* 콘텐츠 */}
       <main className="p-4 space-y-6">
@@ -432,6 +437,8 @@ export default function ChallengePage() {
           </>
         )}
       </main>
+
+      <BottomNavigation />
     </div>
   );
 }
