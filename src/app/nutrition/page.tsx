@@ -1593,7 +1593,7 @@ function SupplementRecommendationSection({
           {/* 추천 상품 */}
           {recommendedProducts.length > 0 && (
             <div className="overflow-x-auto scrollbar-hide -mx-2 px-2">
-              <div className="flex gap-3 pb-2">
+              <div className="flex gap-3 pb-2 items-start">
                 {recommendedProducts.map((product) => (
                   <button
                     key={product.id}
@@ -1611,7 +1611,7 @@ function SupplementRecommendationSection({
                         <span className="text-4xl">📦</span>
                       )}
                     </div>
-                    <p className="text-xs font-medium text-gray-800 line-clamp-2">
+                    <p className="text-xs font-medium text-gray-800 line-clamp-2 h-8">
                       {product.name}
                     </p>
                   </button>
@@ -1645,7 +1645,7 @@ function SupplementRecommendationSection({
             </h3>
 
             <div className="overflow-x-auto scrollbar-hide -mx-2 px-2">
-              <div className="flex gap-3 pb-2">
+              <div className="flex gap-3 pb-2 items-start">
                 {popularProducts.map((product) => (
                   <button
                     key={product.id}
@@ -1663,7 +1663,7 @@ function SupplementRecommendationSection({
                         <span className="text-4xl">📦</span>
                       )}
                     </div>
-                    <p className="text-xs font-medium text-gray-800 line-clamp-2">
+                    <p className="text-xs font-medium text-gray-800 line-clamp-2 h-8">
                       {product.name}
                     </p>
                   </button>
