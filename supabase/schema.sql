@@ -124,10 +124,38 @@ CREATE TABLE IF NOT EXISTS public.meals (
   carbs DECIMAL(5, 2),
   protein DECIMAL(5, 2),
   fat DECIMAL(5, 2),
+  fiber DECIMAL(5, 2) DEFAULT 0,
+  sodium DECIMAL(8, 2) DEFAULT 0,
+  sugar DECIMAL(5, 2) DEFAULT 0,
+  saturated_fat DECIMAL(5, 2) DEFAULT 0,
+  cholesterol DECIMAL(8, 2) DEFAULT 0,
   serving_size TEXT,
   meal_date DATE DEFAULT CURRENT_DATE,
+  is_skipped BOOLEAN DEFAULT false,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- 끼니별 안먹음/기록 상태 테이블
+CREATE TABLE IF NOT EXISTS public.meal_status (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  meal_date DATE DEFAULT CURRENT_DATE NOT NULL,
+  meal_type TEXT CHECK (meal_type IN ('breakfast', 'lunch', 'dinner', 'snack')) NOT NULL,
+  status TEXT CHECK (status IN ('not_recorded', 'recorded', 'skipped')) DEFAULT 'not_recorded',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(user_id, meal_date, meal_type)
+);
+
+ALTER TABLE public.meal_status ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view own meal status" ON public.meal_status;
+DROP POLICY IF EXISTS "Users can insert own meal status" ON public.meal_status;
+DROP POLICY IF EXISTS "Users can update own meal status" ON public.meal_status;
+
+CREATE POLICY "Users can view own meal status" ON public.meal_status FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own meal status" ON public.meal_status FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own meal status" ON public.meal_status FOR UPDATE USING (auth.uid() = user_id);
 
 ALTER TABLE public.meals ENABLE ROW LEVEL SECURITY;
 
@@ -150,6 +178,12 @@ CREATE TABLE IF NOT EXISTS public.nutrition_logs (
   total_carbs DECIMAL(5, 2) DEFAULT 0,
   total_protein DECIMAL(5, 2) DEFAULT 0,
   total_fat DECIMAL(5, 2) DEFAULT 0,
+  total_fiber DECIMAL(5, 2) DEFAULT 0,
+  total_sodium DECIMAL(8, 2) DEFAULT 0,
+  total_sugar DECIMAL(5, 2) DEFAULT 0,
+  total_saturated_fat DECIMAL(5, 2) DEFAULT 0,
+  total_cholesterol DECIMAL(8, 2) DEFAULT 0,
+  burned_calories INTEGER DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE(user_id, log_date)
@@ -196,7 +230,10 @@ CREATE TABLE IF NOT EXISTS public.nutrition_diagnosis (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   diagnosis_date DATE DEFAULT CURRENT_DATE,
+  eat_score INTEGER,
   overall_score INTEGER,
+  recommended_calories INTEGER,
+  basal_metabolic_rate INTEGER,
   recommendations TEXT[],
   warning_nutrients TEXT[],
   diagnosis_type TEXT,
@@ -211,6 +248,53 @@ DROP POLICY IF EXISTS "Users can insert own diagnosis" ON public.nutrition_diagn
 
 CREATE POLICY "Users can view own diagnosis" ON public.nutrition_diagnosis FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can insert own diagnosis" ON public.nutrition_diagnosis FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- 영양제 루틴 테이블
+CREATE TABLE IF NOT EXISTS public.supplement_routines (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  name TEXT NOT NULL,
+  dosage TEXT,
+  time_slot TEXT CHECK (time_slot IN ('morning', 'lunch', 'dinner', 'before_sleep')) NOT NULL,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE public.supplement_routines ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view own supplement routines" ON public.supplement_routines;
+DROP POLICY IF EXISTS "Users can insert own supplement routines" ON public.supplement_routines;
+DROP POLICY IF EXISTS "Users can update own supplement routines" ON public.supplement_routines;
+DROP POLICY IF EXISTS "Users can delete own supplement routines" ON public.supplement_routines;
+
+CREATE POLICY "Users can view own supplement routines" ON public.supplement_routines FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own supplement routines" ON public.supplement_routines FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own supplement routines" ON public.supplement_routines FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own supplement routines" ON public.supplement_routines FOR DELETE USING (auth.uid() = user_id);
+
+-- 영양제 섭취 기록 테이블
+CREATE TABLE IF NOT EXISTS public.supplement_logs (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  routine_id UUID REFERENCES public.supplement_routines(id) ON DELETE CASCADE,
+  log_date DATE DEFAULT CURRENT_DATE NOT NULL,
+  is_taken BOOLEAN DEFAULT false,
+  taken_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(user_id, routine_id, log_date)
+);
+
+ALTER TABLE public.supplement_logs ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view own supplement logs" ON public.supplement_logs;
+DROP POLICY IF EXISTS "Users can insert own supplement logs" ON public.supplement_logs;
+DROP POLICY IF EXISTS "Users can update own supplement logs" ON public.supplement_logs;
+
+CREATE POLICY "Users can view own supplement logs" ON public.supplement_logs FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own supplement logs" ON public.supplement_logs FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own supplement logs" ON public.supplement_logs FOR UPDATE USING (auth.uid() = user_id);
 
 
 -- ============================================
@@ -947,6 +1031,9 @@ CREATE INDEX IF NOT EXISTS idx_phone_verifications_expires ON public.phone_verif
 -- 영양 관련
 CREATE INDEX IF NOT EXISTS idx_meals_user_id ON public.meals(user_id);
 CREATE INDEX IF NOT EXISTS idx_meals_meal_date ON public.meals(meal_date);
+CREATE INDEX IF NOT EXISTS idx_meals_meal_type ON public.meals(meal_type);
+CREATE INDEX IF NOT EXISTS idx_meal_status_user_id ON public.meal_status(user_id);
+CREATE INDEX IF NOT EXISTS idx_meal_status_date ON public.meal_status(meal_date);
 CREATE INDEX IF NOT EXISTS idx_nutrition_logs_user_id ON public.nutrition_logs(user_id);
 CREATE INDEX IF NOT EXISTS idx_nutrition_logs_date ON public.nutrition_logs(log_date);
 CREATE INDEX IF NOT EXISTS idx_user_health_goals_user_id ON public.user_health_goals(user_id);
@@ -955,6 +1042,9 @@ CREATE INDEX IF NOT EXISTS idx_nutrition_status_date ON public.nutrition_status(
 CREATE INDEX IF NOT EXISTS idx_step_records_user_id ON public.step_records(user_id);
 CREATE INDEX IF NOT EXISTS idx_step_records_date ON public.step_records(record_date);
 CREATE INDEX IF NOT EXISTS idx_nutrition_diagnosis_user_id ON public.nutrition_diagnosis(user_id);
+CREATE INDEX IF NOT EXISTS idx_supplement_routines_user_id ON public.supplement_routines(user_id);
+CREATE INDEX IF NOT EXISTS idx_supplement_logs_user_id ON public.supplement_logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_supplement_logs_date ON public.supplement_logs(log_date);
 
 -- 컨텐츠 관련
 CREATE INDEX IF NOT EXISTS idx_contents_category_id ON public.contents(category_id);
@@ -1022,9 +1112,15 @@ CREATE TRIGGER update_inquiries_updated_at BEFORE UPDATE ON public.inquiries FOR
 
 DROP TRIGGER IF EXISTS update_coupons_updated_at ON public.coupons;
 DROP TRIGGER IF EXISTS update_linked_accounts_updated_at ON public.linked_accounts;
+DROP TRIGGER IF EXISTS update_meal_status_updated_at ON public.meal_status;
+DROP TRIGGER IF EXISTS update_supplement_routines_updated_at ON public.supplement_routines;
+DROP TRIGGER IF EXISTS update_supplement_logs_updated_at ON public.supplement_logs;
 
 CREATE TRIGGER update_coupons_updated_at BEFORE UPDATE ON public.coupons FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_linked_accounts_updated_at BEFORE UPDATE ON public.linked_accounts FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_meal_status_updated_at BEFORE UPDATE ON public.meal_status FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_supplement_routines_updated_at BEFORE UPDATE ON public.supplement_routines FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_supplement_logs_updated_at BEFORE UPDATE ON public.supplement_logs FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 
 -- ============================================

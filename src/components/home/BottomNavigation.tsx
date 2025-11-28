@@ -291,7 +291,11 @@ export function BottomNavigation() {
   ];
 
   const isHomeActive = pathname === "/home";
-  const isMealActive = pathname === "/record" || pathname === "/meal-record";
+  const isMealActive =
+    pathname === "/nutrition" ||
+    pathname.startsWith("/nutrition/") ||
+    pathname === "/record" ||
+    pathname === "/meal-record";
   const isSupplementActive =
     pathname === "/supplement" || pathname === "/supplement-record";
   const isMenuPageActive =
@@ -362,7 +366,7 @@ export function BottomNavigation() {
 
           {/* 식사 */}
           <Link
-            href="/record"
+            href="/nutrition"
             className="flex flex-col items-center justify-center flex-1 pt-2"
           >
             <NavMealIcon
@@ -378,7 +382,7 @@ export function BottomNavigation() {
                 isMealActive ? "text-[#9F85E3]" : "text-gray-500"
               )}
             >
-              식사
+              영양
             </span>
           </Link>
 
