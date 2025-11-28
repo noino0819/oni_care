@@ -997,7 +997,7 @@ function SupplementTab() {
 function TodayMenuTab({ selectedDate }: { selectedDate: Date }) {
   const router = useRouter();
   const [selectedMealType, setSelectedMealType] = useState<
-    "breakfast" | "lunch" | "dinner" | "snack"
+    "breakfast" | "lunch" | "dinner"
   >("lunch");
   const [menus, setMenus] = useState<
     {
@@ -1006,6 +1006,13 @@ function TodayMenuTab({ selectedDate }: { selectedDate: Date }) {
       menuName: string;
       calories: number;
       image?: string;
+      foods: {
+        name: string;
+        calories: number;
+        carbs: number;
+        protein: number;
+        fat: number;
+      }[];
     }[]
   >([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -1029,35 +1036,415 @@ function TodayMenuTab({ selectedDate }: { selectedDate: Date }) {
     const fetchMenus = async () => {
       setIsLoading(true);
       try {
-        // TODO: 실제 API 호출로 대체
+        // ============================================================
+        // [실제 구현] 외부 위즈(WIZ) API에서 사업장 메뉴 데이터 조회
+        // ============================================================
+        /*
+        const dateStr = selectedDate.toISOString().split("T")[0];
+        const response = await fetch(`/api/external/wiz/menus?date=${dateStr}&mealType=${selectedMealType}&businessCode=${businessCode}`);
+        
+        if (response.ok) {
+          const data = await response.json();
+          // 외부 API 응답 형태:
+          // {
+          //   menus: [
+          //     {
+          //       id: "menu_001",
+          //       cornerName: "A코너",
+          //       menuName: "매콤순대볶음",
+          //       calories: 945,
+          //       image: "https://wiz-cdn.example.com/images/menu001.jpg",
+          //       foods: [
+          //         { name: "순대볶음", calories: 650, carbs: 45, protein: 20, fat: 35 },
+          //         { name: "밥", calories: 295, carbs: 65, protein: 5, fat: 0.5 }
+          //       ]
+          //     },
+          //     ...
+          //   ]
+          // }
+          setMenus(data.menus);
+        }
+        */
+
+        // ============================================================
+        // [테스트용] 하드코딩된 메뉴 데이터
+        // ============================================================
         await new Promise((resolve) => setTimeout(resolve, 300));
 
-        // 샘플 데이터
-        setMenus([
-          {
-            id: "1",
-            cornerName: "A코너",
-            menuName: "매콤순대볶음",
-            calories: 945,
-            image: "/images/meal-order-01.jpg",
-          },
-          {
-            id: "2",
-            cornerName: "B코너",
-            menuName: "황태콩나물 해장국",
-            calories: 860,
-            image: "/images/meal-order-02.jpg",
-          },
-          {
-            id: "3",
-            cornerName: "C코너",
-            menuName: "유니짜장면",
-            calories: 1110,
-            image: undefined,
-          },
-        ]);
+        // 끼니별 다른 메뉴 데이터
+        const menusByMealType: Record<string, typeof menus> = {
+          breakfast: [
+            {
+              id: "b1",
+              cornerName: "A코너",
+              menuName: "된장찌개 정식",
+              calories: 520,
+              image: undefined,
+              foods: [
+                {
+                  name: "된장찌개",
+                  calories: 150,
+                  carbs: 10,
+                  protein: 8,
+                  fat: 6,
+                },
+                {
+                  name: "현미밥",
+                  calories: 200,
+                  carbs: 40,
+                  protein: 5,
+                  fat: 1,
+                },
+                {
+                  name: "계란후라이",
+                  calories: 100,
+                  carbs: 1,
+                  protein: 7,
+                  fat: 8,
+                },
+                { name: "김치", calories: 20, carbs: 3, protein: 1, fat: 0.3 },
+                {
+                  name: "깍두기",
+                  calories: 15,
+                  carbs: 3,
+                  protein: 0.5,
+                  fat: 0.1,
+                },
+                {
+                  name: "콩나물무침",
+                  calories: 35,
+                  carbs: 4,
+                  protein: 3,
+                  fat: 1,
+                },
+              ],
+            },
+            {
+              id: "b2",
+              cornerName: "B코너",
+              menuName: "토스트 & 샐러드",
+              calories: 380,
+              image: undefined,
+              foods: [
+                {
+                  name: "통밀토스트",
+                  calories: 180,
+                  carbs: 30,
+                  protein: 6,
+                  fat: 4,
+                },
+                {
+                  name: "그린샐러드",
+                  calories: 80,
+                  carbs: 8,
+                  protein: 2,
+                  fat: 5,
+                },
+                {
+                  name: "삶은달걀",
+                  calories: 70,
+                  carbs: 0.5,
+                  protein: 6,
+                  fat: 5,
+                },
+                { name: "요거트", calories: 50, carbs: 8, protein: 4, fat: 1 },
+              ],
+            },
+            {
+              id: "b3",
+              cornerName: "C코너",
+              menuName: "죽 정식",
+              calories: 320,
+              image: undefined,
+              foods: [
+                {
+                  name: "전복죽",
+                  calories: 250,
+                  carbs: 35,
+                  protein: 10,
+                  fat: 5,
+                },
+                {
+                  name: "동치미",
+                  calories: 20,
+                  carbs: 4,
+                  protein: 0.5,
+                  fat: 0.1,
+                },
+                {
+                  name: "깻잎장아찌",
+                  calories: 30,
+                  carbs: 5,
+                  protein: 1,
+                  fat: 0.5,
+                },
+                {
+                  name: "멸치볶음",
+                  calories: 20,
+                  carbs: 2,
+                  protein: 3,
+                  fat: 1,
+                },
+              ],
+            },
+          ],
+          lunch: [
+            {
+              id: "l1",
+              cornerName: "A코너",
+              menuName: "매콤순대볶음",
+              calories: 945,
+              image: undefined,
+              foods: [
+                {
+                  name: "순대볶음",
+                  calories: 450,
+                  carbs: 30,
+                  protein: 18,
+                  fat: 28,
+                },
+                {
+                  name: "공기밥",
+                  calories: 300,
+                  carbs: 65,
+                  protein: 5,
+                  fat: 0.5,
+                },
+                { name: "된장국", calories: 80, carbs: 6, protein: 5, fat: 3 },
+                { name: "김치", calories: 20, carbs: 3, protein: 1, fat: 0.3 },
+                {
+                  name: "단무지",
+                  calories: 15,
+                  carbs: 3,
+                  protein: 0.3,
+                  fat: 0,
+                },
+                {
+                  name: "콩나물무침",
+                  calories: 35,
+                  carbs: 4,
+                  protein: 3,
+                  fat: 1,
+                },
+                { name: "계란찜", calories: 45, carbs: 1, protein: 4, fat: 3 },
+              ],
+            },
+            {
+              id: "l2",
+              cornerName: "B코너",
+              menuName: "황태콩나물 해장국",
+              calories: 860,
+              image: undefined,
+              foods: [
+                {
+                  name: "황태해장국",
+                  calories: 350,
+                  carbs: 15,
+                  protein: 25,
+                  fat: 18,
+                },
+                {
+                  name: "공기밥",
+                  calories: 300,
+                  carbs: 65,
+                  protein: 5,
+                  fat: 0.5,
+                },
+                { name: "김치", calories: 20, carbs: 3, protein: 1, fat: 0.3 },
+                {
+                  name: "깍두기",
+                  calories: 15,
+                  carbs: 3,
+                  protein: 0.5,
+                  fat: 0.1,
+                },
+                {
+                  name: "멸치볶음",
+                  calories: 30,
+                  carbs: 2,
+                  protein: 4,
+                  fat: 1.5,
+                },
+                {
+                  name: "시금치나물",
+                  calories: 25,
+                  carbs: 3,
+                  protein: 2,
+                  fat: 1,
+                },
+                {
+                  name: "두부조림",
+                  calories: 80,
+                  carbs: 5,
+                  protein: 6,
+                  fat: 4,
+                },
+                {
+                  name: "오이소박이",
+                  calories: 20,
+                  carbs: 4,
+                  protein: 0.5,
+                  fat: 0.1,
+                },
+                {
+                  name: "어묵볶음",
+                  calories: 20,
+                  carbs: 3,
+                  protein: 2,
+                  fat: 0.5,
+                },
+              ],
+            },
+            {
+              id: "l3",
+              cornerName: "C코너",
+              menuName: "유니짜장면",
+              calories: 780,
+              image: undefined,
+              foods: [
+                {
+                  name: "짜장면",
+                  calories: 650,
+                  carbs: 90,
+                  protein: 15,
+                  fat: 20,
+                },
+                {
+                  name: "단무지",
+                  calories: 20,
+                  carbs: 4,
+                  protein: 0.3,
+                  fat: 0,
+                },
+                {
+                  name: "양파절임",
+                  calories: 15,
+                  carbs: 3,
+                  protein: 0.3,
+                  fat: 0,
+                },
+                { name: "군만두", calories: 95, carbs: 12, protein: 4, fat: 4 },
+              ],
+            },
+          ],
+          dinner: [
+            {
+              id: "d1",
+              cornerName: "A코너",
+              menuName: "삼겹살 정식",
+              calories: 1050,
+              image: undefined,
+              foods: [
+                {
+                  name: "삼겹살구이",
+                  calories: 550,
+                  carbs: 0,
+                  protein: 25,
+                  fat: 50,
+                },
+                {
+                  name: "공기밥",
+                  calories: 300,
+                  carbs: 65,
+                  protein: 5,
+                  fat: 0.5,
+                },
+                {
+                  name: "된장찌개",
+                  calories: 100,
+                  carbs: 8,
+                  protein: 6,
+                  fat: 4,
+                },
+                {
+                  name: "쌈채소",
+                  calories: 20,
+                  carbs: 4,
+                  protein: 1,
+                  fat: 0.2,
+                },
+                { name: "쌈장", calories: 30, carbs: 5, protein: 1, fat: 1 },
+                { name: "김치", calories: 20, carbs: 3, protein: 1, fat: 0.3 },
+                { name: "파절이", calories: 30, carbs: 5, protein: 1, fat: 1 },
+              ],
+            },
+            {
+              id: "d2",
+              cornerName: "B코너",
+              menuName: "생선구이 정식",
+              calories: 680,
+              image: undefined,
+              foods: [
+                {
+                  name: "고등어구이",
+                  calories: 250,
+                  carbs: 0,
+                  protein: 22,
+                  fat: 18,
+                },
+                {
+                  name: "현미밥",
+                  calories: 200,
+                  carbs: 40,
+                  protein: 5,
+                  fat: 1,
+                },
+                { name: "미역국", calories: 80, carbs: 5, protein: 3, fat: 2 },
+                { name: "김치", calories: 20, carbs: 3, protein: 1, fat: 0.3 },
+                {
+                  name: "무생채",
+                  calories: 30,
+                  carbs: 6,
+                  protein: 0.5,
+                  fat: 0.2,
+                },
+                { name: "콩자반", calories: 50, carbs: 8, protein: 3, fat: 1 },
+                {
+                  name: "시금치무침",
+                  calories: 30,
+                  carbs: 3,
+                  protein: 2,
+                  fat: 1.5,
+                },
+                {
+                  name: "계란말이",
+                  calories: 20,
+                  carbs: 1,
+                  protein: 2,
+                  fat: 1,
+                },
+              ],
+            },
+            {
+              id: "d3",
+              cornerName: "C코너",
+              menuName: "비빔밥",
+              calories: 620,
+              image: undefined,
+              foods: [
+                {
+                  name: "비빔밥",
+                  calories: 550,
+                  carbs: 75,
+                  protein: 15,
+                  fat: 18,
+                },
+                {
+                  name: "계란후라이",
+                  calories: 70,
+                  carbs: 0.5,
+                  protein: 5,
+                  fat: 5,
+                },
+              ],
+            },
+          ],
+        };
+
+        setMenus(menusByMealType[selectedMealType] || []);
       } catch (error) {
         console.error(error);
+        setMenus([]);
       } finally {
         setIsLoading(false);
       }
@@ -1070,8 +1457,49 @@ function TodayMenuTab({ selectedDate }: { selectedDate: Date }) {
     { value: "breakfast", label: "아침" },
     { value: "lunch", label: "점심" },
     { value: "dinner", label: "저녁" },
-    { value: "snack", label: "야식" },
   ];
+
+  // 식사 기록하기 - 해당 메뉴의 음식들을 자동으로 기록
+  const handleRecordMeal = async (menu: (typeof menus)[0]) => {
+    try {
+      const dateStr = selectedDate.toISOString().split("T")[0];
+      const response = await fetch("/api/nutrition/meals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mealType: selectedMealType,
+          mealDate: dateStr,
+          foods: menu.foods.map((f) => ({
+            name: f.name,
+            calories: f.calories,
+            carbs: f.carbs,
+            protein: f.protein,
+            fat: f.fat,
+            servingSize: "1인분",
+          })),
+        }),
+      });
+
+      if (response.ok) {
+        alert(`${menu.menuName} 기록이 완료되었습니다!`);
+        router.push("/nutrition");
+      } else {
+        // 로그인 필요 등의 에러
+        router.push(
+          `/nutrition/meal/${selectedMealType}?date=${
+            selectedDate.toISOString().split("T")[0]
+          }`
+        );
+      }
+    } catch (error) {
+      console.error("Meal record error:", error);
+      router.push(
+        `/nutrition/meal/${selectedMealType}?date=${
+          selectedDate.toISOString().split("T")[0]
+        }`
+      );
+    }
+  };
 
   if (isLoading) {
     return (
@@ -1092,10 +1520,10 @@ function TodayMenuTab({ selectedDate }: { selectedDate: Date }) {
               setSelectedMealType(meal.value as typeof selectedMealType)
             }
             className={cn(
-              "flex-1 py-2 rounded-lg text-sm font-medium transition-colors",
+              "flex-1 py-3 rounded-xl text-sm font-medium transition-colors",
               selectedMealType === meal.value
-                ? "bg-[#7B9B5C] text-white"
-                : "bg-gray-100 text-gray-600"
+                ? "bg-[#7B9B5C] text-white shadow-md"
+                : "bg-white text-gray-600 border border-gray-200"
             )}
           >
             {meal.label}
@@ -1104,13 +1532,14 @@ function TodayMenuTab({ selectedDate }: { selectedDate: Date }) {
       </div>
 
       {/* 메뉴 목록 */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="space-y-3">
         {menus.map((menu) => (
           <div
             key={menu.id}
-            className="bg-white rounded-xl shadow-sm overflow-hidden"
+            className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100"
           >
-            <div className="aspect-square bg-gray-100 relative">
+            {/* 메뉴 이미지 영역 */}
+            <div className="h-32 bg-gradient-to-br from-[#F5F5DC] to-[#E8E8D0] relative flex items-center justify-center">
               {menu.image ? (
                 <img
                   src={menu.image}
@@ -1118,29 +1547,53 @@ function TodayMenuTab({ selectedDate }: { selectedDate: Date }) {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400">
+                <div className="text-center">
                   <span className="text-4xl">🍽️</span>
+                  <p className="text-[#7B9B5C] text-xs mt-1 font-medium">
+                    {menu.cornerName}
+                  </p>
                 </div>
               )}
             </div>
-            <div className="p-3">
-              <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
-                <span>{menu.cornerName}</span>
-                <span>{menu.calories}kcal</span>
+
+            {/* 메뉴 정보 */}
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-medium text-[#7B9B5C] bg-[#7B9B5C]/10 px-2 py-1 rounded-full">
+                  {menu.cornerName}
+                </span>
+                <span className="text-sm font-bold text-orange-500">
+                  {menu.calories}kcal
+                </span>
               </div>
-              <p className="font-medium text-gray-800 text-sm mb-2">
+
+              <h3 className="font-bold text-gray-800 text-lg mb-3">
                 {menu.menuName}
-              </p>
+              </h3>
+
+              {/* 구성 음식 목록 */}
+              <div className="flex flex-wrap gap-1 mb-4">
+                {menu.foods.slice(0, 5).map((food, idx) => (
+                  <span
+                    key={idx}
+                    className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded"
+                  >
+                    {food.name}
+                  </span>
+                ))}
+                {menu.foods.length > 5 && (
+                  <span className="text-xs text-gray-400">
+                    외 {menu.foods.length - 5}개
+                  </span>
+                )}
+              </div>
+
+              {/* 식사기록 버튼 */}
               <button
-                onClick={() => {
-                  // 해당 메뉴로 식사 기록 페이지 이동
-                  router.push(
-                    `/nutrition/meal/${selectedMealType}?menu=${menu.id}`
-                  );
-                }}
-                className="w-full py-2 bg-gray-100 rounded-lg text-sm font-medium text-gray-700"
+                onClick={() => handleRecordMeal(menu)}
+                className="w-full py-3 bg-[#7B9B5C] hover:bg-[#6A8A4B] text-white rounded-xl text-sm font-bold transition-colors"
               >
-                식사기록
+                🍴 식사기록
               </button>
             </div>
           </div>
@@ -1149,7 +1602,7 @@ function TodayMenuTab({ selectedDate }: { selectedDate: Date }) {
 
       {menus.length === 0 && (
         <div className="bg-white rounded-2xl p-8 shadow-sm text-center">
-          <div className="text-4xl mb-4">🍽️</div>
+          <div className="text-6xl mb-4">🍽️</div>
           <h3 className="text-lg font-semibold text-gray-800 mb-2">
             등록된 메뉴가 없어요
           </h3>
