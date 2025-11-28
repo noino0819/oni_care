@@ -1,0 +1,452 @@
+"use client";
+
+import { useEffect, useRef, ReactNode } from "react";
+import { X } from "lucide-react";
+
+interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title?: string;
+  children: ReactNode;
+  showCloseButton?: boolean;
+  size?: "sm" | "md" | "lg" | "full";
+}
+
+export function Modal({
+  isOpen,
+  onClose,
+  title,
+  children,
+  showCloseButton = true,
+  size = "md",
+}: ModalProps) {
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+
+    if (isOpen) {
+      document.addEventListener("keydown", handleEscape);
+      document.body.style.overflow = "hidden";
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  const sizeClasses = {
+    sm: "max-w-sm",
+    md: "max-w-md",
+    lg: "max-w-lg",
+    full: "max-w-[calc(100%-32px)] w-full",
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/50 animate-fade-in"
+        onClick={onClose}
+      />
+
+      {/* Modal */}
+      <div
+        ref={modalRef}
+        className={`relative bg-white rounded-2xl ${sizeClasses[size]} w-full mx-4 animate-slide-up`}
+      >
+        {/* Header */}
+        {(title || showCloseButton) && (
+          <div className="flex items-center justify-between p-4 border-b border-gray-100">
+            {title && (
+              <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+            )}
+            {showCloseButton && (
+              <button
+                onClick={onClose}
+                className="p-1 text-gray-400 hover:text-gray-600 transition-colors ml-auto"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Content */}
+        <div className="p-4">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+// 확인/취소 버튼이 있는 팝업
+interface ConfirmModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title?: string;
+  message: string | ReactNode;
+  confirmText?: string;
+  cancelText?: string;
+  confirmVariant?: "primary" | "danger";
+  showCancel?: boolean;
+}
+
+export function ConfirmModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  title,
+  message,
+  confirmText = "확인",
+  cancelText = "취소",
+  confirmVariant = "primary",
+  showCancel = true,
+}: ConfirmModalProps) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/50 animate-fade-in"
+        onClick={onClose}
+      />
+
+      {/* Modal */}
+      <div className="relative bg-white rounded-2xl max-w-sm w-full mx-4 animate-slide-up">
+        {/* Content */}
+        <div className="p-6 text-center">
+          {title && (
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              {title}
+            </h3>
+          )}
+          <div className="text-gray-600 text-sm leading-relaxed whitespace-pre-line">
+            {message}
+          </div>
+        </div>
+
+        {/* Buttons */}
+        <div className="flex border-t border-gray-100">
+          {showCancel && (
+            <button
+              onClick={onClose}
+              className="flex-1 py-4 text-gray-600 font-medium hover:bg-gray-50 transition-colors border-r border-gray-100"
+            >
+              {cancelText}
+            </button>
+          )}
+          <button
+            onClick={() => {
+              onConfirm();
+              onClose();
+            }}
+            className={`flex-1 py-4 font-medium transition-colors ${
+              confirmVariant === "danger"
+                ? "text-red-500 hover:bg-red-50"
+                : "text-[#9F85E3] hover:bg-purple-50"
+            }`}
+          >
+            {confirmText}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// 하단에서 올라오는 바텀시트 모달
+interface BottomSheetProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title?: string;
+  children: ReactNode;
+  showCloseButton?: boolean;
+}
+
+export function BottomSheet({
+  isOpen,
+  onClose,
+  title,
+  children,
+  showCloseButton = true,
+}: BottomSheetProps) {
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/50 animate-fade-in"
+        onClick={onClose}
+      />
+
+      {/* Sheet */}
+      <div className="relative bg-white rounded-t-3xl w-full max-h-[85vh] animate-slide-up">
+        {/* Handle */}
+        <div className="flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1 bg-gray-300 rounded-full" />
+        </div>
+
+        {/* Header */}
+        {(title || showCloseButton) && (
+          <div className="flex items-center justify-between px-4 py-2">
+            {title && (
+              <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+            )}
+            {showCloseButton && (
+              <button
+                onClick={onClose}
+                className="p-1 text-gray-400 hover:text-gray-600 transition-colors ml-auto"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Content */}
+        <div className="px-4 pb-8 overflow-y-auto max-h-[calc(85vh-80px)]">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// 스크롤 피커 모달
+interface WheelPickerModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  options: { value: string | number; label: string }[];
+  selectedValue: string | number;
+  onSelect: (value: string | number) => void;
+  unit?: string;
+}
+
+export function WheelPickerModal({
+  isOpen,
+  onClose,
+  title,
+  options,
+  selectedValue,
+  onSelect,
+  unit = "",
+}: WheelPickerModalProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const ITEM_HEIGHT = 44;
+  const VISIBLE_ITEMS = 5;
+
+  useEffect(() => {
+    if (isOpen && containerRef.current) {
+      const selectedIndex = options.findIndex(
+        (opt) => opt.value === selectedValue
+      );
+      if (selectedIndex >= 0) {
+        containerRef.current.scrollTop = selectedIndex * ITEM_HEIGHT;
+      }
+    }
+  }, [isOpen, selectedValue, options]);
+
+  const handleScroll = () => {
+    if (containerRef.current) {
+      const scrollTop = containerRef.current.scrollTop;
+      const index = Math.round(scrollTop / ITEM_HEIGHT);
+      const clampedIndex = Math.max(0, Math.min(index, options.length - 1));
+      if (options[clampedIndex]) {
+        onSelect(options[clampedIndex].value);
+      }
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/50 animate-fade-in"
+        onClick={onClose}
+      />
+
+      {/* Sheet */}
+      <div className="relative bg-white rounded-t-3xl w-full animate-slide-up">
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
+          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+          <button
+            onClick={onClose}
+            className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Picker */}
+        <div className="relative h-[220px] overflow-hidden">
+          {/* Selection indicator */}
+          <div className="absolute top-1/2 left-0 right-0 -translate-y-1/2 h-[44px] bg-gray-100 border-y border-gray-200 pointer-events-none z-10" />
+
+          {/* Options */}
+          <div
+            ref={containerRef}
+            className="h-full overflow-y-scroll scrollbar-hide py-[88px]"
+            onScroll={handleScroll}
+            style={{
+              scrollSnapType: "y mandatory",
+            }}
+          >
+            {options.map((option, index) => (
+              <div
+                key={`${option.value}-${index}`}
+                className={`h-[44px] flex items-center justify-center text-lg transition-all scroll-snap-center ${
+                  option.value === selectedValue
+                    ? "text-gray-900 font-semibold"
+                    : "text-gray-400"
+                }`}
+                style={{ scrollSnapAlign: "center" }}
+              >
+                {option.label} {unit}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Confirm Button */}
+        <div className="p-4">
+          <button
+            onClick={onClose}
+            className="w-full py-4 bg-[#9F85E3] text-white font-semibold rounded-xl hover:bg-[#8B71CF] transition-colors"
+          >
+            완 료
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// 다중 선택 바텀시트
+interface MultiSelectBottomSheetProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  options: { value: string; label: string }[];
+  selectedValues: string[];
+  onSelect: (values: string[]) => void;
+  maxSelections?: number;
+}
+
+export function MultiSelectBottomSheet({
+  isOpen,
+  onClose,
+  title,
+  options,
+  selectedValues,
+  onSelect,
+  maxSelections,
+}: MultiSelectBottomSheetProps) {
+  const toggleOption = (value: string) => {
+    if (selectedValues.includes(value)) {
+      onSelect(selectedValues.filter((v) => v !== value));
+    } else if (!maxSelections || selectedValues.length < maxSelections) {
+      onSelect([...selectedValues, value]);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <BottomSheet isOpen={isOpen} onClose={onClose} title={title}>
+      <div className="flex flex-wrap gap-2 mb-6">
+        {options.map((option) => (
+          <button
+            key={option.value}
+            onClick={() => toggleOption(option.value)}
+            className={`px-4 py-2 rounded-full border transition-colors ${
+              selectedValues.includes(option.value)
+                ? "bg-gray-800 text-white border-gray-800"
+                : "bg-white text-gray-600 border-gray-300 hover:border-gray-400"
+            }`}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+
+      <button
+        onClick={onClose}
+        className="w-full py-4 bg-[#9F85E3] text-white font-semibold rounded-xl hover:bg-[#8B71CF] transition-colors"
+      >
+        완 료
+      </button>
+    </BottomSheet>
+  );
+}
+
+// 단일 선택 바텀시트
+interface SingleSelectBottomSheetProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  options: { value: string; label: string }[];
+  selectedValue: string;
+  onSelect: (value: string) => void;
+}
+
+export function SingleSelectBottomSheet({
+  isOpen,
+  onClose,
+  title,
+  options,
+  selectedValue,
+  onSelect,
+}: SingleSelectBottomSheetProps) {
+  if (!isOpen) return null;
+
+  return (
+    <BottomSheet isOpen={isOpen} onClose={onClose} title={title}>
+      <div className="space-y-1 mb-6">
+        {options.map((option) => (
+          <button
+            key={option.value}
+            onClick={() => {
+              onSelect(option.value);
+            }}
+            className={`w-full px-4 py-3 text-left rounded-xl transition-colors ${
+              selectedValue === option.value
+                ? "bg-gray-100 text-gray-900 font-semibold"
+                : "text-gray-500 hover:bg-gray-50"
+            }`}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+
+      <button
+        onClick={onClose}
+        className="w-full py-4 bg-[#9F85E3] text-white font-semibold rounded-xl hover:bg-[#8B71CF] transition-colors"
+      >
+        완 료
+      </button>
+    </BottomSheet>
+  );
+}
+
