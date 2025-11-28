@@ -32,27 +32,36 @@ export default function NutritionAnalysisPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: 실제 API 호출로 대체
-    setIsLoading(true);
-    setTimeout(() => {
-      setAnalysisData({
-        dailyCalories: {
-          consumed: 1528,
-          target: 2100,
-          burned: 72,
-        },
-        nutrients: [
-          { name: "carbs", nameKo: "탄수화물", status: "excessive", value: 126, min: 200, max: 300, unit: "g" },
-          { name: "protein", nameKo: "단백질", status: "adequate", value: 47, min: 50, max: 80, unit: "g" },
-          { name: "fat", nameKo: "지방", status: "deficient", value: 5, min: 40, max: 70, unit: "g" },
-          { name: "sodium", nameKo: "나트륨", status: "deficient", value: 2600, min: 1500, max: 2300, unit: "mg" },
-          { name: "sugar", nameKo: "당류", status: "deficient", value: 5, min: 25, max: 50, unit: "g" },
-          { name: "saturatedFat", nameKo: "포화지방", status: "deficient", value: 5, min: 15, max: 22, unit: "g" },
-          { name: "cholesterol", nameKo: "콜레스테롤", status: "deficient", value: 5, min: 200, max: 300, unit: "mg" },
-        ],
-      });
-      setIsLoading(false);
-    }, 300);
+    const fetchAnalysisData = async () => {
+      setIsLoading(true);
+      try {
+        const dateStr = selectedDate.toISOString().split("T")[0];
+        const response = await fetch(
+          `/api/nutrition/analysis?date=${dateStr}&period=${analysisPeriod}`
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          setAnalysisData(data);
+        } else {
+          // API 실패 시 빈 데이터
+          setAnalysisData({
+            dailyCalories: { consumed: 0, target: 2100, burned: 0 },
+            nutrients: [],
+          });
+        }
+      } catch (error) {
+        console.error("Analysis data fetch error:", error);
+        setAnalysisData({
+          dailyCalories: { consumed: 0, target: 2100, burned: 0 },
+          nutrients: [],
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAnalysisData();
   }, [selectedDate, analysisPeriod]);
 
   const formatDate = (date: Date) => {

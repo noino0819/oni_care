@@ -363,21 +363,53 @@ export default function NutritionPage() {
                 식사분석
               </h3>
 
-              {nutritionData?.hasNutritionDiagnosis && guidance ? (
+              {nutritionData?.hasNutritionDiagnosis ? (
                 <>
-                  <p className="text-sm text-gray-700 mb-3">
-                    <span className="font-medium">
-                      {nutritionData.user.name}님
-                    </span>{" "}
-                    <span className="text-[#7B9B5C] font-medium">
-                      {guidance.disease}
-                    </span>{" "}
-                    관리를 위해{" "}
-                    <span className="text-[#7B9B5C] font-medium">
-                      {guidance.nutrients.join(", ")}
-                    </span>{" "}
-                    섭취를 특별히 주의해야해요!
-                  </p>
+                  {/* 잇스코어 표시 */}
+                  <div className="flex items-center gap-2 mb-3">
+                    <Star className="w-5 h-5 text-[#7B9B5C] fill-[#7B9B5C]" />
+                    <span className="text-lg font-bold">
+                      나의 잇스코어 점수는{" "}
+                      <span className="text-[#7B9B5C]">
+                        {nutritionData.eatScore || 0}점
+                      </span>
+                    </span>
+                  </div>
+
+                  {/* 질병 기반 안내 메시지 */}
+                  {guidance && (
+                    <p className="text-sm text-gray-700 mb-3">
+                      <span className="font-medium">
+                        {nutritionData.user.name}님
+                      </span>{" "}
+                      <span className="text-[#7B9B5C] font-medium">
+                        {guidance.disease}
+                      </span>{" "}
+                      관리를 위해{" "}
+                      <span className="text-[#7B9B5C] font-medium">
+                        {guidance.nutrients.join(", ")}
+                      </span>{" "}
+                      섭취를 특별히 주의해야해요!
+                    </p>
+                  )}
+
+                  {/* 진단 유형 안내 (질병이 없는 경우) */}
+                  {!guidance && nutritionData.diagnosisType && (
+                    <p className="text-sm text-gray-700 mb-3">
+                      <span className="font-medium">
+                        {nutritionData.user.name}님
+                      </span>
+                      의 식습관은{" "}
+                      <span className="text-[#7B9B5C] font-medium">
+                        {nutritionData.diagnosisType}
+                      </span>
+                      유형으로{" "}
+                      <span className="text-[#7B9B5C] font-medium">
+                        {nutritionData.warningNutrients?.join(", ")}
+                      </span>{" "}
+                      섭취에 좀더 주의를 기울여주세요!
+                    </p>
+                  )}
 
                   <div className="flex gap-2 mb-3">
                     <button
