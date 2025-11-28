@@ -146,13 +146,22 @@ export async function POST(request: NextRequest) {
 
       const currentPoints = pointData?.total_points || 0;
       const bonusPoints = 1000;
+      const newBalance = currentPoints + bonusPoints;
 
-      await supabase
-        .from("user_points")
-        .upsert({
-          user_id: userId,
-          total_points: currentPoints + bonusPoints,
-        });
+      // user_points 테이블 업데이트 (존재하면 update, 없으면 insert)
+      if (pointData) {
+        await supabase
+          .from("user_points")
+          .update({ total_points: newBalance })
+          .eq("user_id", userId);
+      } else {
+        await supabase
+          .from("user_points")
+          .insert({
+            user_id: userId,
+            total_points: newBalance,
+          });
+      }
 
       await supabase.from("point_history").insert({
         user_id: userId,
@@ -162,7 +171,7 @@ export async function POST(request: NextRequest) {
         source_detail: `${accountType === "greating_mall" ? "그리팅몰" : accountType === "h_cafeteria" ? "카페테리아" : "오프라인 상담"} 연동`,
         text1: `${accountType === "greating_mall" ? "그리팅몰" : accountType === "h_cafeteria" ? "카페테리아" : "오프라인 상담"} 연동 완료`,
         text2: "회원 연동",
-        balance_after: currentPoints + bonusPoints,
+        balance_after: newBalance,
         expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // 1년 후 만료
       });
 
