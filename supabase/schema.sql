@@ -10,10 +10,11 @@
 --   PART 6: 컨텐츠 관련 테이블
 --   PART 7: 챌린지 관련 테이블
 --   PART 8: 메뉴 관련 테이블 (공지/알림/FAQ/문의)
---   PART 9: 인덱스
---   PART 10: 트리거
---   PART 11: 유틸리티 함수
---   PART 12: 샘플 데이터
+--   PART 9: 쿠폰/포인트 관련 테이블
+--   PART 10: 인덱스
+--   PART 11: 트리거
+--   PART 12: 유틸리티 함수
+--   PART 13: 샘플 데이터
 -- ============================================
 
 -- ============================================
@@ -53,6 +54,13 @@ CREATE TABLE IF NOT EXISTS public.users (
   height DECIMAL(5, 2),
   weight DECIMAL(5, 2),
   activity_level TEXT CHECK (activity_level IN ('sedentary', 'lightly_active', 'moderately_active', 'very_active', 'extra_active')),
+  diseases TEXT[] DEFAULT '{}',
+  interests TEXT[] DEFAULT '{}',
+  business_code TEXT,
+  marketing_push_agreed BOOLEAN DEFAULT false,
+  marketing_sms_agreed BOOLEAN DEFAULT false,
+  push_agreed_at TIMESTAMP WITH TIME ZONE,
+  sms_agreed_at TIMESTAMP WITH TIME ZONE,
   weekly_goal TEXT,
   goal_weight DECIMAL(5, 2),
   provider TEXT DEFAULT 'email',
@@ -776,8 +784,161 @@ CREATE POLICY "Users can update own pending inquiries" ON public.inquiries FOR U
 
 
 -- ============================================
--- PART 9: 인덱스
+-- PART 9: 쿠폰/포인트 관련 테이블
 -- ============================================
+
+-- 쿠폰 테이블
+CREATE TABLE IF NOT EXISTS public.coupons (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  coupon_name TEXT NOT NULL,
+  coupon_type TEXT CHECK (coupon_type IN ('greating', 'cafeteria')) NOT NULL,
+  coupon_value INTEGER NOT NULL DEFAULT 0,
+  source TEXT NOT NULL,
+  source_detail TEXT,
+  status TEXT CHECK (status IN ('pending', 'available', 'transferred', 'used', 'expired')) DEFAULT 'available',
+  transferred_account TEXT,
+  transferred_at TIMESTAMP WITH TIME ZONE,
+  expires_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE public.coupons ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view own coupons" ON public.coupons;
+DROP POLICY IF EXISTS "Users can insert own coupons" ON public.coupons;
+DROP POLICY IF EXISTS "Users can update own coupons" ON public.coupons;
+
+CREATE POLICY "Users can view own coupons" ON public.coupons FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own coupons" ON public.coupons FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own coupons" ON public.coupons FOR UPDATE USING (auth.uid() = user_id);
+
+-- 포인트 내역 테이블
+CREATE TABLE IF NOT EXISTS public.point_history (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  points INTEGER NOT NULL,
+  transaction_type TEXT CHECK (transaction_type IN ('earn', 'use', 'transfer', 'expire')) NOT NULL,
+  source TEXT NOT NULL,
+  source_detail TEXT,
+  text1 TEXT,
+  text2 TEXT,
+  balance_after INTEGER NOT NULL DEFAULT 0,
+  expires_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE public.point_history ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view own point history" ON public.point_history;
+DROP POLICY IF EXISTS "Users can insert own point history" ON public.point_history;
+
+CREATE POLICY "Users can view own point history" ON public.point_history FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own point history" ON public.point_history FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- 연동 계정 테이블
+CREATE TABLE IF NOT EXISTS public.linked_accounts (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  account_type TEXT CHECK (account_type IN ('greating_mall', 'h_cafeteria', 'offline_counseling')) NOT NULL,
+  account_id TEXT,
+  is_linked BOOLEAN DEFAULT false,
+  linked_at TIMESTAMP WITH TIME ZONE,
+  unlinked_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(user_id, account_type)
+);
+
+ALTER TABLE public.linked_accounts ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view own linked accounts" ON public.linked_accounts;
+DROP POLICY IF EXISTS "Users can insert own linked accounts" ON public.linked_accounts;
+DROP POLICY IF EXISTS "Users can update own linked accounts" ON public.linked_accounts;
+
+CREATE POLICY "Users can view own linked accounts" ON public.linked_accounts FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own linked accounts" ON public.linked_accounts FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own linked accounts" ON public.linked_accounts FOR UPDATE USING (auth.uid() = user_id);
+
+-- 사업장 코드 테이블
+CREATE TABLE IF NOT EXISTS public.business_codes (
+  id SERIAL PRIMARY KEY,
+  code TEXT NOT NULL UNIQUE,
+  name TEXT NOT NULL,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE public.business_codes ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Anyone can view business codes" ON public.business_codes;
+CREATE POLICY "Anyone can view business codes" ON public.business_codes FOR SELECT USING (is_active = true);
+
+-- 회원탈퇴 기록 테이블
+CREATE TABLE IF NOT EXISTS public.withdrawal_records (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  original_user_id UUID NOT NULL,
+  email_hash TEXT,
+  withdrawal_reason TEXT,
+  withdrawal_reason_category TEXT,
+  withdrawn_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  can_rejoin_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE public.withdrawal_records ENABLE ROW LEVEL SECURITY;
+
+-- 마케팅 수신동의 내역 테이블
+CREATE TABLE IF NOT EXISTS public.marketing_consent_history (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  consent_type TEXT CHECK (consent_type IN ('app_push', 'marketing_sms')) NOT NULL,
+  is_agreed BOOLEAN NOT NULL,
+  agreed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  ip_address TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE public.marketing_consent_history ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view own consent history" ON public.marketing_consent_history;
+DROP POLICY IF EXISTS "Users can insert own consent history" ON public.marketing_consent_history;
+
+CREATE POLICY "Users can view own consent history" ON public.marketing_consent_history FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own consent history" ON public.marketing_consent_history FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- 포인트 전환 옵션 테이블
+CREATE TABLE IF NOT EXISTS public.point_conversion_options (
+  id SERIAL PRIMARY KEY,
+  option_type TEXT NOT NULL,
+  option_name TEXT NOT NULL,
+  min_points INTEGER DEFAULT 5000,
+  max_points INTEGER DEFAULT 10000,
+  requires_membership BOOLEAN DEFAULT false,
+  membership_type TEXT,
+  is_active BOOLEAN DEFAULT true,
+  display_order INTEGER DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE public.point_conversion_options ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Anyone can view conversion options" ON public.point_conversion_options;
+CREATE POLICY "Anyone can view conversion options" ON public.point_conversion_options FOR SELECT USING (is_active = true);
+
+
+-- ============================================
+-- PART 10: 인덱스
+-- ============================================
+
+-- 쿠폰/포인트 관련
+CREATE INDEX IF NOT EXISTS idx_coupons_user_id ON public.coupons(user_id);
+CREATE INDEX IF NOT EXISTS idx_coupons_status ON public.coupons(status);
+CREATE INDEX IF NOT EXISTS idx_coupons_created_at ON public.coupons(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_point_history_user_id ON public.point_history(user_id);
+CREATE INDEX IF NOT EXISTS idx_point_history_type ON public.point_history(transaction_type);
+CREATE INDEX IF NOT EXISTS idx_point_history_created_at ON public.point_history(created_at DESC);
 
 -- 사용자 관련
 CREATE INDEX IF NOT EXISTS idx_phone_verifications_phone ON public.phone_verifications(phone);
@@ -830,7 +991,7 @@ CREATE INDEX IF NOT EXISTS idx_inquiries_created_at ON public.inquiries(created_
 
 
 -- ============================================
--- PART 10: 트리거
+-- PART 11: 트리거
 -- ============================================
 
 DROP TRIGGER IF EXISTS update_users_updated_at ON public.users;
@@ -859,9 +1020,15 @@ CREATE TRIGGER update_challenge_rankings_updated_at BEFORE UPDATE ON public.chal
 CREATE TRIGGER update_notices_updated_at BEFORE UPDATE ON public.notices FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_inquiries_updated_at BEFORE UPDATE ON public.inquiries FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_coupons_updated_at ON public.coupons;
+DROP TRIGGER IF EXISTS update_linked_accounts_updated_at ON public.linked_accounts;
+
+CREATE TRIGGER update_coupons_updated_at BEFORE UPDATE ON public.coupons FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_linked_accounts_updated_at BEFORE UPDATE ON public.linked_accounts FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 
 -- ============================================
--- PART 11: 유틸리티 함수
+-- PART 12: 유틸리티 함수
 -- ============================================
 
 -- 챌린지 상태 계산 함수
@@ -955,7 +1122,7 @@ $$ LANGUAGE plpgsql;
 
 
 -- ============================================
--- PART 12: 샘플 데이터
+-- PART 13: 샘플 데이터
 -- ============================================
 
 -- 약관 샘플 데이터
@@ -1071,6 +1238,22 @@ SELECT id, 'multiple_choice',
   '["포도당", "아미노산", "비타민C", "망간", "오메가-3"]'::jsonb,
   '[0]'::jsonb, '포도에서 최초로 발견된 성분이에요!', 1
 FROM public.challenges WHERE challenge_type = 'quiz' LIMIT 1
+ON CONFLICT DO NOTHING;
+
+-- 사업장 코드 샘플 데이터
+INSERT INTO public.business_codes (code, name) VALUES
+  ('214567', '본사'),
+  ('199868', '그리팅 케어'),
+  ('199879', '카페테리아'),
+  ('198875', '그리팅몰')
+ON CONFLICT (code) DO NOTHING;
+
+-- 포인트 전환 옵션 샘플 데이터
+INSERT INTO public.point_conversion_options (option_type, option_name, min_points, max_points, requires_membership, membership_type, display_order) VALUES
+  ('greating_hpoint', '그리팅 H.point', 5000, 10000, true, 'hpoint_member', 1),
+  ('greenery_point', '그리너리 포인트', 5000, 10000, false, NULL, 2),
+  ('greating_coupon', '그리팅 상품권', 5000, 10000, false, NULL, 3),
+  ('greating_spoon', '그리팅 스푼', 5000, 10000, false, NULL, 4)
 ON CONFLICT DO NOTHING;
 
 
