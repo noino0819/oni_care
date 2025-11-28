@@ -284,9 +284,9 @@ export function BottomNavigation() {
       label: "영양제 기록",
       icon: SupplementRecordIcon,
     },
-    { href: "/diagnosis", label: "영양진단", icon: NutritionDiagnosisIcon },
+    { href: "/record?tab=diagnosis", label: "영양진단", icon: NutritionDiagnosisIcon },
     { href: "/attendance", label: "출석체크", icon: AttendanceIcon },
-    { href: "/steps", label: "걸음수", icon: StepsMenuIcon },
+    { href: "/record?tab=steps", label: "걸음수", icon: StepsMenuIcon },
     { href: "/ai-doctor", label: "AI 영양박사", icon: AIDoctorIcon },
   ];
 
