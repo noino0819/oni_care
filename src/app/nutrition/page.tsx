@@ -2,7 +2,15 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronRight, ChevronDown, Star, Info, Plus, Check, Salad } from "lucide-react";
+import {
+  ChevronRight,
+  ChevronDown,
+  Star,
+  Info,
+  Plus,
+  Check,
+  Salad,
+} from "lucide-react";
 import { Header } from "@/components/home/Header";
 import { BottomNavigation } from "@/components/home/BottomNavigation";
 import { cn } from "@/lib/utils";
@@ -83,8 +91,12 @@ export default function NutritionPage() {
   const [activeTab, setActiveTab] = useState<"meal" | "supplement">("meal");
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showMonthPicker, setShowMonthPicker] = useState(false);
-  const [analysisPeriod, setAnalysisPeriod] = useState<"daily" | "weekly" | "monthly">("daily");
-  const [nutritionData, setNutritionData] = useState<NutritionData | null>(null);
+  const [analysisPeriod, setAnalysisPeriod] = useState<
+    "daily" | "weekly" | "monthly"
+  >("daily");
+  const [nutritionData, setNutritionData] = useState<NutritionData | null>(
+    null
+  );
   const [isLoading, setIsLoading] = useState(true);
 
   // 주간 날짜 계산
@@ -120,10 +132,30 @@ export default function NutritionPage() {
         warningNutrients: ["지방", "포화지방", "당류"],
         diagnosisType: "지방 집중관리형",
         meals: [
-          { type: "breakfast", status: "skipped", calories: 0, targetCalories: 500 },
-          { type: "lunch", status: "recorded", calories: 260, targetCalories: 500 },
-          { type: "dinner", status: "recorded", calories: 80, targetCalories: 500 },
-          { type: "snack", status: "not_recorded", calories: 0, targetCalories: 225 },
+          {
+            type: "breakfast",
+            status: "skipped",
+            calories: 0,
+            targetCalories: 500,
+          },
+          {
+            type: "lunch",
+            status: "recorded",
+            calories: 260,
+            targetCalories: 500,
+          },
+          {
+            type: "dinner",
+            status: "recorded",
+            calories: 80,
+            targetCalories: 500,
+          },
+          {
+            type: "snack",
+            status: "not_recorded",
+            calories: 0,
+            targetCalories: 225,
+          },
         ],
         dailyCalories: {
           consumed: 1528,
@@ -131,14 +163,86 @@ export default function NutritionPage() {
           burned: 72,
         },
         nutrients: [
-          { name: "carbs", nameKo: "탄수화물", status: "excessive", value: 126, min: 200, max: 300, unit: "g", needsAttention: true },
-          { name: "protein", nameKo: "단백질", status: "adequate", value: 47, min: 50, max: 80, unit: "g", needsAttention: false },
-          { name: "fat", nameKo: "지방", status: "deficient", value: 5, min: 40, max: 70, unit: "g", needsAttention: false },
-          { name: "fiber", nameKo: "식이섬유", status: "deficient", value: 10, min: 20, max: 30, unit: "g", needsAttention: false },
-          { name: "sodium", nameKo: "나트륨", status: "deficient", value: 1200, min: 1500, max: 2300, unit: "mg", needsAttention: false },
-          { name: "sugar", nameKo: "당류", status: "deficient", value: 5, min: 25, max: 50, unit: "g", needsAttention: false },
-          { name: "saturatedFat", nameKo: "포화지방", status: "deficient", value: 5, min: 15, max: 22, unit: "g", needsAttention: false },
-          { name: "cholesterol", nameKo: "콜레스테롤", status: "deficient", value: 100, min: 200, max: 300, unit: "mg", needsAttention: false },
+          {
+            name: "carbs",
+            nameKo: "탄수화물",
+            status: "excessive",
+            value: 126,
+            min: 200,
+            max: 300,
+            unit: "g",
+            needsAttention: true,
+          },
+          {
+            name: "protein",
+            nameKo: "단백질",
+            status: "adequate",
+            value: 47,
+            min: 50,
+            max: 80,
+            unit: "g",
+            needsAttention: false,
+          },
+          {
+            name: "fat",
+            nameKo: "지방",
+            status: "deficient",
+            value: 5,
+            min: 40,
+            max: 70,
+            unit: "g",
+            needsAttention: false,
+          },
+          {
+            name: "fiber",
+            nameKo: "식이섬유",
+            status: "deficient",
+            value: 10,
+            min: 20,
+            max: 30,
+            unit: "g",
+            needsAttention: false,
+          },
+          {
+            name: "sodium",
+            nameKo: "나트륨",
+            status: "deficient",
+            value: 1200,
+            min: 1500,
+            max: 2300,
+            unit: "mg",
+            needsAttention: false,
+          },
+          {
+            name: "sugar",
+            nameKo: "당류",
+            status: "deficient",
+            value: 5,
+            min: 25,
+            max: 50,
+            unit: "g",
+            needsAttention: false,
+          },
+          {
+            name: "saturatedFat",
+            nameKo: "포화지방",
+            status: "deficient",
+            value: 5,
+            min: 15,
+            max: 22,
+            unit: "g",
+            needsAttention: false,
+          },
+          {
+            name: "cholesterol",
+            nameKo: "콜레스테롤",
+            status: "deficient",
+            value: 100,
+            min: 200,
+            max: 300,
+            unit: "mg",
+            needsAttention: false,
+          },
         ],
       });
       setIsLoading(false);
@@ -154,7 +258,11 @@ export default function NutritionPage() {
 
   // 섭취율 계산
   const consumptionRate = nutritionData
-    ? Math.round((nutritionData.dailyCalories.consumed / nutritionData.dailyCalories.target) * 100)
+    ? Math.round(
+        (nutritionData.dailyCalories.consumed /
+          nutritionData.dailyCalories.target) *
+          100
+      )
     : 0;
 
   // 질병 기반 안내 메시지 생성
@@ -225,14 +333,18 @@ export default function NutritionPage() {
                 className="flex items-center gap-1 mb-3"
               >
                 <ChevronDown className="w-4 h-4 text-gray-400" />
-                <span className="text-sm font-medium">{formatDate(selectedDate)}</span>
+                <span className="text-sm font-medium">
+                  {formatDate(selectedDate)}
+                </span>
               </button>
 
               {/* 주간 캘린더 */}
               <div className="flex justify-between">
                 {weekDates.map((date, idx) => {
-                  const isSelected = date.toDateString() === selectedDate.toDateString();
-                  const isToday = date.toDateString() === new Date().toDateString();
+                  const isSelected =
+                    date.toDateString() === selectedDate.toDateString();
+                  const isToday =
+                    date.toDateString() === new Date().toDateString();
 
                   return (
                     <button
@@ -240,10 +352,16 @@ export default function NutritionPage() {
                       onClick={() => setSelectedDate(date)}
                       className="flex flex-col items-center gap-1"
                     >
-                      <span className={cn(
-                        "text-xs",
-                        idx === 0 ? "text-red-400" : idx === 6 ? "text-blue-400" : "text-gray-400"
-                      )}>
+                      <span
+                        className={cn(
+                          "text-xs",
+                          idx === 0
+                            ? "text-red-400"
+                            : idx === 6
+                            ? "text-blue-400"
+                            : "text-gray-400"
+                        )}
+                      >
                         {WEEKDAYS[idx]}
                       </span>
                       <span
@@ -252,8 +370,8 @@ export default function NutritionPage() {
                           isSelected
                             ? "bg-[#7B9B5C] text-white"
                             : isToday
-                              ? "bg-gray-100 text-gray-900"
-                              : "text-gray-600"
+                            ? "bg-gray-100 text-gray-900"
+                            : "text-gray-600"
                         )}
                       >
                         {date.getDate()}
@@ -268,14 +386,23 @@ export default function NutritionPage() {
           {/* 식사분석 (영양진단 영역) */}
           <div className="px-4">
             <div className="bg-[#F8F9E8] rounded-2xl p-4 shadow-sm border border-[#E8EBC8]">
-              <h3 className="text-sm font-semibold text-gray-800 mb-2">식사분석</h3>
+              <h3 className="text-sm font-semibold text-gray-800 mb-2">
+                식사분석
+              </h3>
 
               {nutritionData?.hasNutritionDiagnosis && guidance ? (
                 <>
                   <p className="text-sm text-gray-700 mb-3">
-                    <span className="font-medium">{nutritionData.user.name}님</span>{" "}
-                    <span className="text-[#7B9B5C] font-medium">{guidance.disease}</span> 관리를 위해{" "}
-                    <span className="text-[#7B9B5C] font-medium">{guidance.nutrients.join(", ")}</span>{" "}
+                    <span className="font-medium">
+                      {nutritionData.user.name}님
+                    </span>{" "}
+                    <span className="text-[#7B9B5C] font-medium">
+                      {guidance.disease}
+                    </span>{" "}
+                    관리를 위해{" "}
+                    <span className="text-[#7B9B5C] font-medium">
+                      {guidance.nutrients.join(", ")}
+                    </span>{" "}
                     섭취를 특별히 주의해야해요!
                   </p>
 
@@ -303,9 +430,13 @@ export default function NutritionPage() {
                 <div className="text-center py-4">
                   <div className="flex items-center justify-center gap-2 mb-2">
                     <Star className="w-5 h-5 text-[#7B9B5C]" />
-                    <span className="text-lg font-bold">나의 잇스코어 점수는 __점</span>
+                    <span className="text-lg font-bold">
+                      나의 잇스코어 점수는 __점
+                    </span>
                   </div>
-                  <p className="text-sm text-gray-500 mb-4">나의 식습관이 궁금하다면?</p>
+                  <p className="text-sm text-gray-500 mb-4">
+                    나의 식습관이 궁금하다면?
+                  </p>
                   <button
                     onClick={() => router.push("/nutrition/diagnosis")}
                     className="bg-[#7B9B5C] text-white px-6 py-2 rounded-full text-sm font-medium"
@@ -320,7 +451,9 @@ export default function NutritionPage() {
           {/* 식사 추가 */}
           <div className="px-4">
             <div className="bg-white rounded-2xl p-4 shadow-sm">
-              <h3 className="text-sm font-semibold text-gray-800 mb-4">식사 추가</h3>
+              <h3 className="text-sm font-semibold text-gray-800 mb-4">
+                식사 추가
+              </h3>
 
               <div className="grid grid-cols-4 gap-2">
                 {nutritionData?.meals.map((meal) => {
@@ -340,11 +473,17 @@ export default function NutritionPage() {
                       }}
                       className={cn(
                         "flex flex-col items-center p-3 rounded-2xl transition-colors relative",
-                        isRecorded ? "bg-[#7B9B5C]/10" : isSkipped ? "bg-gray-100" : config.color
+                        isRecorded
+                          ? "bg-[#7B9B5C]/10"
+                          : isSkipped
+                          ? "bg-gray-100"
+                          : config.color
                       )}
                     >
                       <span className="text-2xl mb-1">{config.icon}</span>
-                      <span className="text-xs font-medium text-gray-700">{config.label}</span>
+                      <span className="text-xs font-medium text-gray-700">
+                        {config.label}
+                      </span>
                       {isRecorded && (
                         <div className="absolute top-2 right-2">
                           <Check className="w-4 h-4 text-[#7B9B5C]" />
@@ -355,15 +494,21 @@ export default function NutritionPage() {
                           <Plus className="w-4 h-4 text-gray-400" />
                         </div>
                       )}
-                      <span className={cn(
-                        "text-xs mt-1",
-                        isRecorded ? "text-[#7B9B5C]" : isSkipped ? "text-gray-400" : "text-gray-500"
-                      )}>
+                      <span
+                        className={cn(
+                          "text-xs mt-1",
+                          isRecorded
+                            ? "text-[#7B9B5C]"
+                            : isSkipped
+                            ? "text-gray-400"
+                            : "text-gray-500"
+                        )}
+                      >
                         {isSkipped
                           ? "안먹었어요"
                           : isRecorded
-                            ? `${meal.calories}/${meal.targetCalories}kcal`
-                            : "안먹었어요✓"}
+                          ? `${meal.calories}/${meal.targetCalories}kcal`
+                          : "안먹었어요✓"}
                       </span>
                     </button>
                   );
@@ -376,7 +521,9 @@ export default function NutritionPage() {
           <div className="px-4">
             <div className="bg-white rounded-2xl p-4 shadow-sm">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-gray-800">식사 분석</h3>
+                <h3 className="text-sm font-semibold text-gray-800">
+                  식사 분석
+                </h3>
                 <button
                   onClick={() => router.push("/nutrition/analysis")}
                   className="text-xs text-gray-500 flex items-center gap-1"
@@ -394,7 +541,9 @@ export default function NutritionPage() {
                 ].map((period) => (
                   <button
                     key={period.key}
-                    onClick={() => setAnalysisPeriod(period.key as typeof analysisPeriod)}
+                    onClick={() =>
+                      setAnalysisPeriod(period.key as typeof analysisPeriod)
+                    }
                     className={cn(
                       "px-3 py-1.5 rounded-full text-xs font-medium transition-colors",
                       analysisPeriod === period.key
@@ -410,7 +559,10 @@ export default function NutritionPage() {
               {/* 칼로리 원형 그래프 */}
               <div className="flex flex-col items-center mb-6">
                 <div className="relative w-40 h-40">
-                  <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                  <svg
+                    className="w-full h-full -rotate-90"
+                    viewBox="0 0 100 100"
+                  >
                     <circle
                       cx="50"
                       cy="50"
@@ -427,7 +579,9 @@ export default function NutritionPage() {
                       strokeWidth="8"
                       fill="none"
                       strokeLinecap="round"
-                      strokeDasharray={`${Math.min(consumptionRate, 100) * 2.51} 251`}
+                      strokeDasharray={`${
+                        Math.min(consumptionRate, 100) * 2.51
+                      } 251`}
                     />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -448,7 +602,8 @@ export default function NutritionPage() {
                     <div className="text-center">
                       <p className="text-xs text-gray-500">섭취한 칼로리</p>
                       <p className="text-lg font-bold text-gray-900">
-                        {nutritionData?.dailyCalories.consumed} <span className="text-xs font-normal">kcal</span>
+                        {nutritionData?.dailyCalories.consumed}{" "}
+                        <span className="text-xs font-normal">kcal</span>
                       </p>
                     </div>
                   </div>
@@ -458,7 +613,8 @@ export default function NutritionPage() {
                     <div className="text-center">
                       <p className="text-xs text-gray-500">소모한 칼로리</p>
                       <p className="text-lg font-bold text-gray-900">
-                        {nutritionData?.dailyCalories.burned} <span className="text-xs font-normal">kcal</span>
+                        {nutritionData?.dailyCalories.burned}{" "}
+                        <span className="text-xs font-normal">kcal</span>
                       </p>
                     </div>
                   </div>
@@ -468,7 +624,11 @@ export default function NutritionPage() {
                 <div className="flex items-center gap-1 mt-3 text-sm text-gray-500">
                   <Info className="w-4 h-4" />
                   <span>
-                    권장열량 대비 {consumptionRate < 100 ? `${100 - consumptionRate}% 부족하게` : `${consumptionRate - 100}% 과다하게`} 섭취했어요.
+                    권장열량 대비{" "}
+                    {consumptionRate < 100
+                      ? `${100 - consumptionRate}% 부족하게`
+                      : `${consumptionRate - 100}% 과다하게`}{" "}
+                    섭취했어요.
                   </span>
                 </div>
               </div>
@@ -476,39 +636,59 @@ export default function NutritionPage() {
               {/* 관리가 필요한 영양소 */}
               <div className="border-t border-gray-100 pt-4">
                 <div className="flex items-center gap-1 mb-3">
-                  <span className="text-sm font-medium text-[#7B9B5C]">🥬 관리가 필요한 영양소!</span>
+                  <span className="text-sm font-medium text-[#7B9B5C]">
+                    🥬 관리가 필요한 영양소!
+                  </span>
                 </div>
 
                 {/* 영양소 바 차트 */}
                 <div className="space-y-3">
                   {nutritionData?.nutrients.map((nutrient) => {
-                    const percentage = Math.min((nutrient.value / nutrient.max) * 100, 100);
+                    const percentage = Math.min(
+                      (nutrient.value / nutrient.max) * 100,
+                      100
+                    );
                     const isExcessive = nutrient.status === "excessive";
                     const isDeficient = nutrient.status === "deficient";
 
                     return (
-                      <div key={nutrient.name} className={cn(
-                        "p-3 rounded-xl",
-                        nutrient.needsAttention ? "bg-orange-50 border border-orange-200" : "bg-gray-50"
-                      )}>
+                      <div
+                        key={nutrient.name}
+                        className={cn(
+                          "p-3 rounded-xl",
+                          nutrient.needsAttention
+                            ? "bg-orange-50 border border-orange-200"
+                            : "bg-gray-50"
+                        )}
+                      >
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2">
                             {nutrient.needsAttention && (
                               <span className="text-orange-500">⚠️</span>
                             )}
-                            <span className="text-sm font-medium">{nutrient.nameKo}</span>
+                            <span className="text-sm font-medium">
+                              {nutrient.nameKo}
+                            </span>
                             {nutrient.needsAttention && (
                               <Info className="w-3 h-3 text-gray-400" />
                             )}
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className={cn(
-                              "text-xs px-2 py-0.5 rounded-full",
-                              isExcessive ? "bg-red-100 text-red-600" :
-                                isDeficient ? "bg-blue-100 text-blue-600" :
-                                  "bg-green-100 text-green-600"
-                            )}>
-                              {isExcessive ? "과다" : isDeficient ? "부족" : "적정"}
+                            <span
+                              className={cn(
+                                "text-xs px-2 py-0.5 rounded-full",
+                                isExcessive
+                                  ? "bg-red-100 text-red-600"
+                                  : isDeficient
+                                  ? "bg-blue-100 text-blue-600"
+                                  : "bg-green-100 text-green-600"
+                              )}
+                            >
+                              {isExcessive
+                                ? "과다"
+                                : isDeficient
+                                ? "부족"
+                                : "적정"}
                             </span>
                           </div>
                         </div>
@@ -517,27 +697,35 @@ export default function NutritionPage() {
                           <div
                             className={cn(
                               "absolute left-0 top-0 h-full rounded-full transition-all",
-                              isExcessive ? "bg-red-400" :
-                                isDeficient ? "bg-blue-400" :
-                                  "bg-green-400"
+                              isExcessive
+                                ? "bg-red-400"
+                                : isDeficient
+                                ? "bg-blue-400"
+                                : "bg-green-400"
                             )}
                             style={{ width: `${percentage}%` }}
                           />
                           {/* 적정 범위 마커 */}
                           <div
                             className="absolute top-0 h-full border-l-2 border-gray-400"
-                            style={{ left: `${(nutrient.min / nutrient.max) * 100}%` }}
+                            style={{
+                              left: `${(nutrient.min / nutrient.max) * 100}%`,
+                            }}
                           />
                         </div>
 
                         <div className="flex justify-between mt-1 text-xs text-gray-400">
                           <span>부족</span>
-                          <span>적정 ({nutrient.min}-{nutrient.max}{nutrient.unit})</span>
+                          <span>
+                            적정 ({nutrient.min}-{nutrient.max}
+                            {nutrient.unit})
+                          </span>
                           <span>과다</span>
                         </div>
 
                         <div className="text-right text-xs text-gray-600 mt-1">
-                          {nutrient.value}{nutrient.unit}
+                          {nutrient.value}
+                          {nutrient.unit}
                         </div>
                       </div>
                     );
@@ -572,13 +760,15 @@ export default function NutritionPage() {
 // 영양제 탭 컴포넌트
 function SupplementTab() {
   const router = useRouter();
-  const [supplements, setSupplements] = useState<{
-    id: string;
-    name: string;
-    dosage: string;
-    timeSlot: string;
-    isTaken: boolean;
-  }[]>([]);
+  const [supplements, setSupplements] = useState<
+    {
+      id: string;
+      name: string;
+      dosage: string;
+      timeSlot: string;
+      isTaken: boolean;
+    }[]
+  >([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -586,9 +776,27 @@ function SupplementTab() {
     setIsLoading(true);
     setTimeout(() => {
       setSupplements([
-        { id: "1", name: "종합 비타민", dosage: "1정", timeSlot: "아침 식후", isTaken: true },
-        { id: "2", name: "오메가3", dosage: "1캡슐", timeSlot: "점심 식후", isTaken: true },
-        { id: "3", name: "비타민D", dosage: "1정", timeSlot: "저녁 식후", isTaken: false },
+        {
+          id: "1",
+          name: "종합 비타민",
+          dosage: "1정",
+          timeSlot: "아침 식후",
+          isTaken: true,
+        },
+        {
+          id: "2",
+          name: "오메가3",
+          dosage: "1캡슐",
+          timeSlot: "점심 식후",
+          isTaken: true,
+        },
+        {
+          id: "3",
+          name: "비타민D",
+          dosage: "1정",
+          timeSlot: "저녁 식후",
+          isTaken: false,
+        },
       ]);
       setIsLoading(false);
     }, 300);
@@ -596,7 +804,8 @@ function SupplementTab() {
 
   const takenCount = supplements.filter((s) => s.isTaken).length;
   const totalCount = supplements.length;
-  const completionRate = totalCount > 0 ? Math.round((takenCount / totalCount) * 100) : 0;
+  const completionRate =
+    totalCount > 0 ? Math.round((takenCount / totalCount) * 100) : 0;
 
   if (isLoading) {
     return (
@@ -614,9 +823,7 @@ function SupplementTab() {
           <h3 className="text-lg font-semibold text-gray-800 mb-2">
             챙겨먹는 영양제가 있나요?
           </h3>
-          <p className="text-sm text-gray-500 mb-6">
-            아직 기록이 없어요
-          </p>
+          <p className="text-sm text-gray-500 mb-6">아직 기록이 없어요</p>
           <button
             onClick={() => router.push("/nutrition/supplement/routine")}
             className="inline-flex items-center gap-2 bg-[#9F85E3] text-white px-6 py-3 rounded-xl font-medium"
@@ -635,7 +842,9 @@ function SupplementTab() {
       <div className="bg-white rounded-2xl p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <span className="text-sm text-gray-500">섭취 완료율</span>
-          <span className="text-sm text-gray-500">{takenCount}개 남았어요!</span>
+          <span className="text-sm text-gray-500">
+            {takenCount}개 남았어요!
+          </span>
         </div>
 
         <div className="flex items-center gap-4">
@@ -661,7 +870,9 @@ function SupplementTab() {
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-xl font-bold text-gray-900">{completionRate}%</span>
+              <span className="text-xl font-bold text-gray-900">
+                {completionRate}%
+              </span>
             </div>
           </div>
 
@@ -798,4 +1009,3 @@ function MonthPickerModal({
     </div>
   );
 }
-
