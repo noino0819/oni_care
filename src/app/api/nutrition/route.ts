@@ -18,10 +18,10 @@ export async function GET(request: NextRequest) {
     const selectedDate = dateParam ? new Date(dateParam) : new Date();
     const dateStr = selectedDate.toISOString().split("T")[0];
 
-    // 사용자 정보 조회
+    // 사용자 정보 조회 (business_code가 있으면 FS 회원)
     const { data: userData } = await supabase
       .from("users")
-      .select("name, diseases, interests, is_fs_member, height, weight")
+      .select("name, diseases, interests, business_code, height, weight")
       .eq("id", user.id)
       .single();
 
@@ -158,7 +158,9 @@ export async function GET(request: NextRequest) {
         name: userData?.name || "사용자",
         points: pointsData?.total_points || 0,
         diseases: userData?.diseases || [],
-        isFsMember: userData?.is_fs_member || false,
+        // business_code가 있으면 FS 회원
+        isFsMember: !!userData?.business_code,
+        businessCode: userData?.business_code || null,
       },
       eatScore: diagnosisData?.eat_score || null,
       hasNutritionDiagnosis: !!diagnosisData,

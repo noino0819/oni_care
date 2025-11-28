@@ -22,6 +22,7 @@ interface AnalysisData {
     burned: number;
   };
   nutrients: NutrientData[];
+  message?: string; // 기록 부족 시 안내 메시지
 }
 
 export default function NutritionAnalysisPage() {
@@ -71,15 +72,42 @@ export default function NutritionAnalysisPage() {
     return `${month}.${day} (${weekday})`;
   };
 
+  // 기간별 날짜 범위 텍스트
+  const getDateRangeText = () => {
+    if (analysisPeriod === "daily") {
+      return formatDate(selectedDate);
+    } else if (analysisPeriod === "weekly") {
+      const startDate = new Date(selectedDate);
+      startDate.setDate(startDate.getDate() - 6);
+      return `${formatDate(startDate)} ~ ${formatDate(selectedDate)}`;
+    } else {
+      const startDate = new Date(selectedDate);
+      startDate.setDate(startDate.getDate() - 29);
+      return `${formatDate(startDate)} ~ ${formatDate(selectedDate)}`;
+    }
+  };
+
   const goToPreviousDay = () => {
     const newDate = new Date(selectedDate);
-    newDate.setDate(newDate.getDate() - 1);
+    if (analysisPeriod === "daily") {
+      newDate.setDate(newDate.getDate() - 1);
+    } else if (analysisPeriod === "weekly") {
+      newDate.setDate(newDate.getDate() - 7);
+    } else {
+      newDate.setDate(newDate.getDate() - 30);
+    }
     setSelectedDate(newDate);
   };
 
   const goToNextDay = () => {
     const newDate = new Date(selectedDate);
-    newDate.setDate(newDate.getDate() + 1);
+    if (analysisPeriod === "daily") {
+      newDate.setDate(newDate.getDate() + 1);
+    } else if (analysisPeriod === "weekly") {
+      newDate.setDate(newDate.getDate() + 7);
+    } else {
+      newDate.setDate(newDate.getDate() + 30);
+    }
     if (newDate <= new Date()) {
       setSelectedDate(newDate);
     }
@@ -138,7 +166,7 @@ export default function NutritionAnalysisPage() {
           <button onClick={goToPreviousDay} className="p-2">
             <ChevronLeft className="w-5 h-5 text-gray-600" />
           </button>
-          <span className="text-lg font-semibold">{formatDate(selectedDate)}</span>
+          <span className="text-lg font-semibold text-center">{getDateRangeText()}</span>
           <button onClick={goToNextDay} className="p-2">
             <ChevronRight className="w-5 h-5 text-gray-600" />
           </button>
@@ -188,58 +216,71 @@ export default function NutritionAnalysisPage() {
             </div>
           </div>
 
+          {/* 기록 부족 메시지 */}
+          {analysisData?.message && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-center">
+              <p className="text-yellow-700 text-sm">{analysisData.message}</p>
+            </div>
+          )}
+
           {/* 영양소 분석 */}
           <div className="space-y-4">
-            {analysisData?.nutrients.map((nutrient) => {
-              const percentage = Math.min((nutrient.value / nutrient.max) * 100, 100);
-              const isExcessive = nutrient.status === "excessive";
-              const isDeficient = nutrient.status === "deficient";
+            {(!analysisData?.nutrients || analysisData.nutrients.length === 0) && !analysisData?.message ? (
+              <div className="text-center py-8 text-gray-400">
+                <p>🥗 식사기록을 시작해주세요</p>
+              </div>
+            ) : (
+              analysisData?.nutrients.map((nutrient) => {
+                const percentage = Math.min((nutrient.value / nutrient.max) * 100, 100);
+                const isExcessive = nutrient.status === "excessive";
+                const isDeficient = nutrient.status === "deficient";
 
-              return (
-                <div key={nutrient.name} className="border-b border-gray-100 pb-4 last:border-0">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium">{nutrient.nameKo}</span>
-                    <span className={cn(
-                      "text-xs px-2 py-0.5 rounded-full",
-                      isExcessive ? "bg-red-100 text-red-600" :
-                        isDeficient ? "bg-blue-100 text-blue-600" :
-                          "bg-green-100 text-green-600"
-                    )}>
-                      {isExcessive ? "과다" : isDeficient ? "부족" : "적정"}
-                    </span>
-                  </div>
+                return (
+                  <div key={nutrient.name} className="border-b border-gray-100 pb-4 last:border-0">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium">{nutrient.nameKo}</span>
+                      <span className={cn(
+                        "text-xs px-2 py-0.5 rounded-full",
+                        isExcessive ? "bg-red-100 text-red-600" :
+                          isDeficient ? "bg-blue-100 text-blue-600" :
+                            "bg-green-100 text-green-600"
+                      )}>
+                        {isExcessive ? "과다" : isDeficient ? "부족" : "적정"}
+                      </span>
+                    </div>
 
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs text-gray-500 w-12">{nutrient.value}{nutrient.unit}</span>
-                    <div className="flex-1 relative h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <div
-                        className={cn(
-                          "absolute left-0 top-0 h-full rounded-full transition-all",
-                          isExcessive ? "bg-red-400" :
-                            isDeficient ? "bg-blue-400" :
-                              "bg-green-400"
-                        )}
-                        style={{ width: `${percentage}%` }}
-                      />
-                      {/* 적정 범위 표시 */}
-                      <div
-                        className="absolute top-0 h-full bg-gray-400/30"
-                        style={{
-                          left: `${(nutrient.min / nutrient.max) * 100}%`,
-                          width: `${((nutrient.max - nutrient.min) / nutrient.max) * 100}%`,
-                        }}
-                      />
+                    <div className="flex items-center gap-3">
+                      <span className="text-xs text-gray-500 w-12">{nutrient.value}{nutrient.unit}</span>
+                      <div className="flex-1 relative h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div
+                          className={cn(
+                            "absolute left-0 top-0 h-full rounded-full transition-all",
+                            isExcessive ? "bg-red-400" :
+                              isDeficient ? "bg-blue-400" :
+                                "bg-green-400"
+                          )}
+                          style={{ width: `${percentage}%` }}
+                        />
+                        {/* 적정 범위 표시 */}
+                        <div
+                          className="absolute top-0 h-full bg-gray-400/30"
+                          style={{
+                            left: `${(nutrient.min / nutrient.max) * 100}%`,
+                            width: `${((nutrient.max - nutrient.min) / nutrient.max) * 100}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between mt-1 text-xs text-gray-400">
+                      <span>부족</span>
+                      <span>적정 ({nutrient.min}-{nutrient.max}{nutrient.unit})</span>
+                      <span>과다</span>
                     </div>
                   </div>
-
-                  <div className="flex justify-between mt-1 text-xs text-gray-400">
-                    <span>부족</span>
-                    <span>적정 ({nutrient.min}-{nutrient.max}{nutrient.unit})</span>
-                    <span>과다</span>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
       </div>

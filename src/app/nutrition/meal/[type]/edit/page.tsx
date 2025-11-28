@@ -12,8 +12,14 @@ interface FoodRecord {
   carbs: number;
   protein: number;
   fat: number;
+  fiber: number;
+  sodium: number;
+  sugar: number;
+  saturatedFat: number;
+  cholesterol: number;
   servingSize: string;
   quantity: number;
+  isDeleted?: boolean; // 삭제 표시용
 }
 
 const MEAL_LABELS: Record<string, string> = {
@@ -41,17 +47,50 @@ export default function MealEditPage() {
     const fetchMealRecord = async () => {
       setIsLoading(true);
       try {
-        // TODO: 실제 API 호출로 대체
-        await new Promise((resolve) => setTimeout(resolve, 300));
-        
-        // 샘플 데이터
-        setFoods([
-          { id: "1", name: "흰쌀밥", calories: 300, carbs: 65, protein: 5, fat: 0.5, servingSize: "1공기", quantity: 1 },
-          { id: "2", name: "된장찌개", calories: 120, carbs: 8, protein: 8, fat: 6, servingSize: "1인분", quantity: 1 },
-          { id: "3", name: "김치", calories: 15, carbs: 3, protein: 1, fat: 0.3, servingSize: "1접시", quantity: 1 },
-        ]);
+        const response = await fetch(
+          `/api/nutrition/meals?date=${mealDate}&mealType=${mealType}`
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          // API 응답을 FoodRecord 형태로 변환
+          const formattedFoods: FoodRecord[] = (data.meals || []).map(
+            (meal: {
+              id: string;
+              food_name: string;
+              calories: number;
+              carbs: number;
+              protein: number;
+              fat: number;
+              fiber: number;
+              sodium: number;
+              sugar: number;
+              saturated_fat: number;
+              cholesterol: number;
+              serving_size: string;
+            }) => ({
+              id: meal.id,
+              name: meal.food_name,
+              calories: meal.calories || 0,
+              carbs: meal.carbs || 0,
+              protein: meal.protein || 0,
+              fat: meal.fat || 0,
+              fiber: meal.fiber || 0,
+              sodium: meal.sodium || 0,
+              sugar: meal.sugar || 0,
+              saturatedFat: meal.saturated_fat || 0,
+              cholesterol: meal.cholesterol || 0,
+              servingSize: meal.serving_size || "1인분",
+              quantity: 1,
+            })
+          );
+          setFoods(formattedFoods);
+        } else {
+          setFoods([]);
+        }
       } catch (error) {
-        console.error(error);
+        console.error("Meal fetch error:", error);
+        setFoods([]);
       } finally {
         setIsLoading(false);
       }
@@ -60,10 +99,12 @@ export default function MealEditPage() {
     fetchMealRecord();
   }, [mealType, mealDate]);
 
-  const totalCalories = foods.reduce((sum, f) => sum + f.calories * f.quantity, 0);
-  const totalCarbs = foods.reduce((sum, f) => sum + f.carbs * f.quantity, 0);
-  const totalProtein = foods.reduce((sum, f) => sum + f.protein * f.quantity, 0);
-  const totalFat = foods.reduce((sum, f) => sum + f.fat * f.quantity, 0);
+  // 삭제되지 않은 음식만 계산
+  const activeFoods = foods.filter((f) => !f.isDeleted);
+  const totalCalories = activeFoods.reduce((sum, f) => sum + f.calories * f.quantity, 0);
+  const totalCarbs = activeFoods.reduce((sum, f) => sum + f.carbs * f.quantity, 0);
+  const totalProtein = activeFoods.reduce((sum, f) => sum + f.protein * f.quantity, 0);
+  const totalFat = activeFoods.reduce((sum, f) => sum + f.fat * f.quantity, 0);
 
   // 수량 변경
   const updateQuantity = (foodId: string, delta: number) => {
@@ -76,20 +117,31 @@ export default function MealEditPage() {
     );
   };
 
-  // 음식 삭제
+  // 음식 삭제 (로컬에서 삭제 표시)
   const removeFood = (foodId: string) => {
-    setFoods((prev) => prev.filter((f) => f.id !== foodId));
+    setFoods((prev) => prev.map((f) => 
+      f.id === foodId ? { ...f, isDeleted: true } : f
+    ));
   };
 
-  // 저장
+  // 저장 - 변경사항 반영
   const saveChanges = async () => {
     setIsSaving(true);
     try {
-      // TODO: API 호출로 대체
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      // 삭제된 음식들 실제 삭제
+      const deletedFoods = foods.filter((f) => f.isDeleted);
+      for (const food of deletedFoods) {
+        await fetch(`/api/nutrition/meals?mealId=${food.id}`, {
+          method: "DELETE",
+        });
+      }
+
+      // 수량 변경된 음식들 업데이트 (현재는 수량 정보를 DB에 저장하지 않으므로 스킵)
+      // 필요 시 PUT API 호출 추가
+
       router.push("/nutrition");
     } catch (error) {
-      console.error(error);
+      console.error("Save error:", error);
       alert("저장 중 오류가 발생했습니다.");
     } finally {
       setIsSaving(false);
@@ -100,11 +152,18 @@ export default function MealEditPage() {
   const deleteMeal = async () => {
     setIsSaving(true);
     try {
-      // TODO: API 호출로 대체
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      const response = await fetch(
+        `/api/nutrition/meals?mealType=${mealType}&mealDate=${mealDate}`,
+        { method: "DELETE" }
+      );
+
+      if (!response.ok) {
+        throw new Error("Delete failed");
+      }
+
       router.push("/nutrition");
     } catch (error) {
-      console.error(error);
+      console.error("Delete error:", error);
       alert("삭제 중 오류가 발생했습니다.");
     } finally {
       setIsSaving(false);
@@ -158,13 +217,13 @@ export default function MealEditPage() {
             </button>
           </div>
           
-          {foods.length === 0 ? (
+          {activeFoods.length === 0 ? (
             <div className="p-8 text-center text-gray-500">
               기록된 음식이 없습니다.
             </div>
           ) : (
             <div className="divide-y divide-gray-100">
-              {foods.map((food) => (
+              {activeFoods.map((food) => (
                 <div key={food.id} className="p-4 flex items-center justify-between">
                   <div className="flex-1">
                     <p className="font-medium text-gray-800">{food.name}</p>

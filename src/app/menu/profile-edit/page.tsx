@@ -280,7 +280,7 @@ export default function ProfileEditPage() {
           >
             <span className="text-gray-600">사업장코드</span>
             <div className="flex items-center gap-1">
-              <span className="text-gray-900">{profile?.business_code || "214567"}</span>
+              <span className="text-gray-900">{profile?.business_code || "미등록"}</span>
               <ChevronRight className="w-4 h-4 text-gray-400" />
             </div>
           </button>
