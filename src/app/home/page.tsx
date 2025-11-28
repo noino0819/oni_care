@@ -9,6 +9,7 @@ import { TodayMeal } from "@/components/home/TodayMeal";
 import { StepsAndChallenge } from "@/components/home/StepsAndChallenge";
 import { ContentBanners } from "@/components/home/ContentBanners";
 import { FloatingDoctorButton } from "@/components/home/FloatingDoctorButton";
+import { BottomNavigation } from "@/components/home/BottomNavigation";
 import { LoadingOverlay } from "@/components/ui/LoadingSpinner";
 import { ErrorState } from "@/components/ui/ErrorState";
 import {
@@ -247,6 +248,9 @@ export default function HomePage() {
 
       {/* 영양박사 플로팅 버튼 */}
       <FloatingDoctorButton />
+
+      {/* 하단 네비게이션 */}
+      <BottomNavigation />
     </div>
   );
 }

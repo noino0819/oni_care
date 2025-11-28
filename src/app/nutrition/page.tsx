@@ -88,7 +88,10 @@ const DISEASE_WARNINGS: Record<string, string[]> = {
 
 export default function NutritionPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"meal" | "supplement">("meal");
+  const [activeTab, setActiveTab] = useState<
+    "todayMenu" | "meal" | "supplement"
+  >("meal");
+  const [isFsMember, setIsFsMember] = useState(false); // FS회원 여부
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showMonthPicker, setShowMonthPicker] = useState(false);
   const [analysisPeriod, setAnalysisPeriod] = useState<
@@ -114,142 +117,95 @@ export default function NutritionPage() {
     return dates;
   }, [selectedDate]);
 
-  // 데이터 로드 (임시 mock 데이터)
+  // 데이터 로드
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
-      // TODO: 실제 API 호출로 대체
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      try {
+        const dateStr = selectedDate.toISOString().split("T")[0];
+        const response = await fetch(`/api/nutrition?date=${dateStr}`);
 
-      setNutritionData({
-        user: {
-          name: "김건강",
-          points: 50,
-          diseases: ["hyperlipidemia"],
-        },
-        eatScore: 86,
-        hasNutritionDiagnosis: true,
-        warningNutrients: ["지방", "포화지방", "당류"],
-        diagnosisType: "지방 집중관리형",
-        meals: [
-          {
-            type: "breakfast",
-            status: "skipped",
-            calories: 0,
-            targetCalories: 500,
-          },
-          {
-            type: "lunch",
-            status: "recorded",
-            calories: 260,
-            targetCalories: 500,
-          },
-          {
-            type: "dinner",
-            status: "recorded",
-            calories: 80,
-            targetCalories: 500,
-          },
-          {
-            type: "snack",
-            status: "not_recorded",
-            calories: 0,
-            targetCalories: 225,
-          },
-        ],
-        dailyCalories: {
-          consumed: 1528,
-          target: 2100,
-          burned: 72,
-        },
-        nutrients: [
-          {
-            name: "carbs",
-            nameKo: "탄수화물",
-            status: "excessive",
-            value: 126,
-            min: 200,
-            max: 300,
-            unit: "g",
-            needsAttention: true,
-          },
-          {
-            name: "protein",
-            nameKo: "단백질",
-            status: "adequate",
-            value: 47,
-            min: 50,
-            max: 80,
-            unit: "g",
-            needsAttention: false,
-          },
-          {
-            name: "fat",
-            nameKo: "지방",
-            status: "deficient",
-            value: 5,
-            min: 40,
-            max: 70,
-            unit: "g",
-            needsAttention: false,
-          },
-          {
-            name: "fiber",
-            nameKo: "식이섬유",
-            status: "deficient",
-            value: 10,
-            min: 20,
-            max: 30,
-            unit: "g",
-            needsAttention: false,
-          },
-          {
-            name: "sodium",
-            nameKo: "나트륨",
-            status: "deficient",
-            value: 1200,
-            min: 1500,
-            max: 2300,
-            unit: "mg",
-            needsAttention: false,
-          },
-          {
-            name: "sugar",
-            nameKo: "당류",
-            status: "deficient",
-            value: 5,
-            min: 25,
-            max: 50,
-            unit: "g",
-            needsAttention: false,
-          },
-          {
-            name: "saturatedFat",
-            nameKo: "포화지방",
-            status: "deficient",
-            value: 5,
-            min: 15,
-            max: 22,
-            unit: "g",
-            needsAttention: false,
-          },
-          {
-            name: "cholesterol",
-            nameKo: "콜레스테롤",
-            status: "deficient",
-            value: 100,
-            min: 200,
-            max: 300,
-            unit: "mg",
-            needsAttention: false,
-          },
-        ],
-      });
-      setIsLoading(false);
+        if (response.ok) {
+          const data = await response.json();
+          setNutritionData(data);
+          // FS 회원 여부 설정
+          setIsFsMember(data.user?.isFsMember || false);
+        } else {
+          // API 실패 시 기본값 설정
+          setNutritionData(getDefaultNutritionData());
+        }
+      } catch (error) {
+        console.error("Nutrition data fetch error:", error);
+        setNutritionData(getDefaultNutritionData());
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     fetchData();
   }, [selectedDate]);
+
+  // 기본 영양 데이터
+  const getDefaultNutritionData = (): NutritionData => ({
+    user: {
+      name: "사용자",
+      points: 0,
+      diseases: [],
+    },
+    eatScore: null,
+    hasNutritionDiagnosis: false,
+    warningNutrients: [],
+    diagnosisType: null,
+    meals: [
+      {
+        type: "breakfast",
+        status: "not_recorded",
+        calories: 0,
+        targetCalories: 500,
+      },
+      {
+        type: "lunch",
+        status: "not_recorded",
+        calories: 0,
+        targetCalories: 500,
+      },
+      {
+        type: "dinner",
+        status: "not_recorded",
+        calories: 0,
+        targetCalories: 500,
+      },
+      {
+        type: "snack",
+        status: "not_recorded",
+        calories: 0,
+        targetCalories: 225,
+      },
+    ],
+    dailyCalories: { consumed: 0, target: 2100, burned: 0 },
+    nutrients: [],
+  });
+
+  // 안먹음 기록 핸들러
+  const handleSkipMeal = async (mealType: string) => {
+    try {
+      const dateStr = selectedDate.toISOString().split("T")[0];
+      await fetch(
+        `/api/nutrition/meals?mealType=${mealType}&mealDate=${dateStr}`,
+        {
+          method: "DELETE",
+        }
+      );
+      // 데이터 새로고침
+      const response = await fetch(`/api/nutrition?date=${dateStr}`);
+      if (response.ok) {
+        const data = await response.json();
+        setNutritionData(data);
+      }
+    } catch (error) {
+      console.error("Skip meal error:", error);
+    }
+  };
 
   // 날짜 포맷
   const formatDate = (date: Date) => {
@@ -295,6 +251,21 @@ export default function NutritionPage() {
       {/* 탭 네비게이션 */}
       <div className="sticky top-[56px] z-10 bg-white border-b border-gray-100">
         <div className="flex">
+          {/* 오늘의 메뉴 탭 - FS회원에게만 노출 */}
+          {isFsMember && (
+            <button
+              onClick={() => setActiveTab("todayMenu")}
+              className={cn(
+                "flex-1 py-3 text-center text-sm font-medium transition-colors relative",
+                activeTab === "todayMenu" ? "text-gray-900" : "text-gray-400"
+              )}
+            >
+              오늘의 메뉴
+              {activeTab === "todayMenu" && (
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-16 h-0.5 bg-[#7B9B5C]" />
+              )}
+            </button>
+          )}
           <button
             onClick={() => setActiveTab("meal")}
             className={cn(
@@ -322,7 +293,9 @@ export default function NutritionPage() {
         </div>
       </div>
 
-      {activeTab === "meal" ? (
+      {activeTab === "todayMenu" && isFsMember ? (
+        <TodayMenuTab selectedDate={selectedDate} />
+      ) : activeTab === "meal" ? (
         <div className="space-y-4 pt-4">
           {/* 날짜 선택 */}
           <div className="px-4">
@@ -462,55 +435,75 @@ export default function NutritionPage() {
                   const isSkipped = meal.status === "skipped";
 
                   return (
-                    <button
-                      key={meal.type}
-                      onClick={() => {
-                        if (isRecorded) {
-                          router.push(`/nutrition/meal/${meal.type}/edit`);
-                        } else {
-                          router.push(`/nutrition/meal/${meal.type}`);
-                        }
-                      }}
-                      className={cn(
-                        "flex flex-col items-center p-3 rounded-2xl transition-colors relative",
-                        isRecorded
-                          ? "bg-[#7B9B5C]/10"
-                          : isSkipped
-                          ? "bg-gray-100"
-                          : config.color
-                      )}
-                    >
-                      <span className="text-2xl mb-1">{config.icon}</span>
-                      <span className="text-xs font-medium text-gray-700">
-                        {config.label}
-                      </span>
-                      {isRecorded && (
-                        <div className="absolute top-2 right-2">
-                          <Check className="w-4 h-4 text-[#7B9B5C]" />
-                        </div>
-                      )}
-                      {!isRecorded && !isSkipped && (
-                        <div className="absolute top-2 right-2">
-                          <Plus className="w-4 h-4 text-gray-400" />
-                        </div>
-                      )}
-                      <span
+                    <div key={meal.type} className="flex flex-col">
+                      <button
+                        onClick={() => {
+                          if (isRecorded) {
+                            router.push(
+                              `/nutrition/meal/${meal.type}/edit?date=${
+                                selectedDate.toISOString().split("T")[0]
+                              }`
+                            );
+                          } else if (isSkipped) {
+                            router.push(
+                              `/nutrition/meal/${meal.type}/edit?date=${
+                                selectedDate.toISOString().split("T")[0]
+                              }`
+                            );
+                          } else {
+                            router.push(`/nutrition/meal/${meal.type}`);
+                          }
+                        }}
                         className={cn(
-                          "text-xs mt-1",
+                          "flex flex-col items-center p-3 rounded-2xl transition-colors relative",
                           isRecorded
-                            ? "text-[#7B9B5C]"
+                            ? "bg-[#7B9B5C]/10"
                             : isSkipped
-                            ? "text-gray-400"
-                            : "text-gray-500"
+                            ? "bg-gray-100"
+                            : config.color
                         )}
                       >
-                        {isSkipped
-                          ? "안먹었어요"
-                          : isRecorded
-                          ? `${meal.calories}/${meal.targetCalories}kcal`
-                          : "안먹었어요✓"}
-                      </span>
-                    </button>
+                        <span className="text-2xl mb-1">{config.icon}</span>
+                        <span className="text-xs font-medium text-gray-700">
+                          {config.label}
+                        </span>
+                        {isRecorded && (
+                          <div className="absolute top-2 right-2">
+                            <Check className="w-4 h-4 text-[#7B9B5C]" />
+                          </div>
+                        )}
+                        {!isRecorded && !isSkipped && (
+                          <div className="absolute top-2 right-2">
+                            <Plus className="w-4 h-4 text-gray-400" />
+                          </div>
+                        )}
+                        <span
+                          className={cn(
+                            "text-xs mt-1",
+                            isRecorded
+                              ? "text-[#7B9B5C]"
+                              : isSkipped
+                              ? "text-gray-400"
+                              : "text-gray-500"
+                          )}
+                        >
+                          {isSkipped
+                            ? "안먹었어요"
+                            : isRecorded
+                            ? `${meal.calories}/${meal.targetCalories}kcal`
+                            : ""}
+                        </span>
+                      </button>
+                      {/* 안먹었어요 버튼 */}
+                      {!isRecorded && !isSkipped && (
+                        <button
+                          onClick={() => handleSkipMeal(meal.type)}
+                          className="text-xs text-gray-400 mt-1 hover:text-gray-600"
+                        >
+                          안먹었어요✓
+                        </button>
+                      )}
+                    </div>
                   );
                 })}
               </div>
@@ -771,36 +764,65 @@ function SupplementTab() {
   >([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const TIME_SLOT_LABELS: Record<string, string> = {
+    morning: "아침 식후",
+    lunch: "점심 식후",
+    dinner: "저녁 식후",
+    before_sleep: "취침 전",
+  };
+
   useEffect(() => {
-    // TODO: 실제 API로 대체
-    setIsLoading(true);
-    setTimeout(() => {
-      setSupplements([
-        {
-          id: "1",
-          name: "종합 비타민",
-          dosage: "1정",
-          timeSlot: "아침 식후",
-          isTaken: true,
-        },
-        {
-          id: "2",
-          name: "오메가3",
-          dosage: "1캡슐",
-          timeSlot: "점심 식후",
-          isTaken: true,
-        },
-        {
-          id: "3",
-          name: "비타민D",
-          dosage: "1정",
-          timeSlot: "저녁 식후",
-          isTaken: false,
-        },
-      ]);
-      setIsLoading(false);
-    }, 300);
+    const fetchSupplements = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch("/api/nutrition/supplements");
+        if (response.ok) {
+          const data = await response.json();
+          const formattedSupplements = (data.supplements || []).map(
+            (s: {
+              id: string;
+              name: string;
+              dosage: string;
+              timeSlot: string;
+              isTaken: boolean;
+            }) => ({
+              ...s,
+              timeSlot: TIME_SLOT_LABELS[s.timeSlot] || s.timeSlot,
+            })
+          );
+          setSupplements(formattedSupplements);
+        }
+      } catch (error) {
+        console.error("Supplements fetch error:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSupplements();
   }, []);
+
+  // 복용 토글
+  const toggleTaken = async (supplementId: string) => {
+    try {
+      await fetch("/api/nutrition/supplements", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          routineId: supplementId,
+          action: "toggleTaken",
+        }),
+      });
+      // 로컬 상태 업데이트
+      setSupplements((prev) =>
+        prev.map((s) =>
+          s.id === supplementId ? { ...s, isTaken: !s.isTaken } : s
+        )
+      );
+    } catch (error) {
+      console.error("Toggle taken error:", error);
+    }
+  };
 
   const takenCount = supplements.filter((s) => s.isTaken).length;
   const totalCount = supplements.length;
@@ -921,6 +943,7 @@ function SupplementTab() {
                 </div>
               </div>
               <button
+                onClick={() => toggleTaken(supplement.id)}
                 className={cn(
                   "w-8 h-8 rounded-full flex items-center justify-center border-2 transition-colors",
                   supplement.isTaken
@@ -934,6 +957,175 @@ function SupplementTab() {
           ))}
         </div>
       </div>
+    </div>
+  );
+}
+
+// 오늘의 메뉴 탭 컴포넌트 (FS회원 전용)
+function TodayMenuTab({ selectedDate }: { selectedDate: Date }) {
+  const router = useRouter();
+  const [selectedMealType, setSelectedMealType] = useState<
+    "breakfast" | "lunch" | "dinner" | "snack"
+  >("lunch");
+  const [menus, setMenus] = useState<
+    {
+      id: string;
+      cornerName: string;
+      menuName: string;
+      calories: number;
+      image?: string;
+    }[]
+  >([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // 현재 시간에 따른 기본 끼니 설정
+  useEffect(() => {
+    const hour = new Date().getHours();
+    if (hour >= 6 && hour < 11) {
+      setSelectedMealType("breakfast");
+    } else if (hour >= 11 && hour < 16) {
+      setSelectedMealType("lunch");
+    } else if (hour >= 16 && hour < 21) {
+      setSelectedMealType("dinner");
+    } else {
+      setSelectedMealType("breakfast"); // 다음날 아침
+    }
+  }, []);
+
+  // 메뉴 데이터 로드
+  useEffect(() => {
+    const fetchMenus = async () => {
+      setIsLoading(true);
+      try {
+        // TODO: 실제 API 호출로 대체
+        await new Promise((resolve) => setTimeout(resolve, 300));
+
+        // 샘플 데이터
+        setMenus([
+          {
+            id: "1",
+            cornerName: "A코너",
+            menuName: "매콤순대볶음",
+            calories: 945,
+            image: "/images/meal-order-01.jpg",
+          },
+          {
+            id: "2",
+            cornerName: "B코너",
+            menuName: "황태콩나물 해장국",
+            calories: 860,
+            image: "/images/meal-order-02.jpg",
+          },
+          {
+            id: "3",
+            cornerName: "C코너",
+            menuName: "유니짜장면",
+            calories: 1110,
+            image: undefined,
+          },
+        ]);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchMenus();
+  }, [selectedDate, selectedMealType]);
+
+  const MEAL_TYPES = [
+    { value: "breakfast", label: "아침" },
+    { value: "lunch", label: "점심" },
+    { value: "dinner", label: "저녁" },
+    { value: "snack", label: "야식" },
+  ];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#7B9B5C]" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="px-4 py-4 space-y-4">
+      {/* 끼니 선택 */}
+      <div className="flex gap-2">
+        {MEAL_TYPES.map((meal) => (
+          <button
+            key={meal.value}
+            onClick={() =>
+              setSelectedMealType(meal.value as typeof selectedMealType)
+            }
+            className={cn(
+              "flex-1 py-2 rounded-lg text-sm font-medium transition-colors",
+              selectedMealType === meal.value
+                ? "bg-[#7B9B5C] text-white"
+                : "bg-gray-100 text-gray-600"
+            )}
+          >
+            {meal.label}
+          </button>
+        ))}
+      </div>
+
+      {/* 메뉴 목록 */}
+      <div className="grid grid-cols-2 gap-3">
+        {menus.map((menu) => (
+          <div
+            key={menu.id}
+            className="bg-white rounded-xl shadow-sm overflow-hidden"
+          >
+            <div className="aspect-square bg-gray-100 relative">
+              {menu.image ? (
+                <img
+                  src={menu.image}
+                  alt={menu.menuName}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-400">
+                  <span className="text-4xl">🍽️</span>
+                </div>
+              )}
+            </div>
+            <div className="p-3">
+              <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+                <span>{menu.cornerName}</span>
+                <span>{menu.calories}kcal</span>
+              </div>
+              <p className="font-medium text-gray-800 text-sm mb-2">
+                {menu.menuName}
+              </p>
+              <button
+                onClick={() => {
+                  // 해당 메뉴로 식사 기록 페이지 이동
+                  router.push(
+                    `/nutrition/meal/${selectedMealType}?menu=${menu.id}`
+                  );
+                }}
+                className="w-full py-2 bg-gray-100 rounded-lg text-sm font-medium text-gray-700"
+              >
+                식사기록
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {menus.length === 0 && (
+        <div className="bg-white rounded-2xl p-8 shadow-sm text-center">
+          <div className="text-4xl mb-4">🍽️</div>
+          <h3 className="text-lg font-semibold text-gray-800 mb-2">
+            등록된 메뉴가 없어요
+          </h3>
+          <p className="text-sm text-gray-500">
+            오늘의 메뉴가 아직 등록되지 않았습니다.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

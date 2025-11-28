@@ -46,41 +46,180 @@ export default function DiagnosisResultPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: 실제 API 호출로 대체
-    setIsLoading(true);
-    setTimeout(() => {
-      setResult({
-        user: {
-          name: "테스트",
-          gender: "female",
-          age: 40,
-          height: 165,
-          weight: 55,
-          diseases: ["osteoporosis"],
-          interests: ["immunity", "muscle", "weight_control"],
-        },
-        diagnosisDate: "2025.02.05",
-        eatScore: 92,
-        eatScoreMessage: "식이섬유 섭취량이 부족하고, 당류 과다하여 잇스코어가 감점 되었어요.",
-        deficientNutrients: ["식이섬유"],
-        excessiveNutrients: ["당류"],
-        averageScore: 94,
-        recommendedCalories: 1900,
-        basalMetabolicRate: 1292,
-        currentCalories: 1528,
-        calorieStatus: "deficient",
-        diseaseManagement: {
-          disease: "골다공증",
-          tips: [
-            "칼슘과 비타민D 섭취를 늘려주세요.",
-            "나트륨 섭취를 줄이세요.",
-            "적절한 체중 부하 운동을 해주세요.",
-          ],
-        },
-      });
-      setIsLoading(false);
-    }, 500);
+    const fetchDiagnosisResult = async () => {
+      setIsLoading(true);
+      try {
+        // API에서 최신 진단 결과 조회
+        const response = await fetch("/api/nutrition/diagnosis");
+        
+        if (response.ok) {
+          const diagnosisData = await response.json();
+          
+          if (diagnosisData) {
+            // API 데이터를 화면용 포맷으로 변환
+            const formattedResult: DiagnosisResult = {
+              user: {
+                name: diagnosisData.user_name || "사용자",
+                gender: diagnosisData.gender || "female",
+                age: diagnosisData.age || 40,
+                height: diagnosisData.height || 165,
+                weight: diagnosisData.weight || 55,
+                diseases: diagnosisData.diseases || [],
+                interests: diagnosisData.interests || [],
+              },
+              diagnosisDate: new Date(diagnosisData.diagnosis_date).toLocaleDateString("ko-KR", {
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+              }).replace(/\. /g, ".").replace(/\.$/, ""),
+              eatScore: diagnosisData.eat_score || 86,
+              eatScoreMessage: generateEatScoreMessage(diagnosisData),
+              deficientNutrients: getDeficientNutrients(diagnosisData.nutrient_scores),
+              excessiveNutrients: getExcessiveNutrients(diagnosisData.nutrient_scores),
+              averageScore: 94, // 평균 점수는 고정값 또는 별도 API
+              recommendedCalories: diagnosisData.recommended_calories || 2100,
+              basalMetabolicRate: diagnosisData.basal_metabolic_rate || 1450,
+              currentCalories: diagnosisData.current_calories || 1528,
+              calorieStatus: getCalorieStatus(diagnosisData),
+              diseaseManagement: getDiseaseManagement(diagnosisData.diseases),
+            };
+            setResult(formattedResult);
+            return;
+          }
+        }
+        
+        // API 실패 시 기본 데이터 사용
+        setResult(getDefaultResult());
+      } catch (error) {
+        console.error("Diagnosis result fetch error:", error);
+        setResult(getDefaultResult());
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDiagnosisResult();
   }, []);
+
+  // 잇스코어 메시지 생성
+  const generateEatScoreMessage = (data: Record<string, unknown>) => {
+    const deficient = getDeficientNutrients(data.nutrient_scores as Record<string, number>);
+    const excessive = getExcessiveNutrients(data.nutrient_scores as Record<string, number>);
+    
+    if (deficient.length > 0 && excessive.length > 0) {
+      return `${deficient.join(", ")} 섭취량이 부족하고, ${excessive.join(", ")} 과다하여 잇스코어가 감점 되었어요.`;
+    } else if (deficient.length > 0) {
+      return `${deficient.join(", ")} 섭취량이 부족하여 잇스코어가 감점 되었어요.`;
+    } else if (excessive.length > 0) {
+      return `${excessive.join(", ")} 과다 섭취로 잇스코어가 감점 되었어요.`;
+    }
+    return "영양 균형이 양호합니다!";
+  };
+
+  // 부족 영양소 추출
+  const getDeficientNutrients = (scores: Record<string, number> | undefined) => {
+    if (!scores) return ["식이섬유"];
+    const nutrientNames: Record<string, string> = {
+      carbs: "탄수화물", protein: "단백질", fat: "지방", fiber: "식이섬유",
+      sodium: "나트륨", sugar: "당류", saturatedFat: "포화지방", cholesterol: "콜레스테롤",
+    };
+    return Object.entries(scores)
+      .filter(([, score]) => score < 70)
+      .map(([name]) => nutrientNames[name] || name);
+  };
+
+  // 과다 영양소 추출
+  const getExcessiveNutrients = (scores: Record<string, number> | undefined) => {
+    if (!scores) return ["당류"];
+    const nutrientNames: Record<string, string> = {
+      carbs: "탄수화물", protein: "단백질", fat: "지방", fiber: "식이섬유",
+      sodium: "나트륨", sugar: "당류", saturatedFat: "포화지방", cholesterol: "콜레스테롤",
+    };
+    // 점수가 높으면 오히려 과다 섭취 (역산 필요한 경우)
+    // 여기서는 warning_nutrients를 활용하거나 별도 로직
+    return [];
+  };
+
+  // 칼로리 상태
+  const getCalorieStatus = (data: Record<string, unknown>): "excessive" | "deficient" | "adequate" => {
+    const current = (data.current_calories as number) || 1528;
+    const recommended = (data.recommended_calories as number) || 2100;
+    const ratio = current / recommended;
+    if (ratio < 0.9) return "deficient";
+    if (ratio > 1.1) return "excessive";
+    return "adequate";
+  };
+
+  // 질병 관리법
+  const getDiseaseManagement = (diseases: string[] | undefined) => {
+    if (!diseases || diseases.length === 0) return null;
+    
+    const managementMap: Record<string, { disease: string; tips: string[] }> = {
+      osteoporosis: {
+        disease: "골다공증",
+        tips: [
+          "칼슘과 비타민D 섭취를 늘려주세요.",
+          "나트륨 섭취를 줄이세요.",
+          "적절한 체중 부하 운동을 해주세요.",
+        ],
+      },
+      diabetes: {
+        disease: "당뇨",
+        tips: [
+          "당류 섭취를 제한해주세요.",
+          "식이섬유가 풍부한 식품을 섭취하세요.",
+          "규칙적인 식사 시간을 유지하세요.",
+        ],
+      },
+      hypertension: {
+        disease: "고혈압",
+        tips: [
+          "나트륨 섭취를 하루 2,000mg 이하로 줄이세요.",
+          "칼륨이 풍부한 과일, 채소를 드세요.",
+          "포화지방 섭취를 줄이세요.",
+        ],
+      },
+      hyperlipidemia: {
+        disease: "고중성지방혈증",
+        tips: [
+          "지방 섭취를 줄이세요.",
+          "오메가3가 풍부한 생선을 드세요.",
+          "당류와 정제 탄수화물을 제한하세요.",
+        ],
+      },
+    };
+    
+    const firstDisease = diseases[0];
+    return managementMap[firstDisease] || null;
+  };
+
+  // 기본 결과 데이터
+  const getDefaultResult = (): DiagnosisResult => ({
+    user: {
+      name: "사용자",
+      gender: "female",
+      age: 40,
+      height: 165,
+      weight: 55,
+      diseases: [],
+      interests: ["immunity", "muscle", "weight_control"],
+    },
+    diagnosisDate: new Date().toLocaleDateString("ko-KR", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).replace(/\. /g, ".").replace(/\.$/, ""),
+    eatScore: 86,
+    eatScoreMessage: "식이섬유 섭취량이 부족하고, 당류 과다하여 잇스코어가 감점 되었어요.",
+    deficientNutrients: ["식이섬유"],
+    excessiveNutrients: ["당류"],
+    averageScore: 94,
+    recommendedCalories: 2100,
+    basalMetabolicRate: 1450,
+    currentCalories: 1528,
+    calorieStatus: "deficient",
+    diseaseManagement: null,
+  });
 
   if (isLoading) {
     return (

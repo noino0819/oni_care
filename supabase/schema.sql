@@ -57,6 +57,8 @@ CREATE TABLE IF NOT EXISTS public.users (
   diseases TEXT[] DEFAULT '{}',
   interests TEXT[] DEFAULT '{}',
   business_code TEXT,
+  is_fs_member BOOLEAN DEFAULT false,  -- FS(Food Service) 회원 여부
+  fs_business_id UUID,                 -- FS 사업장 ID
   marketing_push_agreed BOOLEAN DEFAULT false,
   marketing_sms_agreed BOOLEAN DEFAULT false,
   push_agreed_at TIMESTAMP WITH TIME ZONE,
