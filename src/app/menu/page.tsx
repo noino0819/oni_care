@@ -103,10 +103,6 @@ export default function MenuPage() {
     router.push("/");
   };
 
-  if (loading) {
-    return <MenuPageSkeleton />;
-  }
-
   const quickMenuItems = [
     { href: "/menu/notices", label: "공지사항", icon: NoticeIcon },
     { href: "/challenge", label: "챌린지", icon: ChallengeIcon },
@@ -134,7 +130,7 @@ export default function MenuPage() {
 
   return (
     <div className="min-h-screen bg-white pb-32">
-      {/* 헤더 */}
+      {/* 헤더 - 항상 표시 */}
       <header className="sticky top-0 bg-white z-10 border-b border-gray-100">
         <div className="flex items-center justify-between px-4 py-3">
           <button onClick={() => router.back()} className="p-1">
@@ -146,6 +142,42 @@ export default function MenuPage() {
       </header>
 
       <div className="px-4">
+        {/* 프로필 섹션 - 로딩 시 스켈레톤 */}
+        {loading ? (
+          <>
+            <div className="py-5 flex items-center justify-between border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gray-200 rounded-full animate-pulse" />
+                <div className="h-6 w-24 bg-gray-200 rounded animate-pulse" />
+              </div>
+              <div className="w-8 h-8 bg-gray-200 rounded animate-pulse" />
+            </div>
+            <div className="py-5 border-b border-gray-100">
+              <div className="flex justify-around">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex flex-col items-center gap-2">
+                    <div className="w-14 h-14 bg-gray-200 rounded-2xl animate-pulse" />
+                    <div className="h-4 w-12 bg-gray-200 rounded animate-pulse" />
+                  </div>
+                ))}
+              </div>
+            </div>
+            {[1, 2, 3].map((section) => (
+              <div key={section} className="py-4">
+                <div className="h-4 w-16 bg-gray-200 rounded animate-pulse mb-2" />
+                <div className="bg-gray-50 rounded-xl overflow-hidden">
+                  {[1, 2, 3].map((item) => (
+                    <div key={item} className="flex items-center justify-between px-4 py-4 border-b border-gray-100 last:border-0">
+                      <div className="h-5 w-24 bg-gray-200 rounded animate-pulse" />
+                      <div className="w-5 h-5 bg-gray-200 rounded animate-pulse" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </>
+        ) : (
+        <>
         {/* 프로필 섹션 */}
         <div className="py-5 flex items-center justify-between border-b border-gray-100">
           <div className="flex items-center gap-3">
@@ -256,6 +288,8 @@ export default function MenuPage() {
             로그아웃
           </button>
         </div>
+        </>
+        )}
       </div>
     </div>
   );

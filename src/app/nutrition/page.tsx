@@ -286,16 +286,14 @@ export default function NutritionPage() {
 
   const guidance = getGuidanceMessage();
 
-  if (isLoading) {
-    return <NutritionPageSkeleton />;
-  }
-
   return (
     <div className="min-h-screen bg-gray-50 pb-28">
-      {/* 공통 헤더 */}
-      <Header points={nutritionData?.user.points || 0} />
+      {/* 공통 헤더 - 항상 표시 */}
+      <Header
+        points={isLoading ? undefined : nutritionData?.user.points || 0}
+      />
 
-      {/* 탭 네비게이션 */}
+      {/* 탭 네비게이션 - 항상 표시 */}
       <div className="sticky top-[56px] z-10 bg-white border-b border-gray-100">
         <div className="flex">
           {/* 오늘의 메뉴 탭 - FS회원에게만 노출 */}
@@ -344,7 +342,7 @@ export default function NutritionPage() {
         <TodayMenuTab selectedDate={selectedDate} />
       ) : activeTab === "meal" ? (
         <div className="space-y-4 pt-4">
-          {/* 날짜 선택 */}
+          {/* 날짜 선택 - 항상 표시 (UI 컴포넌트) */}
           <div className="px-4">
             <div className="bg-white rounded-2xl p-4 shadow-sm">
               {/* 년월 선택 */}
@@ -409,411 +407,463 @@ export default function NutritionPage() {
             </div>
           </div>
 
-          {/* 식사분석 (영양진단 영역) */}
+          {/* 식사분석 (영양진단 영역) - 로딩 시 스켈레톤 */}
           <div className="px-4">
-            <div className="bg-[#F8F9E8] rounded-2xl p-4 shadow-sm border border-[#E8EBC8]">
-              <h3 className="text-sm font-semibold text-gray-800 mb-2">
-                식사분석
-              </h3>
-
-              {nutritionData?.hasNutritionDiagnosis ? (
-                <>
-                  {/* 잇스코어 표시 */}
-                  <div className="flex items-center gap-2 mb-3">
-                    <Star className="w-5 h-5 text-[#7B9B5C] fill-[#7B9B5C]" />
-                    <span className="text-lg font-bold">
-                      나의 잇스코어 점수는{" "}
-                      <span className="text-[#7B9B5C]">
-                        {nutritionData.eatScore || 0}점
-                      </span>
-                    </span>
-                  </div>
-
-                  {/* 질병 기반 안내 메시지 */}
-                  {guidance && (
-                    <p className="text-sm text-gray-700 mb-3">
-                      <span className="font-medium">
-                        {nutritionData.user.name}님
-                      </span>{" "}
-                      <span className="text-[#7B9B5C] font-medium">
-                        {guidance.disease}
-                      </span>{" "}
-                      관리를 위해{" "}
-                      <span className="text-[#7B9B5C] font-medium">
-                        {guidance.nutrients.join(", ")}
-                      </span>{" "}
-                      섭취를 특별히 주의해야해요!
-                    </p>
-                  )}
-
-                  {/* 진단 유형 안내 (질병이 없는 경우) */}
-                  {!guidance && nutritionData.diagnosisType && (
-                    <p className="text-sm text-gray-700 mb-3">
-                      <span className="font-medium">
-                        {nutritionData.user.name}님
-                      </span>
-                      의 식습관은{" "}
-                      <span className="text-[#7B9B5C] font-medium">
-                        {nutritionData.diagnosisType}
-                      </span>
-                      유형으로{" "}
-                      <span className="text-[#7B9B5C] font-medium">
-                        {nutritionData.warningNutrients?.join(", ")}
-                      </span>{" "}
-                      섭취에 좀더 주의를 기울여주세요!
-                    </p>
-                  )}
-
-                  <div className="flex gap-2 mb-3">
-                    <button
-                      onClick={() => router.push("/nutrition/diagnosis-result")}
-                      className="flex-1 flex items-center justify-center gap-2 bg-[#7B9B5C] text-white py-3 rounded-xl text-sm font-medium"
-                    >
-                      <Salad className="w-4 h-4" />
-                      영양진단 결과보기
-                    </button>
-                    <button
-                      onClick={() => router.push("/nutrition/recommendation")}
-                      className="flex-1 flex items-center justify-center gap-2 bg-white text-gray-700 py-3 rounded-xl text-sm font-medium border border-gray-200"
-                    >
-                      🍽️ 맞춤 상품 추천받기
-                    </button>
-                  </div>
-
-                  <button className="text-sm text-gray-500 flex items-center gap-1">
-                    이전 내역 확인하기 <ChevronRight className="w-4 h-4" />
-                  </button>
-                </>
-              ) : (
-                <div className="text-center py-4">
-                  <div className="flex items-center justify-center gap-2 mb-2">
-                    <Star className="w-5 h-5 text-[#7B9B5C]" />
-                    <span className="text-lg font-bold">
-                      나의 잇스코어 점수는 __점
-                    </span>
-                  </div>
-                  <p className="text-sm text-gray-500 mb-4">
-                    나의 식습관이 궁금하다면?
-                  </p>
-                  <button
-                    onClick={() => router.push("/nutrition/diagnosis")}
-                    className="bg-[#7B9B5C] text-white px-6 py-2 rounded-full text-sm font-medium"
-                  >
-                    영양진단 하러가기
-                  </button>
+            {isLoading ? (
+              <div className="bg-[#F8F9E8] rounded-2xl p-4 shadow-sm border border-[#E8EBC8] animate-pulse">
+                <div className="h-5 w-20 bg-white/50 rounded mb-4" />
+                <div className="h-6 w-48 bg-white/50 rounded mb-3" />
+                <div className="h-4 w-full bg-white/50 rounded mb-4" />
+                <div className="flex gap-2">
+                  <div className="flex-1 h-12 bg-white/50 rounded-xl" />
+                  <div className="flex-1 h-12 bg-white/50 rounded-xl" />
                 </div>
-              )}
-            </div>
-          </div>
-
-          {/* 식사 추가 */}
-          <div className="px-4">
-            <div className="bg-white rounded-2xl p-4 shadow-sm">
-              <h3 className="text-sm font-semibold text-gray-800 mb-4">
-                식사 추가
-              </h3>
-
-              <div className="grid grid-cols-4 gap-2">
-                {nutritionData?.meals.map((meal) => {
-                  const config = MEAL_CONFIG[meal.type];
-                  const isRecorded = meal.status === "recorded";
-                  const isSkipped = meal.status === "skipped";
-
-                  return (
-                    <div key={meal.type} className="flex flex-col">
-                      <button
-                        onClick={() => {
-                          if (isRecorded) {
-                            // 기록된 식사 → 상세 페이지 (MF_NU_0107)
-                            router.push(
-                              `/nutrition/meal/detail?type=${meal.type}&date=${
-                                selectedDate.toISOString().split("T")[0]
-                              }`
-                            );
-                          } else if (isSkipped) {
-                            // 안먹음 → 수정 페이지
-                            router.push(
-                              `/nutrition/meal/${meal.type}/edit?date=${
-                                selectedDate.toISOString().split("T")[0]
-                              }`
-                            );
-                          } else {
-                            // 기록 없음 → 새 기록 페이지
-                            router.push(`/nutrition/meal/${meal.type}`);
-                          }
-                        }}
-                        className={cn(
-                          "flex flex-col items-center p-3 rounded-2xl transition-colors relative",
-                          isRecorded
-                            ? "bg-[#7B9B5C]/10"
-                            : isSkipped
-                            ? "bg-gray-100"
-                            : config.color
-                        )}
-                      >
-                        <span className="text-2xl mb-1">{config.icon}</span>
-                        <span className="text-xs font-medium text-gray-700">
-                          {config.label}
-                        </span>
-                        {isRecorded && (
-                          <div className="absolute top-2 right-2">
-                            <Check className="w-4 h-4 text-[#7B9B5C]" />
-                          </div>
-                        )}
-                        {!isRecorded && !isSkipped && (
-                          <div className="absolute top-2 right-2">
-                            <Plus className="w-4 h-4 text-gray-400" />
-                          </div>
-                        )}
-                        <span
-                          className={cn(
-                            "text-xs mt-1",
-                            isRecorded
-                              ? "text-[#7B9B5C]"
-                              : isSkipped
-                              ? "text-gray-400"
-                              : "text-gray-500"
-                          )}
-                        >
-                          {isSkipped
-                            ? "안먹었어요"
-                            : isRecorded
-                            ? `${meal.calories}/${meal.targetCalories}kcal`
-                            : ""}
-                        </span>
-                      </button>
-                      {/* 안먹었어요 버튼 */}
-                      {!isRecorded && !isSkipped && (
-                        <button
-                          onClick={() => handleSkipMeal(meal.type)}
-                          className="text-xs text-gray-400 mt-1 hover:text-gray-600"
-                        >
-                          안먹었어요✓
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
               </div>
-            </div>
-          </div>
-
-          {/* 식사 분석 */}
-          <div className="px-4">
-            <div className="bg-white rounded-2xl p-4 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-gray-800">
-                  식사 분석
+            ) : (
+              <div className="bg-[#F8F9E8] rounded-2xl p-4 shadow-sm border border-[#E8EBC8]">
+                <h3 className="text-sm font-semibold text-gray-800 mb-2">
+                  식사분석
                 </h3>
-                <button
-                  onClick={() => router.push("/nutrition/analysis")}
-                  className="text-xs text-gray-500 flex items-center gap-1"
-                >
-                  상세분석 <ChevronRight className="w-3 h-3" />
-                </button>
-              </div>
 
-              {/* 기간 선택 탭 */}
-              <div className="flex gap-2 mb-6">
-                {[
-                  { key: "daily", label: "당일분석" },
-                  { key: "weekly", label: "일주일분석" },
-                  { key: "monthly", label: "한달분석" },
-                ].map((period) => (
-                  <button
-                    key={period.key}
-                    onClick={() =>
-                      setAnalysisPeriod(period.key as typeof analysisPeriod)
-                    }
-                    className={cn(
-                      "px-3 py-1.5 rounded-full text-xs font-medium transition-colors",
-                      analysisPeriod === period.key
-                        ? "bg-gray-800 text-white"
-                        : "bg-gray-100 text-gray-600"
+                {nutritionData?.hasNutritionDiagnosis ? (
+                  <>
+                    {/* 잇스코어 표시 */}
+                    <div className="flex items-center gap-2 mb-3">
+                      <Star className="w-5 h-5 text-[#7B9B5C] fill-[#7B9B5C]" />
+                      <span className="text-lg font-bold">
+                        나의 잇스코어 점수는{" "}
+                        <span className="text-[#7B9B5C]">
+                          {nutritionData.eatScore || 0}점
+                        </span>
+                      </span>
+                    </div>
+
+                    {/* 질병 기반 안내 메시지 */}
+                    {guidance && (
+                      <p className="text-sm text-gray-700 mb-3">
+                        <span className="font-medium">
+                          {nutritionData.user.name}님
+                        </span>{" "}
+                        <span className="text-[#7B9B5C] font-medium">
+                          {guidance.disease}
+                        </span>{" "}
+                        관리를 위해{" "}
+                        <span className="text-[#7B9B5C] font-medium">
+                          {guidance.nutrients.join(", ")}
+                        </span>{" "}
+                        섭취를 특별히 주의해야해요!
+                      </p>
                     )}
-                  >
-                    {period.label}
-                  </button>
-                ))}
+
+                    {/* 진단 유형 안내 (질병이 없는 경우) */}
+                    {!guidance && nutritionData.diagnosisType && (
+                      <p className="text-sm text-gray-700 mb-3">
+                        <span className="font-medium">
+                          {nutritionData.user.name}님
+                        </span>
+                        의 식습관은{" "}
+                        <span className="text-[#7B9B5C] font-medium">
+                          {nutritionData.diagnosisType}
+                        </span>
+                        유형으로{" "}
+                        <span className="text-[#7B9B5C] font-medium">
+                          {nutritionData.warningNutrients?.join(", ")}
+                        </span>{" "}
+                        섭취에 좀더 주의를 기울여주세요!
+                      </p>
+                    )}
+
+                    <div className="flex gap-2 mb-3">
+                      <button
+                        onClick={() =>
+                          router.push("/nutrition/diagnosis-result")
+                        }
+                        className="flex-1 flex items-center justify-center gap-2 bg-[#7B9B5C] text-white py-3 rounded-xl text-sm font-medium"
+                      >
+                        <Salad className="w-4 h-4" />
+                        영양진단 결과보기
+                      </button>
+                      <button
+                        onClick={() => router.push("/nutrition/recommendation")}
+                        className="flex-1 flex items-center justify-center gap-2 bg-white text-gray-700 py-3 rounded-xl text-sm font-medium border border-gray-200"
+                      >
+                        🍽️ 맞춤 상품 추천받기
+                      </button>
+                    </div>
+
+                    <button className="text-sm text-gray-500 flex items-center gap-1">
+                      이전 내역 확인하기 <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </>
+                ) : (
+                  <div className="text-center py-4">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <Star className="w-5 h-5 text-[#7B9B5C]" />
+                      <span className="text-lg font-bold">
+                        나의 잇스코어 점수는 __점
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-500 mb-4">
+                      나의 식습관이 궁금하다면?
+                    </p>
+                    <button
+                      onClick={() => router.push("/nutrition/diagnosis")}
+                      className="bg-[#7B9B5C] text-white px-6 py-2 rounded-full text-sm font-medium"
+                    >
+                      영양진단 하러가기
+                    </button>
+                  </div>
+                )}
               </div>
+            )}
+          </div>
 
-              {/* 칼로리 원형 그래프 */}
-              <div className="flex flex-col items-center mb-6">
-                <div className="relative w-40 h-40">
-                  <svg
-                    className="w-full h-full -rotate-90"
-                    viewBox="0 0 100 100"
-                  >
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r="40"
-                      stroke="#E5E7EB"
-                      strokeWidth="8"
-                      fill="none"
-                    />
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r="40"
-                      stroke="#9F85E3"
-                      strokeWidth="8"
-                      fill="none"
-                      strokeLinecap="round"
-                      strokeDasharray={`${
-                        Math.min(consumptionRate, 100) * 2.51
-                      } 251`}
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-bold text-gray-900">
-                      {nutritionData?.dailyCalories.consumed.toLocaleString()}
-                    </span>
-                    <span className="text-sm text-gray-400">kcal</span>
-                    <span className="text-xs text-gray-400">
-                      /{nutritionData?.dailyCalories.target.toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-
-                {/* 섭취/소모 칼로리 */}
-                <div className="flex items-center gap-8 mt-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">🍳</span>
-                    <div className="text-center">
-                      <p className="text-xs text-gray-500">섭취한 칼로리</p>
-                      <p className="text-lg font-bold text-gray-900">
-                        {nutritionData?.dailyCalories.consumed}{" "}
-                        <span className="text-xs font-normal">kcal</span>
-                      </p>
-                    </div>
-                  </div>
-                  <div className="w-px h-8 bg-gray-200" />
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">🏃</span>
-                    <div className="text-center">
-                      <p className="text-xs text-gray-500">소모한 칼로리</p>
-                      <p className="text-lg font-bold text-gray-900">
-                        {nutritionData?.dailyCalories.burned}{" "}
-                        <span className="text-xs font-normal">kcal</span>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 안내 메시지 */}
-                <div className="flex items-center gap-1 mt-3 text-sm text-gray-500">
-                  <Info className="w-4 h-4" />
-                  <span>
-                    권장열량 대비{" "}
-                    {consumptionRate < 100
-                      ? `${100 - consumptionRate}% 부족하게`
-                      : `${consumptionRate - 100}% 과다하게`}{" "}
-                    섭취했어요.
-                  </span>
+          {/* 식사 추가 - 로딩 시 스켈레톤 */}
+          <div className="px-4">
+            {isLoading ? (
+              <div className="bg-white rounded-2xl p-4 shadow-sm animate-pulse">
+                <div className="h-5 w-20 bg-gray-200 rounded mb-4" />
+                <div className="grid grid-cols-4 gap-2">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="h-24 bg-gray-200 rounded-2xl" />
+                  ))}
                 </div>
               </div>
+            ) : (
+              <div className="bg-white rounded-2xl p-4 shadow-sm">
+                <h3 className="text-sm font-semibold text-gray-800 mb-4">
+                  식사 추가
+                </h3>
 
-              {/* 관리가 필요한 영양소 */}
-              <div className="border-t border-gray-100 pt-4">
-                <div className="flex items-center gap-1 mb-3">
-                  <span className="text-sm font-medium text-[#7B9B5C]">
-                    🥬 관리가 필요한 영양소!
-                  </span>
-                </div>
-
-                {/* 영양소 바 차트 */}
-                <div className="space-y-3">
-                  {nutritionData?.nutrients.map((nutrient) => {
-                    const percentage = Math.min(
-                      (nutrient.value / nutrient.max) * 100,
-                      100
-                    );
-                    const isExcessive = nutrient.status === "excessive";
-                    const isDeficient = nutrient.status === "deficient";
+                <div className="grid grid-cols-4 gap-2">
+                  {nutritionData?.meals.map((meal) => {
+                    const config = MEAL_CONFIG[meal.type];
+                    const isRecorded = meal.status === "recorded";
+                    const isSkipped = meal.status === "skipped";
 
                     return (
-                      <div
-                        key={nutrient.name}
-                        className={cn(
-                          "p-3 rounded-xl",
-                          nutrient.needsAttention
-                            ? "bg-orange-50 border border-orange-200"
-                            : "bg-gray-50"
-                        )}
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            {nutrient.needsAttention && (
-                              <span className="text-orange-500">⚠️</span>
-                            )}
-                            <span className="text-sm font-medium">
-                              {nutrient.nameKo}
-                            </span>
-                            {nutrient.needsAttention && (
-                              <Info className="w-3 h-3 text-gray-400" />
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={cn(
-                                "text-xs px-2 py-0.5 rounded-full",
-                                isExcessive
-                                  ? "bg-red-100 text-red-600"
-                                  : isDeficient
-                                  ? "bg-blue-100 text-blue-600"
-                                  : "bg-green-100 text-green-600"
-                              )}
-                            >
-                              {isExcessive
-                                ? "과다"
-                                : isDeficient
-                                ? "부족"
-                                : "적정"}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden">
-                          <div
-                            className={cn(
-                              "absolute left-0 top-0 h-full rounded-full transition-all",
-                              isExcessive
-                                ? "bg-red-400"
-                                : isDeficient
-                                ? "bg-blue-400"
-                                : "bg-green-400"
-                            )}
-                            style={{ width: `${percentage}%` }}
-                          />
-                          {/* 적정 범위 마커 */}
-                          <div
-                            className="absolute top-0 h-full border-l-2 border-gray-400"
-                            style={{
-                              left: `${(nutrient.min / nutrient.max) * 100}%`,
-                            }}
-                          />
-                        </div>
-
-                        <div className="flex justify-between mt-1 text-xs text-gray-400">
-                          <span>부족</span>
-                          <span>
-                            적정 ({nutrient.min}-{nutrient.max}
-                            {nutrient.unit})
+                      <div key={meal.type} className="flex flex-col">
+                        <button
+                          onClick={() => {
+                            if (isRecorded) {
+                              // 기록된 식사 → 상세 페이지 (MF_NU_0107)
+                              router.push(
+                                `/nutrition/meal/detail?type=${
+                                  meal.type
+                                }&date=${
+                                  selectedDate.toISOString().split("T")[0]
+                                }`
+                              );
+                            } else if (isSkipped) {
+                              // 안먹음 → 수정 페이지
+                              router.push(
+                                `/nutrition/meal/${meal.type}/edit?date=${
+                                  selectedDate.toISOString().split("T")[0]
+                                }`
+                              );
+                            } else {
+                              // 기록 없음 → 새 기록 페이지
+                              router.push(`/nutrition/meal/${meal.type}`);
+                            }
+                          }}
+                          className={cn(
+                            "flex flex-col items-center p-3 rounded-2xl transition-colors relative",
+                            isRecorded
+                              ? "bg-[#7B9B5C]/10"
+                              : isSkipped
+                              ? "bg-gray-100"
+                              : config.color
+                          )}
+                        >
+                          <span className="text-2xl mb-1">{config.icon}</span>
+                          <span className="text-xs font-medium text-gray-700">
+                            {config.label}
                           </span>
-                          <span>과다</span>
-                        </div>
-
-                        <div className="text-right text-xs text-gray-600 mt-1">
-                          {nutrient.value}
-                          {nutrient.unit}
-                        </div>
+                          {isRecorded && (
+                            <div className="absolute top-2 right-2">
+                              <Check className="w-4 h-4 text-[#7B9B5C]" />
+                            </div>
+                          )}
+                          {!isRecorded && !isSkipped && (
+                            <div className="absolute top-2 right-2">
+                              <Plus className="w-4 h-4 text-gray-400" />
+                            </div>
+                          )}
+                          <span
+                            className={cn(
+                              "text-xs mt-1",
+                              isRecorded
+                                ? "text-[#7B9B5C]"
+                                : isSkipped
+                                ? "text-gray-400"
+                                : "text-gray-500"
+                            )}
+                          >
+                            {isSkipped
+                              ? "안먹었어요"
+                              : isRecorded
+                              ? `${meal.calories}/${meal.targetCalories}kcal`
+                              : ""}
+                          </span>
+                        </button>
+                        {/* 안먹었어요 버튼 */}
+                        {!isRecorded && !isSkipped && (
+                          <button
+                            onClick={() => handleSkipMeal(meal.type)}
+                            className="text-xs text-gray-400 mt-1 hover:text-gray-600"
+                          >
+                            안먹었어요✓
+                          </button>
+                        )}
                       </div>
                     );
                   })}
                 </div>
               </div>
-            </div>
+            )}
+          </div>
+
+          {/* 식사 분석 - 로딩 시 스켈레톤 */}
+          <div className="px-4">
+            {isLoading ? (
+              <div className="bg-white rounded-2xl p-4 shadow-sm animate-pulse">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="h-5 w-20 bg-gray-200 rounded" />
+                  <div className="h-4 w-16 bg-gray-200 rounded" />
+                </div>
+                <div className="flex gap-2 mb-6">
+                  {[1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className="h-8 w-20 bg-gray-200 rounded-full"
+                    />
+                  ))}
+                </div>
+                <div className="flex justify-center mb-6">
+                  <div className="w-40 h-40 bg-gray-200 rounded-full" />
+                </div>
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="h-16 bg-gray-100 rounded-xl" />
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl p-4 shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-semibold text-gray-800">
+                    식사 분석
+                  </h3>
+                  <button
+                    onClick={() => router.push("/nutrition/analysis")}
+                    className="text-xs text-gray-500 flex items-center gap-1"
+                  >
+                    상세분석 <ChevronRight className="w-3 h-3" />
+                  </button>
+                </div>
+
+                {/* 기간 선택 탭 */}
+                <div className="flex gap-2 mb-6">
+                  {[
+                    { key: "daily", label: "당일분석" },
+                    { key: "weekly", label: "일주일분석" },
+                    { key: "monthly", label: "한달분석" },
+                  ].map((period) => (
+                    <button
+                      key={period.key}
+                      onClick={() =>
+                        setAnalysisPeriod(period.key as typeof analysisPeriod)
+                      }
+                      className={cn(
+                        "px-3 py-1.5 rounded-full text-xs font-medium transition-colors",
+                        analysisPeriod === period.key
+                          ? "bg-gray-800 text-white"
+                          : "bg-gray-100 text-gray-600"
+                      )}
+                    >
+                      {period.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* 칼로리 원형 그래프 */}
+                <div className="flex flex-col items-center mb-6">
+                  <div className="relative w-40 h-40">
+                    <svg
+                      className="w-full h-full -rotate-90"
+                      viewBox="0 0 100 100"
+                    >
+                      <circle
+                        cx="50"
+                        cy="50"
+                        r="40"
+                        stroke="#E5E7EB"
+                        strokeWidth="8"
+                        fill="none"
+                      />
+                      <circle
+                        cx="50"
+                        cy="50"
+                        r="40"
+                        stroke="#9F85E3"
+                        strokeWidth="8"
+                        fill="none"
+                        strokeLinecap="round"
+                        strokeDasharray={`${
+                          Math.min(consumptionRate, 100) * 2.51
+                        } 251`}
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-2xl font-bold text-gray-900">
+                        {nutritionData?.dailyCalories.consumed.toLocaleString()}
+                      </span>
+                      <span className="text-sm text-gray-400">kcal</span>
+                      <span className="text-xs text-gray-400">
+                        /{nutritionData?.dailyCalories.target.toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* 섭취/소모 칼로리 */}
+                  <div className="flex items-center gap-8 mt-4">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">🍳</span>
+                      <div className="text-center">
+                        <p className="text-xs text-gray-500">섭취한 칼로리</p>
+                        <p className="text-lg font-bold text-gray-900">
+                          {nutritionData?.dailyCalories.consumed}{" "}
+                          <span className="text-xs font-normal">kcal</span>
+                        </p>
+                      </div>
+                    </div>
+                    <div className="w-px h-8 bg-gray-200" />
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">🏃</span>
+                      <div className="text-center">
+                        <p className="text-xs text-gray-500">소모한 칼로리</p>
+                        <p className="text-lg font-bold text-gray-900">
+                          {nutritionData?.dailyCalories.burned}{" "}
+                          <span className="text-xs font-normal">kcal</span>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 안내 메시지 */}
+                  <div className="flex items-center gap-1 mt-3 text-sm text-gray-500">
+                    <Info className="w-4 h-4" />
+                    <span>
+                      권장열량 대비{" "}
+                      {consumptionRate < 100
+                        ? `${100 - consumptionRate}% 부족하게`
+                        : `${consumptionRate - 100}% 과다하게`}{" "}
+                      섭취했어요.
+                    </span>
+                  </div>
+                </div>
+
+                {/* 관리가 필요한 영양소 */}
+                <div className="border-t border-gray-100 pt-4">
+                  <div className="flex items-center gap-1 mb-3">
+                    <span className="text-sm font-medium text-[#7B9B5C]">
+                      🥬 관리가 필요한 영양소!
+                    </span>
+                  </div>
+
+                  {/* 영양소 바 차트 */}
+                  <div className="space-y-3">
+                    {nutritionData?.nutrients.map((nutrient) => {
+                      const percentage = Math.min(
+                        (nutrient.value / nutrient.max) * 100,
+                        100
+                      );
+                      const isExcessive = nutrient.status === "excessive";
+                      const isDeficient = nutrient.status === "deficient";
+
+                      return (
+                        <div
+                          key={nutrient.name}
+                          className={cn(
+                            "p-3 rounded-xl",
+                            nutrient.needsAttention
+                              ? "bg-orange-50 border border-orange-200"
+                              : "bg-gray-50"
+                          )}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              {nutrient.needsAttention && (
+                                <span className="text-orange-500">⚠️</span>
+                              )}
+                              <span className="text-sm font-medium">
+                                {nutrient.nameKo}
+                              </span>
+                              {nutrient.needsAttention && (
+                                <Info className="w-3 h-3 text-gray-400" />
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={cn(
+                                  "text-xs px-2 py-0.5 rounded-full",
+                                  isExcessive
+                                    ? "bg-red-100 text-red-600"
+                                    : isDeficient
+                                    ? "bg-blue-100 text-blue-600"
+                                    : "bg-green-100 text-green-600"
+                                )}
+                              >
+                                {isExcessive
+                                  ? "과다"
+                                  : isDeficient
+                                  ? "부족"
+                                  : "적정"}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="relative h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div
+                              className={cn(
+                                "absolute left-0 top-0 h-full rounded-full transition-all",
+                                isExcessive
+                                  ? "bg-red-400"
+                                  : isDeficient
+                                  ? "bg-blue-400"
+                                  : "bg-green-400"
+                              )}
+                              style={{ width: `${percentage}%` }}
+                            />
+                            {/* 적정 범위 마커 */}
+                            <div
+                              className="absolute top-0 h-full border-l-2 border-gray-400"
+                              style={{
+                                left: `${(nutrient.min / nutrient.max) * 100}%`,
+                              }}
+                            />
+                          </div>
+
+                          <div className="flex justify-between mt-1 text-xs text-gray-400">
+                            <span>부족</span>
+                            <span>
+                              적정 ({nutrient.min}-{nutrient.max}
+                              {nutrient.unit})
+                            </span>
+                            <span>과다</span>
+                          </div>
+
+                          <div className="text-right text-xs text-gray-600 mt-1">
+                            {nutrient.value}
+                            {nutrient.unit}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       ) : (

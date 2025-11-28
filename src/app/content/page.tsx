@@ -136,15 +136,13 @@ export default function ContentListPage() {
   // 세분류 태그 목록
   const subcategories = selectedCategory?.subcategories || [];
 
-  // 초기 로딩 상태 (카테고리와 컨텐츠 둘 다 로딩 중)
-  if (!categories && isContentsLoading) {
-    return <ContentPageSkeleton />;
-  }
+  // 카테고리 로딩 상태
+  const isCategoriesLoading = !categories;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
-      {/* 헤더 */}
-      <Header points={points} />
+      {/* 헤더 - 항상 표시 */}
+      <Header points={homeData ? points : undefined} />
 
       {/* 검색창 */}
       <div className="px-4 py-3 bg-white">

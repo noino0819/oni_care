@@ -97,13 +97,9 @@ export default function InquiryPage() {
     return content.length > maxLength ? content.slice(0, maxLength) + "..." : content;
   };
 
-  if (loading) {
-    return <InquiryPageSkeleton />;
-  }
-
   return (
     <div className="min-h-screen bg-white pb-32">
-      {/* 헤더 */}
+      {/* 헤더 - 항상 표시 */}
       <header className="sticky top-0 bg-white z-10 border-b border-gray-100">
         <div className="flex items-center justify-between px-4 py-3">
           <button onClick={() => router.back()} className="p-1">
@@ -114,6 +110,43 @@ export default function InquiryPage() {
         </div>
       </header>
 
+      {loading ? (
+        /* 로딩 시 스켈레톤 (헤더 제외) */
+        <div className="px-4">
+          <div className="py-6">
+            <div className="h-6 w-32 bg-gray-200 rounded animate-pulse mb-4" />
+            <div className="flex gap-4 pb-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="flex flex-col items-center gap-2">
+                  <div className="w-14 h-14 bg-gray-200 rounded-full animate-pulse" />
+                  <div className="h-4 w-10 bg-gray-200 rounded animate-pulse" />
+                </div>
+              ))}
+            </div>
+            <div className="mt-4">
+              <div className="h-5 w-24 bg-gray-200 rounded animate-pulse mb-3" />
+              <div className="space-y-2">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="border-b border-gray-100 py-4 animate-pulse">
+                    <div className="h-5 w-full bg-gray-200 rounded" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="py-6 border-t border-gray-100">
+            <div className="h-6 w-28 bg-gray-200 rounded animate-pulse mb-4" />
+            <div className="space-y-3">
+              {[1, 2].map((i) => (
+                <div key={i} className="flex items-center justify-between py-3 border-b border-gray-100 animate-pulse">
+                  <div className="h-5 w-40 bg-gray-200 rounded" />
+                  <div className="h-6 w-16 bg-gray-200 rounded-full" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : (
       <div className="px-4">
         {/* 자주묻는 질문 섹션 */}
         <div className="py-6">
@@ -227,8 +260,9 @@ export default function InquiryPage() {
           )}
         </div>
       </div>
+      )}
 
-      {/* 1:1 문의하기 버튼 */}
+      {/* 1:1 문의하기 버튼 - 항상 표시 */}
       <div className="fixed bottom-20 left-0 right-0 px-4 pb-4 bg-gradient-to-t from-white via-white to-transparent pt-8">
         <Link
           href="/menu/inquiry/new"

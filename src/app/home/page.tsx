@@ -9,7 +9,6 @@ import { StepsAndChallenge } from "@/components/home/StepsAndChallenge";
 import { ContentBanners } from "@/components/home/ContentBanners";
 import { FloatingDoctorButton } from "@/components/home/FloatingDoctorButton";
 import { BottomNavigation } from "@/components/home/BottomNavigation";
-import { HomePageSkeleton } from "@/components/ui/LoadingSpinner";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { useFetch } from "@/hooks/useFetch";
 import {
@@ -77,17 +76,7 @@ export default function HomePage() {
     refetch,
   } = useFetch<HomeData>("/api/home");
 
-  // 로딩 상태 - 스켈레톤 UI 표시
-  if (isLoading) {
-    return <HomePageSkeleton />;
-  }
-
-  // 에러 상태 (데이터가 없어도 기본값으로 표시)
-  if (error && !homeData) {
-    return <ErrorState message={error} onRetry={() => refetch()} />;
-  }
-
-  // 데이터 가공
+  // 데이터 가공 (로딩 중에도 기본값 사용)
   const userData = homeData || {
     user: { name: "사용자", email: "", points: 0 },
     healthGoal: null,
@@ -152,78 +141,169 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
-      {/* 섹션 1: 헤더 */}
-      <Header points={userData.user.points} userName={userData.user.name} />
+      {/* 헤더 - 항상 표시, 포인트만 로딩 상태 반영 */}
+      <Header
+        points={isLoading ? undefined : userData.user.points}
+        userName={userData.user.name}
+      />
 
       <main className="space-y-5 pt-2">
-        {/* 섹션 2: 건강목표 카드 */}
-        <HealthGoalCard
-          userName={userData.user.name}
-          goalDescription={goalDescription}
-          tags={tags}
-          hasNutritionDiagnosis={userData.hasNutritionDiagnosis}
-        />
+        {/* 에러 상태 */}
+        {error && !homeData ? (
+          <div className="px-4">
+            <ErrorState message={error} onRetry={() => refetch()} />
+          </div>
+        ) : (
+          <>
+            {/* 섹션 2: 건강목표 카드 */}
+            {isLoading ? (
+              <div className="px-4">
+                <div className="bg-white rounded-2xl p-5 shadow-sm animate-pulse">
+                  <div className="h-6 bg-gray-200 rounded w-48 mb-3" />
+                  <div className="h-4 bg-gray-200 rounded w-full mb-4" />
+                  <div className="flex gap-2">
+                    <div className="h-8 bg-gray-200 rounded-full w-20" />
+                    <div className="h-8 bg-gray-200 rounded-full w-24" />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <HealthGoalCard
+                userName={userData.user.name}
+                goalDescription={goalDescription}
+                tags={tags}
+                hasNutritionDiagnosis={userData.hasNutritionDiagnosis}
+              />
+            )}
 
-        {/* 섹션 2-1: 종합 가이드 (영양 진단 있을 경우) */}
-        {userData.hasNutritionDiagnosis && (
-          <NutritionGuide
-            userName={userData.user.name}
-            condition={condition}
-            nutrients={nutrients.length > 0 ? nutrients : undefined}
-          />
+            {/* 섹션 2-1: 종합 가이드 (영양 진단 있을 경우) */}
+            {isLoading ? (
+              <div className="px-4">
+                <div className="bg-gradient-to-br from-[#F5F0FF] to-[#EDE7FF] rounded-2xl p-5 animate-pulse">
+                  <div className="h-5 bg-white/50 rounded w-32 mb-3" />
+                  <div className="h-4 bg-white/50 rounded w-48 mb-4" />
+                  <div className="flex gap-3">
+                    {[1, 2, 3, 4].map((i) => (
+                      <div
+                        key={i}
+                        className="w-14 h-20 bg-white/50 rounded-xl"
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : userData.hasNutritionDiagnosis ? (
+              <NutritionGuide
+                userName={userData.user.name}
+                condition={condition}
+                nutrients={nutrients.length > 0 ? nutrients : undefined}
+              />
+            ) : null}
+
+            {/* 섹션 3: 식품 관련 명언 */}
+            {isLoading ? (
+              <div className="px-4">
+                <div className="bg-white rounded-2xl p-5 shadow-sm animate-pulse">
+                  <div className="h-5 bg-gray-200 rounded w-full mb-2" />
+                  <div className="h-5 bg-gray-200 rounded w-3/4" />
+                </div>
+              </div>
+            ) : (
+              <FoodQuote
+                quotes={
+                  userData.quotes.length > 0 ? userData.quotes : undefined
+                }
+              />
+            )}
+
+            {/* 섹션 4: 오늘의 식사 */}
+            {isLoading ? (
+              <div className="px-4">
+                <div className="bg-white rounded-2xl p-5 shadow-sm animate-pulse">
+                  <div className="h-5 bg-gray-200 rounded w-32 mb-4" />
+                  <div className="flex items-center justify-center mb-4">
+                    <div className="w-32 h-32 bg-gray-200 rounded-full" />
+                  </div>
+                  <div className="flex justify-around">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="flex flex-col items-center gap-2">
+                        <div className="h-2 w-20 bg-gray-200 rounded-full" />
+                        <div className="h-4 bg-gray-200 rounded w-16" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <TodayMeal
+                currentCalories={userData.todayMeal.totalCalories}
+                targetCalories={DEFAULT_NUTRITION_TARGETS.calories}
+                nutrients={[
+                  {
+                    name: "탄수화물",
+                    current: userData.todayMeal.totalCarbs,
+                    target: DEFAULT_NUTRITION_TARGETS.carbs,
+                    color: "#FFC107",
+                  },
+                  {
+                    name: "단백질",
+                    current: userData.todayMeal.totalProtein,
+                    target: DEFAULT_NUTRITION_TARGETS.protein,
+                    color: "#9F85E3",
+                  },
+                  {
+                    name: "지방",
+                    current: userData.todayMeal.totalFat,
+                    target: DEFAULT_NUTRITION_TARGETS.fat,
+                    color: "#FF9800",
+                  },
+                ]}
+              />
+            )}
+
+            {/* 섹션 5: 걸음수 + 챌린지 */}
+            {isLoading ? (
+              <div className="px-4 flex gap-4">
+                <div className="flex-1 bg-white rounded-2xl p-4 animate-pulse">
+                  <div className="h-4 bg-gray-200 rounded w-16 mb-3" />
+                  <div className="h-8 bg-gray-200 rounded w-24" />
+                </div>
+                <div className="flex-1 bg-white rounded-2xl p-4 animate-pulse">
+                  <div className="h-4 bg-gray-200 rounded w-20 mb-3" />
+                  <div className="h-8 bg-gray-200 rounded w-full" />
+                </div>
+              </div>
+            ) : (
+              <StepsAndChallenge
+                currentSteps={userData.steps.currentSteps}
+                targetSteps={userData.steps.goalSteps}
+                challengeTitle={
+                  userData.challenge?.title || "매일 한잔 물마시기"
+                }
+                challengeProgress={challengeProgress}
+                onVerify={() => {
+                  console.log("챌린지 인증");
+                }}
+              />
+            )}
+
+            {/* 섹션 6: 맞춤 컨텐츠 배너 */}
+            {isLoading ? (
+              <div className="px-4 space-y-3">
+                <div className="h-32 bg-gray-200 rounded-2xl animate-pulse" />
+                <div className="h-32 bg-gray-200 rounded-2xl animate-pulse" />
+              </div>
+            ) : (
+              <ContentBanners />
+            )}
+          </>
         )}
-
-        {/* 섹션 3: 식품 관련 명언 */}
-        <FoodQuote
-          quotes={userData.quotes.length > 0 ? userData.quotes : undefined}
-        />
-
-        {/* 섹션 4: 오늘의 식사 */}
-        <TodayMeal
-          currentCalories={userData.todayMeal.totalCalories}
-          targetCalories={DEFAULT_NUTRITION_TARGETS.calories}
-          nutrients={[
-            {
-              name: "탄수화물",
-              current: userData.todayMeal.totalCarbs,
-              target: DEFAULT_NUTRITION_TARGETS.carbs,
-              color: "#FFC107",
-            },
-            {
-              name: "단백질",
-              current: userData.todayMeal.totalProtein,
-              target: DEFAULT_NUTRITION_TARGETS.protein,
-              color: "#9F85E3",
-            },
-            {
-              name: "지방",
-              current: userData.todayMeal.totalFat,
-              target: DEFAULT_NUTRITION_TARGETS.fat,
-              color: "#FF9800",
-            },
-          ]}
-        />
-
-        {/* 섹션 5: 걸음수 + 챌린지 */}
-        <StepsAndChallenge
-          currentSteps={userData.steps.currentSteps}
-          targetSteps={userData.steps.goalSteps}
-          challengeTitle={userData.challenge?.title || "매일 한잔 물마시기"}
-          challengeProgress={challengeProgress}
-          onVerify={() => {
-            // TODO: 챌린지 인증 로직
-            console.log("챌린지 인증");
-          }}
-        />
-
-        {/* 섹션 6: 맞춤 컨텐츠 배너 */}
-        <ContentBanners />
       </main>
 
-      {/* 영양박사 플로팅 버튼 */}
+      {/* 영양박사 플로팅 버튼 - 항상 표시 */}
       <FloatingDoctorButton />
 
-      {/* 하단 네비게이션 */}
+      {/* 하단 네비게이션 - 항상 표시 */}
       <BottomNavigation />
     </div>
   );
