@@ -93,6 +93,133 @@ function getAchievementMessage(rate: number): string {
   return "오늘의 목표를 달성했어요 🎉";
 }
 
+// 챌린지 타입 이름
+function getChallengeTypeName(type: string): string {
+  const names: Record<string, string> = {
+    attendance: "출석체크",
+    steps: "걸음수",
+    meal: "식사기록",
+    supplement: "영양제",
+    quiz: "퀴즈",
+    health_habit: "건강습관",
+  };
+  return names[type] || "챌린지";
+}
+
+// 챌린지 타입별 아이콘
+function ChallengeTypeIcon({
+  type,
+  size = 48,
+}: {
+  type: string;
+  size?: number;
+}) {
+  const iconClass = `text-current`;
+
+  const icons: Record<string, React.ReactNode> = {
+    attendance: (
+      <svg
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        className={iconClass}
+      >
+        <circle cx="12" cy="12" r="10" />
+        <path d="M12 6v6l4 2" strokeLinecap="round" />
+      </svg>
+    ),
+    steps: (
+      <svg
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        className={iconClass}
+      >
+        <path d="M4 19.5A2.5 2.5 0 016.5 17H20" strokeLinecap="round" />
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
+        <circle cx="12" cy="10" r="3" fill="currentColor" />
+      </svg>
+    ),
+    meal: (
+      <svg
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        className={iconClass}
+      >
+        <path d="M18 8h1a4 4 0 010 8h-1" strokeLinecap="round" />
+        <path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z" />
+        <line x1="6" y1="1" x2="6" y2="4" strokeLinecap="round" />
+        <line x1="10" y1="1" x2="10" y2="4" strokeLinecap="round" />
+        <line x1="14" y1="1" x2="14" y2="4" strokeLinecap="round" />
+      </svg>
+    ),
+    supplement: (
+      <svg
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        className={iconClass}
+      >
+        <rect x="3" y="6" width="18" height="12" rx="3" />
+        <line x1="12" y1="6" x2="12" y2="18" />
+        <circle cx="7" cy="12" r="2" fill="currentColor" />
+        <circle cx="17" cy="12" r="2" fill="currentColor" />
+      </svg>
+    ),
+    quiz: (
+      <svg
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        className={iconClass}
+      >
+        <circle cx="12" cy="12" r="10" />
+        <path
+          d="M9 9a3 3 0 115.12 2.12A2.5 2.5 0 0012 14"
+          strokeLinecap="round"
+        />
+        <circle cx="12" cy="18" r="1" fill="currentColor" />
+      </svg>
+    ),
+    health_habit: (
+      <svg
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        className={iconClass}
+      >
+        <path d="M22 11.08V12a10 10 0 11-5.93-9.14" strokeLinecap="round" />
+        <polyline
+          points="22,4 12,14.01 9,11.01"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    ),
+  };
+
+  return <>{icons[type] || icons.health_habit}</>;
+}
+
 // 뒤로가기 아이콘
 function BackIcon({ className }: { className?: string }) {
   return (
@@ -110,7 +237,7 @@ function BackIcon({ className }: { className?: string }) {
   );
 }
 
-// 스탬프 컴포넌트
+// 스탬프 컴포넌트 - 레퍼런스에 맞게 개선
 function StampGrid({
   stamps,
   totalCount,
@@ -123,6 +250,7 @@ function StampGrid({
   filledImage: string | null;
 }) {
   const columns = 5;
+  const rows = Math.ceil(totalCount / columns);
   const stampItems = [];
 
   for (let i = 1; i <= totalCount; i++) {
@@ -130,36 +258,57 @@ function StampGrid({
     const isAchieved = stamp?.is_achieved || false;
 
     stampItems.push(
-      <div key={i} className="flex flex-col items-center">
+      <div key={i} className="flex flex-col items-center gap-1">
         <div
           className={cn(
-            "w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold transition-all",
+            "w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300",
             isAchieved
-              ? "bg-[#9F85E3] text-white shadow-lg"
-              : "bg-gray-200 text-gray-400"
+              ? "bg-gradient-to-br from-[#9F85E3] to-[#B8A5F0] text-white shadow-lg shadow-[#9F85E3]/30 scale-105"
+              : "bg-white text-gray-300 border-2 border-dashed border-gray-200"
           )}
         >
           {isAchieved ? (
-            <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+            <svg className="w-7 h-7" viewBox="0 0 24 24" fill="currentColor">
               <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
             </svg>
           ) : (
-            <span className="text-sm">{i}</span>
+            <svg
+              className="w-7 h-7"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            >
+              <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
+            </svg>
           )}
         </div>
+        <span
+          className={cn(
+            "text-[10px] font-medium",
+            isAchieved ? "text-[#9F85E3]" : "text-gray-400"
+          )}
+        >
+          {i}일차
+        </span>
       </div>
     );
   }
 
   return (
-    <div
-      className={cn(
-        "grid gap-3 p-4 bg-gray-100 rounded-xl",
-        `grid-cols-${columns}`
-      )}
-      style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
-    >
-      {stampItems}
+    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-semibold text-gray-900">스탬프 현황</h3>
+        <span className="text-sm text-[#9F85E3] font-medium">
+          {stamps.filter((s) => s.is_achieved).length}/{totalCount}개 달성
+        </span>
+      </div>
+      <div
+        className="grid gap-2 p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl"
+        style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
+      >
+        {stampItems}
+      </div>
     </div>
   );
 }
@@ -235,7 +384,7 @@ function TodayProgress({
   );
 }
 
-// 진행률 바
+// 진행률 바 - 레퍼런스에 맞게 개선
 function ProgressBar({
   completedDays,
   totalDays,
@@ -245,23 +394,50 @@ function ProgressBar({
   totalDays: number;
   remainingDays: number;
 }) {
-  const progress = (completedDays / totalDays) * 100;
+  const progress = Math.min((completedDays / totalDays) * 100, 100);
+  const isCompleted = completedDays >= totalDays;
 
   return (
     <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-      <h3 className="font-semibold text-gray-900 mb-3">달성 현황</h3>
-      <div className="flex justify-between text-sm mb-2">
-        <span className="text-gray-600">
-          <strong className="text-[#9F85E3]">{completedDays}일</strong> 인증
-          완료!
-        </span>
-        <span className="text-gray-500">{remainingDays}일 남았어요</span>
+      <div className="flex items-center justify-between mb-1">
+        <h3 className="font-semibold text-gray-900">달성 현황 🎉</h3>
+        {isCompleted && (
+          <span className="px-2 py-0.5 bg-emerald-100 text-emerald-600 rounded-full text-xs font-bold">
+            완료!
+          </span>
+        )}
       </div>
-      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+
+      <div className="flex justify-between items-baseline mb-3">
+        <span className="text-lg">
+          <strong className="text-2xl text-[#9F85E3] font-bold">
+            {completedDays}일
+          </strong>
+          <span className="text-gray-600 ml-1">인증 완료!</span>
+        </span>
+        <span className="text-sm text-gray-500">
+          {remainingDays > 0
+            ? `${remainingDays}일 남았어요`
+            : "모든 인증 완료!"}
+        </span>
+      </div>
+
+      <div className="relative h-3 bg-gray-100 rounded-full overflow-hidden">
         <div
-          className="h-full bg-gradient-to-r from-[#9F85E3] to-[#B8A5F0] rounded-full transition-all duration-500"
+          className={cn(
+            "h-full rounded-full transition-all duration-700 ease-out",
+            isCompleted
+              ? "bg-gradient-to-r from-emerald-400 to-emerald-500"
+              : "bg-gradient-to-r from-[#9F85E3] to-[#B8A5F0]"
+          )}
           style={{ width: `${progress}%` }}
         />
+        {/* 진행률 표시 */}
+        {progress > 10 && (
+          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-white">
+            {Math.round(progress)}%
+          </span>
+        )}
       </div>
     </div>
   );
@@ -1166,36 +1342,49 @@ export default function ChallengeVerifyPage() {
 
       {/* 콘텐츠 */}
       <main className="p-4 space-y-4">
-        {/* 챌린지 정보 */}
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
-          <div className="flex items-start gap-4">
-            {challenge.thumbnail_url && (
-              <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
-                <Image
-                  src={challenge.thumbnail_url}
-                  alt={challenge.title}
-                  width={64}
-                  height={64}
-                  className="object-cover w-full h-full"
-                />
+        {/* 챌린지 정보 - 레퍼런스에 맞게 큰 이미지와 태그 표시 */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          {/* 제목 + 태그 영역 */}
+          <div className="p-4">
+            <h2 className="text-xl font-bold text-gray-900 mb-2">
+              {challenge.title}
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              <span className="px-3 py-1 bg-[#9F85E3]/10 text-[#9F85E3] rounded-full text-sm font-medium">
+                하루 {challenge.daily_verification_count}번
+              </span>
+              <span className="px-3 py-1 bg-[#9F85E3]/10 text-[#9F85E3] rounded-full text-sm font-medium">
+                {challenge.challenge_duration_days}일 동안
+              </span>
+              {challenge.total_reward && (
+                <span className="px-3 py-1 bg-[#9F85E3]/10 text-[#9F85E3] rounded-full text-sm font-medium">
+                  {challenge.total_reward}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* 챌린지 이미지 - 큰 사이즈로 표시 */}
+          <div className="relative w-full aspect-[16/9] bg-gradient-to-br from-[#9F85E3]/20 to-[#B8A5F0]/30">
+            {challenge.thumbnail_url ? (
+              <Image
+                src={challenge.thumbnail_url}
+                alt={challenge.title}
+                fill
+                className="object-cover"
+                onError={(e) => {
+                  // 이미지 로드 실패 시 숨김
+                  (e.target as HTMLImageElement).style.display = "none";
+                }}
+              />
+            ) : (
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-[#9F85E3]">
+                <ChallengeTypeIcon type={challenge.challenge_type} size={64} />
+                <span className="mt-2 text-sm font-medium text-gray-500">
+                  {getChallengeTypeName(challenge.challenge_type)}
+                </span>
               </div>
             )}
-            <div className="flex-1 min-w-0">
-              <h2 className="font-bold text-gray-900">{challenge.title}</h2>
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                <span className="px-2 py-0.5 bg-gray-100 rounded-full text-xs text-gray-600">
-                  하루 {challenge.daily_verification_count}번
-                </span>
-                <span className="px-2 py-0.5 bg-gray-100 rounded-full text-xs text-gray-600">
-                  {challenge.challenge_duration_days}일 동안
-                </span>
-                {challenge.total_reward && (
-                  <span className="px-2 py-0.5 bg-gray-100 rounded-full text-xs text-gray-600">
-                    {challenge.total_reward}
-                  </span>
-                )}
-              </div>
-            </div>
           </div>
         </div>
 

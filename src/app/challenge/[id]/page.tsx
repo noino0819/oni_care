@@ -49,6 +49,125 @@ function getStatusTagStyle(color: string) {
   }
 }
 
+// 챌린지 타입 이름
+function getChallengeTypeName(type: string): string {
+  const names: Record<string, string> = {
+    attendance: "출석체크",
+    steps: "걸음수",
+    meal: "식사기록",
+    supplement: "영양제",
+    quiz: "퀴즈",
+    health_habit: "건강습관",
+  };
+  return names[type] || "챌린지";
+}
+
+// 챌린지 타입별 아이콘
+function ChallengeTypeIcon({
+  type,
+  size = 48,
+}: {
+  type: string;
+  size?: number;
+}) {
+  const icons: Record<string, React.ReactNode> = {
+    attendance: (
+      <svg
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
+        <circle cx="12" cy="12" r="10" />
+        <path d="M12 6v6l4 2" strokeLinecap="round" />
+      </svg>
+    ),
+    steps: (
+      <svg
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
+        <path d="M4 19.5A2.5 2.5 0 016.5 17H20" strokeLinecap="round" />
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
+        <circle cx="12" cy="10" r="3" fill="currentColor" />
+      </svg>
+    ),
+    meal: (
+      <svg
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
+        <path d="M18 8h1a4 4 0 010 8h-1" strokeLinecap="round" />
+        <path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z" />
+        <line x1="6" y1="1" x2="6" y2="4" strokeLinecap="round" />
+        <line x1="10" y1="1" x2="10" y2="4" strokeLinecap="round" />
+        <line x1="14" y1="1" x2="14" y2="4" strokeLinecap="round" />
+      </svg>
+    ),
+    supplement: (
+      <svg
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
+        <rect x="3" y="6" width="18" height="12" rx="3" />
+        <line x1="12" y1="6" x2="12" y2="18" />
+        <circle cx="7" cy="12" r="2" fill="currentColor" />
+        <circle cx="17" cy="12" r="2" fill="currentColor" />
+      </svg>
+    ),
+    quiz: (
+      <svg
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
+        <circle cx="12" cy="12" r="10" />
+        <path
+          d="M9 9a3 3 0 115.12 2.12A2.5 2.5 0 0012 14"
+          strokeLinecap="round"
+        />
+        <circle cx="12" cy="18" r="1" fill="currentColor" />
+      </svg>
+    ),
+    health_habit: (
+      <svg
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
+        <path d="M22 11.08V12a10 10 0 11-5.93-9.14" strokeLinecap="round" />
+        <polyline
+          points="22,4 12,14.01 9,11.01"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    ),
+  };
+
+  return <>{icons[type] || icons.health_habit}</>;
+}
+
 // 뒤로가기 아이콘
 function BackIcon({ className }: { className?: string }) {
   return (
@@ -136,6 +255,8 @@ export default function ChallengeDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isJoining, setIsJoining] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   // 팝업 상태
   const [showJoinPopup, setShowJoinPopup] = useState(false);
@@ -315,17 +436,32 @@ export default function ChallengeDetailPage() {
             </p>
           )}
 
-          {/* 썸네일 이미지 */}
-          {challenge.thumbnail_url && (
-            <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-gray-100">
+          {/* 챌린지 이미지 영역 - 폴백 아이콘 표시 */}
+          <div className="relative aspect-[16/9] rounded-xl overflow-hidden bg-gradient-to-br from-[#9F85E3]/10 via-[#B8A5F0]/15 to-[#9F85E3]/20">
+            {/* 폴백: 아이콘 + 텍스트 (이미지 로드 전 또는 실패 시 표시) */}
+            {(!imageLoaded || imageError) && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-[#9F85E3] z-10">
+                <ChallengeTypeIcon type={challenge.challenge_type} size={80} />
+                <span className="mt-3 text-sm font-medium text-gray-500">
+                  {getChallengeTypeName(challenge.challenge_type)} 챌린지
+                </span>
+              </div>
+            )}
+            {/* 이미지가 있으면 로드 시도 */}
+            {challenge.thumbnail_url && !imageError && (
               <Image
                 src={challenge.thumbnail_url}
                 alt={challenge.title}
                 fill
-                className="object-cover"
+                className={cn(
+                  "object-cover transition-opacity duration-300",
+                  imageLoaded ? "opacity-100" : "opacity-0"
+                )}
+                onLoad={() => setImageLoaded(true)}
+                onError={() => setImageError(true)}
               />
-            </div>
-          )}
+            )}
+          </div>
 
           {/* 상세 이미지들 */}
           {challenge.detail_images && challenge.detail_images.length > 0 && (

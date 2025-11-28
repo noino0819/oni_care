@@ -8,7 +8,7 @@ import { WITHDRAWAL_REASONS } from "@/types/point-coupon";
 
 export default function WithdrawPage() {
   const router = useRouter();
-  const [userName, setUserName] = useState("회원");
+  const [userName, setUserName] = useState("김건강");
   const [password, setPassword] = useState("");
   const [selectedReason, setSelectedReason] = useState("");
   const [showReasonPicker, setShowReasonPicker] = useState(false);
@@ -23,7 +23,7 @@ export default function WithdrawPage() {
     try {
       const res = await fetch("/api/profile");
       const data = await res.json();
-      setUserName(data.name || "회원");
+      if (data.name) setUserName(data.name);
     } catch (error) {
       console.error("Error fetching user name:", error);
     }
@@ -61,7 +61,6 @@ export default function WithdrawPage() {
         return;
       }
 
-      // 탈퇴 완료 페이지로 이동
       router.replace("/menu/profile-edit/withdraw/complete");
     } catch {
       setError("회원탈퇴에 실패했습니다.");
@@ -99,22 +98,28 @@ export default function WithdrawPage() {
         {/* 경고 사항 */}
         <div className="space-y-4 mb-8">
           <div className="flex items-start gap-3">
-            <Info className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-gray-600">
+            <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <Info className="w-3 h-3 text-gray-500" />
+            </div>
+            <p className="text-sm text-gray-600 leading-relaxed">
               지금 탈퇴하시면 지금까지 기록한 다양한 건강정보들은<br />
               사라져 다시 확인하실 수 없습니다
             </p>
           </div>
           <div className="flex items-start gap-3">
-            <Info className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-gray-600">
+            <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <Info className="w-3 h-3 text-gray-500" />
+            </div>
+            <p className="text-sm text-gray-600 leading-relaxed">
               지금 탈퇴하시면 보유중이던 적립금과 쿠폰은<br />
               모두 사라져 사용이 불가능합니다
             </p>
           </div>
           <div className="flex items-start gap-3">
-            <Info className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-gray-600">
+            <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <Info className="w-3 h-3 text-gray-500" />
+            </div>
+            <p className="text-sm text-gray-600 leading-relaxed">
               탈퇴후에는 동일한 ID로는 가입이 불가능합니다
             </p>
           </div>
@@ -122,7 +127,7 @@ export default function WithdrawPage() {
 
         {/* 비밀번호 확인 */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-900 mb-2">
             비밀번호 확인
           </label>
           <input
@@ -130,13 +135,13 @@ export default function WithdrawPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="비밀번호"
-            className="w-full px-4 py-3 bg-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#9F85E3]"
+            className="w-full px-4 py-3 bg-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#9F85E3] text-gray-900"
           />
         </div>
 
         {/* 탈퇴사유 선택 */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-900 mb-2">
             탈퇴사유
           </label>
           <button
@@ -161,7 +166,7 @@ export default function WithdrawPage() {
           disabled={!isFormValid || loading}
           className={`w-full py-4 rounded-xl font-semibold transition-colors ${
             isFormValid && !loading
-              ? "bg-[#9F85E3] text-white hover:bg-[#8B71CF]"
+              ? "bg-[#FFD54F] text-gray-900 hover:bg-[#FFC107]"
               : "bg-gray-200 text-gray-400 cursor-not-allowed"
           }`}
         >
@@ -175,7 +180,7 @@ export default function WithdrawPage() {
         onClose={() => setShowReasonPicker(false)}
         title="탈퇴사유를 선택해주세요"
       >
-        <div className="space-y-1 mb-6">
+        <div className="space-y-1 mb-6 pt-2">
           {WITHDRAWAL_REASONS.map((reason) => (
             <button
               key={reason}
@@ -195,7 +200,7 @@ export default function WithdrawPage() {
         </div>
         <button
           onClick={() => setShowReasonPicker(false)}
-          className="w-full py-4 bg-[#9F85E3] text-white font-semibold rounded-xl"
+          className="w-full py-4 bg-[#FFD54F] text-gray-900 font-semibold rounded-xl"
         >
           완 료
         </button>
@@ -203,4 +208,3 @@ export default function WithdrawPage() {
     </div>
   );
 }
-

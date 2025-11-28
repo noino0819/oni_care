@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { Notice } from "@/types/menu";
 
 // 7일 이내 등록 여부 확인
@@ -87,20 +87,17 @@ export default function NoticesPage() {
               <Link
                 key={notice.id}
                 href={`/menu/notices/${notice.id}`}
-                className="flex items-center justify-between py-4 hover:bg-gray-50 transition-colors -mx-4 px-4"
+                className="block py-4 hover:bg-gray-50 transition-colors -mx-4 px-4"
               >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="text-gray-900 truncate">{notice.title}</p>
-                    {isNew(notice.created_at) && (
-                      <span className="text-xs font-semibold text-[#9F85E3]">NEW</span>
-                    )}
-                  </div>
-                  <p className="text-sm text-gray-400 mt-1">
-                    {formatDate(notice.created_at)}
-                  </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-gray-900">{notice.title}</p>
+                  {isNew(notice.created_at) && (
+                    <span className="text-xs font-semibold text-[#9F85E3]">NEW</span>
+                  )}
                 </div>
-                <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                <p className="text-sm text-gray-400 mt-1">
+                  {formatDate(notice.created_at)}
+                </p>
               </Link>
             ))}
           </div>

@@ -29,8 +29,15 @@ export default function SignupCompletePage() {
   }, [router]);
 
   const handleGoToSurvey = () => {
-    // 설문 페이지로 이동 (추후 구현)
-    router.push("/");
+    // 설문 페이지로 이동
+    router.push("/survey");
+  };
+
+  const handleSkip = () => {
+    // 설문 스킵 - 홈으로 이동
+    sessionStorage.removeItem("signup_verify");
+    sessionStorage.removeItem("signup_data");
+    router.push("/home");
   };
 
   if (loading || !signupData) {
@@ -94,15 +101,21 @@ export default function SignupCompletePage() {
           </div>
         </div>
 
-        {/* Bottom Button */}
-        <div className="mt-auto pb-6">
+        {/* Bottom Buttons */}
+        <div className="mt-auto pb-6 space-y-3">
           <Button
-            className="w-full h-14 text-lg font-bold rounded-full bg-gray-500 hover:bg-gray-600 text-white"
+            className="w-full h-14 text-lg font-bold rounded-full bg-[#9F85E3] hover:bg-[#8B74D1] text-white"
             size="lg"
             onClick={handleGoToSurvey}
           >
             설문 하러 가기
           </Button>
+          <button
+            onClick={handleSkip}
+            className="w-full py-3 text-gray-500 text-sm font-medium hover:text-gray-700 transition-colors"
+          >
+            나중에 하기
+          </button>
         </div>
       </div>
     </div>

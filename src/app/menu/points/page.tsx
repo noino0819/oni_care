@@ -2,26 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Home, ChevronDown, ChevronRight } from "lucide-react";
-import { ConfirmModal } from "@/components/ui/Modal";
-
-// 피기 아이콘
-const PiggyIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="12" cy="12" r="10" fill="#FECACA" />
-    <circle cx="9" cy="10" r="1" fill="#1F2937" />
-    <circle cx="15" cy="10" r="1" fill="#1F2937" />
-    <ellipse cx="12" cy="14" rx="2" ry="1.5" fill="#F87171" />
-  </svg>
-);
-
-// 코인 아이콘
-const CoinIcon = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="12" cy="12" r="10" fill="#FDE68A" stroke="#F59E0B" strokeWidth="2" />
-    <text x="12" y="16" textAnchor="middle" fontSize="10" fontWeight="bold" fill="#F59E0B">P</text>
-  </svg>
-);
+import { ChevronLeft, Home, ChevronDown } from "lucide-react";
+import { ConfirmModal, BottomSheet } from "@/components/ui/Modal";
 
 type TabType = "coupon" | "point";
 type CouponFilter = "all" | "greating" | "cafeteria";
@@ -62,18 +44,18 @@ export default function PointsPage() {
   
   // 데이터 상태
   const [loading, setLoading] = useState(true);
-  const [totalCoupons, setTotalCoupons] = useState(0);
-  const [totalPoints, setTotalPoints] = useState(0);
+  const [totalCoupons, setTotalCoupons] = useState(2);
+  const [totalPoints, setTotalPoints] = useState(3200);
   const [couponStats, setCouponStats] = useState({
-    available: 0,
-    thisMonthIssued: 0,
-    thisMonthUsed: 0,
-    expiring30Days: 0,
+    available: 2,
+    thisMonthIssued: 1,
+    thisMonthUsed: 2,
+    expiring30Days: 3,
   });
   const [pointStats, setPointStats] = useState({
-    thisMonthEarned: 0,
-    thisMonthTransferred: 0,
-    expiring30Days: 0,
+    thisMonthEarned: 200,
+    thisMonthTransferred: 5000,
+    expiring30Days: 700,
   });
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [pointHistory, setPointHistory] = useState<PointHistory[]>([]);
@@ -86,6 +68,13 @@ export default function PointsPage() {
   const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null);
   const [linkAccountType, setLinkAccountType] = useState<string>("");
 
+  // 월 선택 옵션 생성
+  const monthOptions = Array.from({ length: 12 }, (_, i) => {
+    const date = new Date();
+    date.setMonth(date.getMonth() - i);
+    return `${date.getFullYear()}년 ${date.getMonth() + 1}월`;
+  });
+
   useEffect(() => {
     fetchData();
   }, [activeTab, couponFilter, pointFilter, selectedMonth]);
@@ -94,29 +83,34 @@ export default function PointsPage() {
     setLoading(true);
     try {
       // 월 파싱
-      const [yearStr, monthStr] = selectedMonth.replace("년 ", "-").replace("월", "").split("-");
-      const monthParam = `${yearStr}-${monthStr.padStart(2, "0")}`;
+      const match = selectedMonth.match(/(\d+)년 (\d+)월/);
+      if (!match) return;
+      const monthParam = `${match[1]}-${match[2].padStart(2, "0")}`;
 
       if (activeTab === "point") {
         const res = await fetch(`/api/points?filter=${pointFilter}&month=${monthParam}`);
         const data = await res.json();
-        setTotalPoints(data.totalPoints || 0);
-        setPointStats({
-          thisMonthEarned: data.thisMonthEarned || 0,
-          thisMonthTransferred: data.thisMonthTransferred || 0,
-          expiring30Days: data.expiringPoints30Days || 0,
-        });
+        if (data.totalPoints !== undefined) setTotalPoints(data.totalPoints);
+        if (data.thisMonthEarned !== undefined) {
+          setPointStats({
+            thisMonthEarned: data.thisMonthEarned || 0,
+            thisMonthTransferred: data.thisMonthTransferred || 0,
+            expiring30Days: data.expiringPoints30Days || 0,
+          });
+        }
         setPointHistory(data.history || []);
       } else {
         const res = await fetch(`/api/coupons?filter=${couponFilter}&month=${monthParam}`);
         const data = await res.json();
-        setTotalCoupons(data.availableCoupons || 0);
-        setCouponStats({
-          available: data.availableCoupons || 0,
-          thisMonthIssued: data.thisMonthIssued || 0,
-          thisMonthUsed: data.thisMonthUsed || 0,
-          expiring30Days: data.expiringCoupons30Days || 0,
-        });
+        if (data.availableCoupons !== undefined) setTotalCoupons(data.availableCoupons);
+        if (data.thisMonthIssued !== undefined) {
+          setCouponStats({
+            available: data.availableCoupons || 0,
+            thisMonthIssued: data.thisMonthIssued || 0,
+            thisMonthUsed: data.thisMonthUsed || 0,
+            expiring30Days: data.expiringCoupons30Days || 0,
+          });
+        }
         setCoupons(data.coupons || []);
       }
     } catch (error) {
@@ -178,13 +172,13 @@ export default function PointsPage() {
     switch (coupon.status) {
       case "pending":
         return (
-          <span className="px-3 py-1 text-xs font-medium text-gray-500 bg-gray-100 rounded-full">
+          <span className="px-3 py-1.5 text-xs font-medium text-gray-500 bg-gray-100 rounded-lg">
             발급대기
           </span>
         );
       case "transferred":
         return (
-          <span className="px-3 py-1 text-xs font-medium text-gray-500 bg-gray-100 rounded-full">
+          <span className="px-3 py-1.5 text-xs font-medium text-gray-500 bg-gray-100 rounded-lg">
             전환됨
           </span>
         );
@@ -192,7 +186,7 @@ export default function PointsPage() {
         return (
           <button
             onClick={() => handleCouponTransfer(coupon)}
-            className="px-3 py-1 text-xs font-medium text-white bg-[#9F85E3] rounded-full hover:bg-[#8B71CF] transition-colors"
+            className="px-3 py-1.5 text-xs font-medium text-white bg-[#9F85E3] rounded-lg hover:bg-[#8B71CF] transition-colors"
           >
             전환하기
           </button>
@@ -216,7 +210,7 @@ export default function PointsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="min-h-screen bg-white pb-24">
       {/* 헤더 - 상단 고정 */}
       <header className="sticky top-0 bg-white z-20 border-b border-gray-100">
         <div className="flex items-center justify-between px-4 py-3">
@@ -234,92 +228,98 @@ export default function PointsPage() {
 
       <div className="px-4 py-4">
         {/* 내 자산 섹션 */}
-        <div className="mb-4">
-          <div className="flex items-center gap-2 mb-3">
-            <PiggyIcon />
+        <div className="mb-5">
+          <div className="flex items-center gap-1.5 mb-3">
+            <span className="text-lg">🐷</span>
             <span className="text-base font-semibold text-gray-900">내 자산</span>
           </div>
           
           {/* 자산 현황 카드 */}
-          <div className="bg-white rounded-2xl overflow-hidden border border-gray-100">
+          <div className="bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
             {/* 쿠폰 행 */}
-            <div 
-              className={`flex items-center justify-between px-4 py-4 cursor-pointer transition-colors ${activeTab === "coupon" ? "bg-purple-50" : ""}`}
+            <button 
+              className={`w-full flex items-center justify-between px-4 py-4 transition-colors ${activeTab === "coupon" ? "bg-purple-50" : ""}`}
               onClick={() => setActiveTab("coupon")}
             >
               <span className="text-gray-700 font-medium">쿠폰</span>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <span className="text-lg font-bold text-gray-900">{totalCoupons}장</span>
                 <span className="text-sm text-gray-400">상세보기</span>
-                <ChevronRight className="w-4 h-4 text-gray-400" />
               </div>
-            </div>
+            </button>
             
             <div className="border-t border-gray-100" />
             
             {/* 포인트 행 */}
-            <div 
-              className={`flex items-center justify-between px-4 py-4 cursor-pointer transition-colors ${activeTab === "point" ? "bg-purple-50" : ""}`}
+            <button 
+              className={`w-full flex items-center justify-between px-4 py-4 transition-colors ${activeTab === "point" ? "bg-purple-50" : ""}`}
               onClick={() => setActiveTab("point")}
             >
               <span className="text-gray-700 font-medium">포인트</span>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <span className="text-lg font-bold text-gray-900">{totalPoints.toLocaleString()}P</span>
                 <span className="text-sm text-gray-400">상세보기</span>
-                <ChevronRight className="w-4 h-4 text-gray-400" />
               </div>
-            </div>
+            </button>
           </div>
         </div>
 
         {/* 상세 현황 섹션 */}
-        <div className="bg-white rounded-2xl p-4 mb-4 border border-gray-100">
-          <div className="flex items-center gap-2 mb-4">
-            <CoinIcon />
+        <div className="bg-white rounded-2xl p-4 mb-5 border border-gray-200 shadow-sm">
+          <div className="flex items-center gap-1.5 mb-4">
+            <span className="text-lg">{activeTab === "point" ? "💰" : "🎫"}</span>
             <span className="text-base font-semibold text-gray-900">
               {activeTab === "point" ? "내 포인트" : "내 쿠폰"}
             </span>
           </div>
 
           {activeTab === "point" ? (
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-gray-500 mb-1">현재 포인트</p>
-                <p className="text-3xl font-bold text-gray-900">{totalPoints.toLocaleString()}P</p>
+            <>
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">현재 포인트</p>
+                  <p className="text-3xl font-bold text-gray-900">{totalPoints.toLocaleString()}P</p>
+                </div>
+                <div className="text-right text-sm space-y-1">
+                  <div className="flex justify-between gap-4">
+                    <span className="text-gray-500">이번달 적립</span>
+                    <span className="text-gray-900 font-medium">{pointStats.thisMonthEarned.toLocaleString()}P</span>
+                  </div>
+                  <div className="flex justify-between gap-4">
+                    <span className="text-gray-500">이번달 전환</span>
+                    <span className="text-gray-900 font-medium">{pointStats.thisMonthTransferred.toLocaleString()}P</span>
+                  </div>
+                  <div className="flex justify-between gap-4">
+                    <span className="text-gray-500">30일 이내 소멸 예정</span>
+                    <span className="text-gray-900 font-medium">{pointStats.expiring30Days.toLocaleString()}P</span>
+                  </div>
+                </div>
               </div>
-              <div className="text-right text-sm space-y-1">
-                <div className="flex justify-between gap-6">
-                  <span className="text-gray-500">이번달 적립</span>
-                  <span className="text-gray-900">{pointStats.thisMonthEarned.toLocaleString()}P</span>
-                </div>
-                <div className="flex justify-between gap-6">
-                  <span className="text-gray-500">이번달 전환</span>
-                  <span className="text-gray-900">{pointStats.thisMonthTransferred.toLocaleString()}P</span>
-                </div>
-                <div className="flex justify-between gap-6">
-                  <span className="text-gray-500">30일 이내 소멸 예정</span>
-                  <span className="text-red-500">{pointStats.expiring30Days.toLocaleString()}P</span>
-                </div>
-              </div>
-            </div>
+              {/* 5000포인트 미만 안내 */}
+              {totalPoints < 5000 && (
+                <p className="text-center text-sm text-gray-500 pt-2 border-t border-gray-100">
+                  5,000 포인트 이상부터 사용가능합니다
+                </p>
+              )}
+            </>
           ) : (
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm text-gray-500 mb-1">전환가능 쿠폰</p>
+                <p className="text-sm text-gray-500 mb-1">발급된 쿠폰</p>
                 <p className="text-3xl font-bold text-gray-900">{couponStats.available}장</p>
               </div>
               <div className="text-right text-sm space-y-1">
-                <div className="flex justify-between gap-6">
+                <div className="flex justify-between gap-4">
                   <span className="text-gray-500">이번달 발급</span>
-                  <span className="text-gray-900">{couponStats.thisMonthIssued}장</span>
+                  <span className="text-gray-900 font-medium">{couponStats.thisMonthIssued}장</span>
                 </div>
-                <div className="flex justify-between gap-6">
-                  <span className="text-gray-500">이번달 사용</span>
-                  <span className="text-gray-900">{couponStats.thisMonthUsed}장</span>
+                <div className="flex justify-between gap-4">
+                  <span className="text-gray-500">이번달 전환</span>
+                  <span className="text-gray-900 font-medium">{couponStats.thisMonthUsed}장</span>
                 </div>
-                <div className="flex justify-between gap-6">
+                <div className="flex justify-between gap-4">
                   <span className="text-gray-500">30일 이내 소멸 예정</span>
-                  <span className="text-red-500">{couponStats.expiring30Days}장</span>
+                  <span className="text-gray-900 font-medium">{couponStats.expiring30Days}장</span>
                 </div>
               </div>
             </div>
@@ -330,7 +330,7 @@ export default function PointsPage() {
         <div className="flex items-center justify-between mb-4">
           {/* 월 선택 */}
           <button
-            onClick={() => setShowMonthPicker(!showMonthPicker)}
+            onClick={() => setShowMonthPicker(true)}
             className="flex items-center gap-1 text-gray-900 font-medium"
           >
             {selectedMonth}
@@ -339,8 +339,8 @@ export default function PointsPage() {
 
           {/* 구분 필터 */}
           {activeTab === "point" ? (
-            <div className="flex gap-2 text-sm">
-              {(["all", "earn", "use", "expire"] as PointFilter[]).map((filter) => (
+            <div className="flex text-sm">
+              {(["all", "earn", "use", "expire"] as PointFilter[]).map((filter, idx) => (
                 <button
                   key={filter}
                   onClick={() => setPointFilter(filter)}
@@ -351,12 +351,13 @@ export default function PointsPage() {
                   }`}
                 >
                   {filter === "all" ? "전체" : filter === "earn" ? "적립" : filter === "use" ? "사용" : "소멸"}
+                  {idx < 3 && <span className="text-gray-300 ml-2">|</span>}
                 </button>
               ))}
             </div>
           ) : (
-            <div className="flex gap-2 text-sm">
-              {(["all", "greating", "cafeteria"] as CouponFilter[]).map((filter) => (
+            <div className="flex text-sm">
+              {(["all", "greating", "cafeteria"] as CouponFilter[]).map((filter, idx) => (
                 <button
                   key={filter}
                   onClick={() => setCouponFilter(filter)}
@@ -367,6 +368,7 @@ export default function PointsPage() {
                   }`}
                 >
                   {filter === "all" ? "전체" : filter === "greating" ? "그리팅" : "카페테리아"}
+                  {idx < 2 && <span className="text-gray-300 ml-2">|</span>}
                 </button>
               ))}
             </div>
@@ -392,14 +394,14 @@ export default function PointsPage() {
                     {items.map((item, idx) => (
                       <div
                         key={item.id}
-                        className={`px-4 py-3 ${idx !== items.length - 1 ? "border-b border-gray-50" : ""}`}
+                        className={`px-4 py-3 ${idx !== items.length - 1 ? "border-b border-gray-100" : ""}`}
                       >
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-start justify-between">
                           <div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <span className="font-medium text-gray-900">{item.source}</span>
                               {item.text1 && (
-                                <span className="px-2 py-0.5 text-xs bg-purple-100 text-purple-600 rounded">
+                                <span className="px-2 py-0.5 text-xs bg-[#9F85E3] text-white rounded">
                                   {item.text1}
                                 </span>
                               )}
@@ -413,14 +415,14 @@ export default function PointsPage() {
                                 </>
                               )}
                               {item.text2 && (
-                                <span className="px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded">
+                                <span className="px-2 py-0.5 text-xs bg-gray-200 text-gray-600 rounded">
                                   {item.text2}
                                 </span>
                               )}
                             </div>
                           </div>
-                          <span className={`font-bold ${item.points > 0 ? "text-[#9F85E3]" : "text-gray-500"}`}>
-                            {item.points > 0 ? "+" : ""}{item.points.toLocaleString()}P
+                          <span className={`font-bold text-lg ${item.points > 0 ? "text-gray-900" : "text-gray-500"}`}>
+                            {item.points > 0 ? "" : ""}{item.points.toLocaleString()}P
                           </span>
                         </div>
                       </div>
@@ -444,7 +446,7 @@ export default function PointsPage() {
                     {items.map((item, idx) => (
                       <div
                         key={item.id}
-                        className={`px-4 py-3 ${idx !== items.length - 1 ? "border-b border-gray-50" : ""}`}
+                        className={`px-4 py-3 ${idx !== items.length - 1 ? "border-b border-gray-100" : ""}`}
                       >
                         <div className="flex items-center justify-between">
                           <div>
@@ -483,12 +485,38 @@ export default function PointsPage() {
         </div>
       )}
 
+      {/* 월 선택 바텀시트 */}
+      <BottomSheet
+        isOpen={showMonthPicker}
+        onClose={() => setShowMonthPicker(false)}
+        title="월 선택"
+      >
+        <div className="space-y-1 mb-4">
+          {monthOptions.map((month) => (
+            <button
+              key={month}
+              onClick={() => {
+                setSelectedMonth(month);
+                setShowMonthPicker(false);
+              }}
+              className={`w-full px-4 py-3 text-left rounded-xl transition-colors ${
+                selectedMonth === month
+                  ? "bg-purple-50 text-[#9F85E3] font-semibold"
+                  : "text-gray-600 hover:bg-gray-50"
+              }`}
+            >
+              {month}
+            </button>
+          ))}
+        </div>
+      </BottomSheet>
+
       {/* 전환 확인 팝업 */}
       <ConfirmModal
         isOpen={showTransferConfirm}
         onClose={() => setShowTransferConfirm(false)}
         onConfirm={() => setShowTransferConfirm(false)}
-        message={`확인 버튼을 누르시면\n그리팅몰(${selectedCoupon?.transferred_account || "***"})로 쿠폰이 전환되어\n그리팅몰 쿠폰함에서 확인하실 수 있어요!`}
+        message={`확인 버튼을 누르시면\n그리팅몰(${selectedCoupon?.transferred_account || "gre***"})로 쿠폰이 전환되어\n그리팅몰 쿠폰함에서 확인하실 수 있어요!`}
         showCancel
       />
 
@@ -509,7 +537,7 @@ export default function PointsPage() {
           setShowLinkRequired(false);
           router.push("/menu/account-link");
         }}
-        message={`___쿠폰 발급을 위해\n${linkAccountType === "greating_mall" ? "그리팅" : "카페테리아"} 연동이 필요해요!`}
+        message={`___쿠폰 발급을 위해\n${linkAccountType === "greating_mall" ? "그리팅(카페테리아)" : "그리팅(카페테리아)"} 연동이 필요해요!`}
         confirmText="연동하기"
         cancelText="취소"
         showCancel
@@ -526,4 +554,3 @@ export default function PointsPage() {
     </div>
   );
 }
-

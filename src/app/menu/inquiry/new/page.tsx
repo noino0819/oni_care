@@ -15,7 +15,6 @@ export default function NewInquiryPage() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [userName, setUserName] = useState("");
 
   useEffect(() => {
     async function fetchData() {
@@ -26,15 +25,6 @@ export default function NewInquiryPage() {
           router.push("/");
           return;
         }
-
-        // 사용자 이름 가져오기
-        const { data: userData } = await supabase
-          .from("users")
-          .select("name")
-          .eq("id", session.user.id)
-          .single();
-
-        setUserName(userData?.name || "회원");
 
         // 문의 유형 가져오기
         const { data: typesData } = await supabase
@@ -117,7 +107,7 @@ export default function NewInquiryPage() {
           <div className="flex items-start gap-3">
             <MessageCircle className="w-5 h-5 text-gray-500 mt-0.5" />
             <div>
-              <p className="font-semibold text-gray-800">안녕하세요 {userName}님</p>
+              <p className="font-semibold text-gray-800">그리팅 케어 문의하기</p>
               <p className="text-sm text-gray-500 mt-1">
                 휴일을 제외한 평일에는 2일 이내에 답변드릴께요
               </p>

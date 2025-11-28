@@ -47,6 +47,7 @@ export default function ProfileEditPage() {
   const [showInterestPicker, setShowInterestPicker] = useState(false);
   const [showBusinessCodeModal, setShowBusinessCodeModal] = useState(false);
   const [showInvalidCodeAlert, setShowInvalidCodeAlert] = useState(false);
+  const [invalidCodeMessage, setInvalidCodeMessage] = useState("");
 
   // 임시 값
   const [tempBusinessCode, setTempBusinessCode] = useState("");
@@ -102,6 +103,7 @@ export default function ProfileEditPage() {
 
   const handleBusinessCodeSubmit = async () => {
     if (tempBusinessCode.length !== 6) {
+      setInvalidCodeMessage("유효하지 않은 사업장코드입니다.");
       setShowInvalidCodeAlert(true);
       return;
     }
@@ -114,6 +116,7 @@ export default function ProfileEditPage() {
       });
 
       if (!res.ok) {
+        setInvalidCodeMessage("유효하지 않은 사업장코드입니다.");
         setShowInvalidCodeAlert(true);
         return;
       }
@@ -122,6 +125,7 @@ export default function ProfileEditPage() {
       setProfile(data);
       setShowBusinessCodeModal(false);
     } catch {
+      setInvalidCodeMessage("유효하지 않은 사업장코드입니다.");
       setShowInvalidCodeAlert(true);
     }
   };
@@ -149,6 +153,14 @@ export default function ProfileEditPage() {
     if (!diseases || diseases.length === 0) return "해당없음";
     return diseases
       .map(d => DISEASE_OPTIONS.find(opt => opt.value === d)?.label)
+      .filter(Boolean)
+      .join(", ");
+  };
+
+  const getInterestLabels = (interests?: string[]) => {
+    if (!interests || interests.length === 0) return "-";
+    return interests
+      .map(i => INTEREST_OPTIONS.find(opt => opt.value === i)?.label)
       .filter(Boolean)
       .join(", ");
   };
@@ -192,7 +204,7 @@ export default function ProfileEditPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
+    <div className="min-h-screen bg-white pb-20">
       {/* 헤더 */}
       <header className="sticky top-0 bg-white z-10 border-b border-gray-100">
         <div className="flex items-center justify-between px-4 py-3">
@@ -208,131 +220,137 @@ export default function ProfileEditPage() {
 
       <div className="px-4 py-4">
         {/* 기본정보 */}
-        <div className="bg-white rounded-2xl mb-4 border border-gray-100">
-          <h2 className="px-4 pt-4 pb-2 text-base font-semibold text-gray-900">기본정보</h2>
-          
-          {/* 이름 */}
-          <div className="flex items-center justify-between px-4 py-4 border-t border-gray-50">
-            <span className="text-gray-600">이름</span>
-            <span className="text-gray-900">{profile?.name || "-"}</span>
-          </div>
-
-          {/* 생년월일 */}
-          <button 
-            onClick={() => setShowBirthDatePicker(true)}
-            className="w-full flex items-center justify-between px-4 py-4 border-t border-gray-50"
-          >
-            <span className="text-gray-600">생년월일</span>
-            <div className="flex items-center gap-1">
-              <span className="text-gray-900">{formatBirthDate(profile?.birth_date)}</span>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
+        <div className="mb-6">
+          <h2 className="text-base font-bold text-gray-900 mb-3">기본정보</h2>
+          <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
+            {/* 이름 */}
+            <div className="flex items-center justify-between px-4 py-4">
+              <span className="text-gray-600">이름</span>
+              <span className="text-gray-900">{profile?.name || "김건강"} &gt;</span>
             </div>
-          </button>
 
-          {/* 성별 */}
-          <button 
-            onClick={() => setShowGenderPicker(true)}
-            className="w-full flex items-center justify-between px-4 py-4 border-t border-gray-50"
-          >
-            <span className="text-gray-600">성별</span>
-            <div className="flex items-center gap-1">
-              <span className="text-gray-900">{getGenderLabel(profile?.gender)}</span>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
-            </div>
-          </button>
-
-          {/* 연락처 */}
-          <div className="flex items-center justify-between px-4 py-4 border-t border-gray-50">
-            <span className="text-gray-600">연락처</span>
-            <span className="text-gray-900">{profile?.masked_phone || "-"}</span>
-          </div>
-
-          {/* 비밀번호 */}
-          <div className="flex items-center justify-between px-4 py-4 border-t border-gray-50">
-            <span className="text-gray-600">비밀번호</span>
+            {/* 생년월일 */}
             <button 
-              onClick={() => router.push("/menu/profile-edit/password")}
-              className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+              onClick={() => setShowBirthDatePicker(true)}
+              className="w-full flex items-center justify-between px-4 py-4"
             >
-              변경하기
+              <span className="text-gray-600">생년월일</span>
+              <div className="flex items-center gap-1">
+                <span className="text-gray-900">{formatBirthDate(profile?.birth_date) || "961128"}</span>
+                <ChevronRight className="w-4 h-4 text-gray-400" />
+              </div>
             </button>
-          </div>
 
-          {/* 사업장코드 */}
+            {/* 성별 */}
+            <button 
+              onClick={() => setShowGenderPicker(true)}
+              className="w-full flex items-center justify-between px-4 py-4"
+            >
+              <span className="text-gray-600">성별</span>
+              <div className="flex items-center gap-1">
+                <span className="text-gray-900">{getGenderLabel(profile?.gender) || "여"}</span>
+                <ChevronRight className="w-4 h-4 text-gray-400" />
+              </div>
+            </button>
+
+            {/* 연락처 */}
+            <div className="flex items-center justify-between px-4 py-4">
+              <span className="text-gray-600">연락처</span>
+              <span className="text-gray-900">{profile?.masked_phone || "010-****-5678"}</span>
+            </div>
+
+            {/* 비밀번호 */}
+            <div className="flex items-center justify-between px-4 py-4">
+              <span className="text-gray-600">비밀번호</span>
+              <button 
+                onClick={() => router.push("/menu/profile-edit/password")}
+                className="px-4 py-1.5 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                변경하기
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* 사업장코드 */}
+        <div className="mb-6">
           <button 
             onClick={() => setShowBusinessCodeModal(true)}
-            className="w-full flex items-center justify-between px-4 py-4 border-t border-gray-50"
+            className="w-full flex items-center justify-between px-4 py-4 bg-white rounded-xl border border-gray-200"
           >
             <span className="text-gray-600">사업장코드</span>
             <div className="flex items-center gap-1">
-              <span className="text-gray-900">{profile?.business_code || "-"}</span>
+              <span className="text-gray-900">{profile?.business_code || "214567"}</span>
               <ChevronRight className="w-4 h-4 text-gray-400" />
             </div>
           </button>
         </div>
 
         {/* 건강정보 */}
-        <div className="bg-white rounded-2xl mb-4 border border-gray-100">
-          <h2 className="px-4 pt-4 pb-2 text-base font-semibold text-gray-900">건강정보</h2>
-          
-          {/* 키 */}
-          <button 
-            onClick={() => setShowHeightPicker(true)}
-            className="w-full flex items-center justify-between px-4 py-4 border-t border-gray-50"
-          >
-            <span className="text-gray-600">키</span>
-            <div className="flex items-center gap-1">
-              <span className="text-gray-900">{profile?.height ? `${profile.height}cm` : "-"}</span>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
-            </div>
-          </button>
+        <div className="mb-6">
+          <h2 className="text-base font-bold text-gray-900 mb-3">건강정보</h2>
+          <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
+            {/* 키 */}
+            <button 
+              onClick={() => setShowHeightPicker(true)}
+              className="w-full flex items-center justify-between px-4 py-4"
+            >
+              <span className="text-gray-600">키</span>
+              <div className="flex items-center gap-1">
+                <span className="text-gray-900">{profile?.height ? `${profile.height}cm` : "165cm"}</span>
+                <ChevronRight className="w-4 h-4 text-gray-400" />
+              </div>
+            </button>
 
-          {/* 몸무게 */}
-          <button 
-            onClick={() => setShowWeightPicker(true)}
-            className="w-full flex items-center justify-between px-4 py-4 border-t border-gray-50"
-          >
-            <span className="text-gray-600">몸무게</span>
-            <div className="flex items-center gap-1">
-              <span className="text-gray-900">{profile?.weight ? `${profile.weight}kg` : "-"}</span>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
-            </div>
-          </button>
+            {/* 몸무게 */}
+            <button 
+              onClick={() => setShowWeightPicker(true)}
+              className="w-full flex items-center justify-between px-4 py-4"
+            >
+              <span className="text-gray-600">몸무게</span>
+              <div className="flex items-center gap-1">
+                <span className="text-gray-900">{profile?.weight ? `${profile.weight}kg` : "58kg"}</span>
+                <ChevronRight className="w-4 h-4 text-gray-400" />
+              </div>
+            </button>
 
-          {/* 활동량 */}
-          <button 
-            onClick={() => setShowActivityPicker(true)}
-            className="w-full flex items-center justify-between px-4 py-4 border-t border-gray-50"
-          >
-            <span className="text-gray-600">활동량</span>
-            <div className="flex items-center gap-1">
-              <span className="text-gray-900">{getActivityLabel(profile?.activity_level) || "-"}</span>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
-            </div>
-          </button>
+            {/* 활동량 */}
+            <button 
+              onClick={() => setShowActivityPicker(true)}
+              className="w-full flex items-center justify-between px-4 py-4"
+            >
+              <span className="text-gray-600">활동량</span>
+              <div className="flex items-center gap-1">
+                <span className="text-gray-900">{getActivityLabel(profile?.activity_level) || "활동적"}</span>
+                <ChevronRight className="w-4 h-4 text-gray-400" />
+              </div>
+            </button>
 
-          {/* 질병 */}
-          <button 
-            onClick={() => setShowDiseasePicker(true)}
-            className="w-full flex items-center justify-between px-4 py-4 border-t border-gray-50"
-          >
-            <span className="text-gray-600">질병</span>
-            <div className="flex items-center gap-1">
-              <span className="text-gray-900 text-right max-w-[200px] truncate">
-                {getDiseaseLabels(profile?.diseases)}
-              </span>
-              <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
-            </div>
-          </button>
+            {/* 질병 */}
+            <button 
+              onClick={() => setShowDiseasePicker(true)}
+              className="w-full flex items-center justify-between px-4 py-4"
+            >
+              <span className="text-gray-600">질병</span>
+              <div className="flex items-center gap-1">
+                <span className="text-gray-900 text-right max-w-[180px] truncate">
+                  {getDiseaseLabels(profile?.diseases)}
+                </span>
+                <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+              </div>
+            </button>
+          </div>
         </div>
 
         {/* 회원 탈퇴 */}
-        <button
-          onClick={() => router.push("/menu/profile-edit/withdraw")}
-          className="w-full text-center py-4 text-gray-400 hover:text-gray-600"
-        >
-          회원 탈퇴
-        </button>
+        <div className="pt-4 border-t border-gray-100">
+          <button
+            onClick={() => router.push("/menu/profile-edit/withdraw")}
+            className="w-full text-center py-3 text-gray-400 hover:text-gray-600"
+          >
+            회원 탈퇴 &gt;
+          </button>
+        </div>
       </div>
 
       {/* 생년월일 피커 */}
@@ -341,19 +359,23 @@ export default function ProfileEditPage() {
         onClose={() => setShowBirthDatePicker(false)}
         title="생년월일을 입력해 주세요."
       >
-        <div className="flex gap-4 mb-6">
+        <div className="flex gap-2 mb-6 relative">
+          {/* 선택 영역 표시 */}
+          <div className="absolute top-1/2 left-0 right-0 -translate-y-1/2 h-10 bg-gray-100 rounded-lg pointer-events-none" />
+          
           {/* 연도 */}
-          <div className="flex-1">
-            <div className="h-[176px] overflow-y-auto scrollbar-hide">
+          <div className="flex-1 relative">
+            <div className="h-[200px] overflow-y-auto scrollbar-hide py-[80px]" style={{ scrollSnapType: "y mandatory" }}>
               {yearOptions.map((opt) => (
                 <button
                   key={opt.value}
                   onClick={() => setTempBirthYear(opt.value)}
-                  className={`w-full py-2 text-center ${
+                  className={`w-full h-10 flex items-center justify-center text-base ${
                     tempBirthYear === opt.value
                       ? "text-gray-900 font-semibold"
                       : "text-gray-400"
                   }`}
+                  style={{ scrollSnapAlign: "center" }}
                 >
                   {opt.label} 년
                 </button>
@@ -361,17 +383,18 @@ export default function ProfileEditPage() {
             </div>
           </div>
           {/* 월 */}
-          <div className="flex-1">
-            <div className="h-[176px] overflow-y-auto scrollbar-hide">
+          <div className="flex-1 relative">
+            <div className="h-[200px] overflow-y-auto scrollbar-hide py-[80px]" style={{ scrollSnapType: "y mandatory" }}>
               {monthOptions.map((opt) => (
                 <button
                   key={opt.value}
                   onClick={() => setTempBirthMonth(opt.value)}
-                  className={`w-full py-2 text-center ${
+                  className={`w-full h-10 flex items-center justify-center text-base ${
                     tempBirthMonth === opt.value
                       ? "text-gray-900 font-semibold"
                       : "text-gray-400"
                   }`}
+                  style={{ scrollSnapAlign: "center" }}
                 >
                   {opt.label} 월
                 </button>
@@ -379,17 +402,18 @@ export default function ProfileEditPage() {
             </div>
           </div>
           {/* 일 */}
-          <div className="flex-1">
-            <div className="h-[176px] overflow-y-auto scrollbar-hide">
+          <div className="flex-1 relative">
+            <div className="h-[200px] overflow-y-auto scrollbar-hide py-[80px]" style={{ scrollSnapType: "y mandatory" }}>
               {dayOptions.map((opt) => (
                 <button
                   key={opt.value}
                   onClick={() => setTempBirthDay(opt.value)}
-                  className={`w-full py-2 text-center ${
+                  className={`w-full h-10 flex items-center justify-center text-base ${
                     tempBirthDay === opt.value
                       ? "text-gray-900 font-semibold"
                       : "text-gray-400"
                   }`}
+                  style={{ scrollSnapAlign: "center" }}
                 >
                   {opt.label} 일
                 </button>
@@ -403,7 +427,7 @@ export default function ProfileEditPage() {
             updateProfile({ birth_date: birthDate });
             setShowBirthDatePicker(false);
           }}
-          className="w-full py-4 bg-[#9F85E3] text-white font-semibold rounded-xl"
+          className="w-full py-4 bg-[#FFD54F] text-gray-900 font-semibold rounded-xl"
         >
           완 료
         </button>
@@ -470,6 +494,16 @@ export default function ProfileEditPage() {
         onSelect={(values) => updateProfile({ diseases: values })}
       />
 
+      {/* 관심사 선택 피커 */}
+      <MultiSelectBottomSheet
+        isOpen={showInterestPicker}
+        onClose={() => setShowInterestPicker(false)}
+        title="관심사를 수정해주세요"
+        options={INTEREST_OPTIONS.map(i => ({ value: i.value, label: i.label }))}
+        selectedValues={profile?.interests || []}
+        onSelect={(values) => updateProfile({ interests: values })}
+      />
+
       {/* 사업장코드 입력 모달 */}
       <BottomSheet
         isOpen={showBusinessCodeModal}
@@ -481,18 +515,20 @@ export default function ProfileEditPage() {
             type="text"
             value={tempBusinessCode}
             onChange={(e) => setTempBusinessCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-            placeholder="6자리 코드 입력"
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#9F85E3]"
+            placeholder="199868"
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#9F85E3] text-center text-lg"
             maxLength={6}
           />
-          <p className="text-sm text-red-500 mt-2">유효하지 않은 사업장코드입니다.</p>
+          {tempBusinessCode.length > 0 && tempBusinessCode.length !== 6 && (
+            <p className="text-sm text-red-500 mt-2">유효하지 않은 사업장코드입니다.</p>
+          )}
         </div>
         <button
           onClick={handleBusinessCodeSubmit}
           disabled={tempBusinessCode.length !== 6}
           className={`w-full py-4 rounded-xl font-semibold ${
             tempBusinessCode.length === 6
-              ? "bg-[#9F85E3] text-white"
+              ? "bg-[#FFD54F] text-gray-900"
               : "bg-gray-200 text-gray-400"
           }`}
         >
@@ -505,7 +541,7 @@ export default function ProfileEditPage() {
         isOpen={showInvalidCodeAlert}
         onClose={() => setShowInvalidCodeAlert(false)}
         onConfirm={() => setShowInvalidCodeAlert(false)}
-        message="유효하지 않은 사업장코드입니다."
+        message={invalidCodeMessage}
         showCancel={false}
       />
 
@@ -520,4 +556,3 @@ export default function ProfileEditPage() {
     </div>
   );
 }
-

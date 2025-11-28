@@ -113,7 +113,7 @@ export default function MenuPage() {
   const quickMenuItems = [
     { href: "/menu/notices", label: "공지사항", icon: NoticeIcon },
     { href: "/challenge", label: "챌린지", icon: ChallengeIcon },
-    { href: "/menu/points", label: "포인트", icon: PointIcon },
+    { href: "/points", label: "포인트", icon: PointIcon },
   ];
 
   const nutritionMenuItems = [
@@ -124,7 +124,7 @@ export default function MenuPage() {
   const activityMenuItems = [
     { href: "/challenge", label: "챌린지" },
     { href: "/content", label: "컨텐츠" },
-    { href: "/menu/points", label: "포인트" },
+    { href: "/points", label: "포인트" },
     { href: "/history", label: "나의 히스토리" },
   ];
 
@@ -132,7 +132,6 @@ export default function MenuPage() {
     { href: "/menu/profile-edit", label: "회원정보수정" },
     { href: "/menu/marketing", label: "마케팅 정보 수신동의" },
     { href: "/menu/account-link", label: "계정 연동 관리" },
-    { href: "/menu/terms", label: "서비스 이용약관" },
     { href: "/menu/inquiry", label: "1:1 문의하기" },
   ];
 

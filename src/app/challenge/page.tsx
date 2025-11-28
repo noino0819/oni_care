@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import React from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
@@ -48,7 +49,7 @@ function getStatusTagStyle(color: string) {
   }
 }
 
-// 챌린지 카드 컴포넌트
+// 챌린지 카드 컴포넌트 - 레퍼런스에 맞게 개선
 function ChallengeCard({
   challenge,
   isParticipating,
@@ -58,30 +59,33 @@ function ChallengeCard({
   isParticipating: boolean;
   onClick: () => void;
 }) {
+  const [imageError, setImageError] = useState(false);
+
   return (
     <div
       onClick={onClick}
-      className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 cursor-pointer hover:shadow-md transition-shadow"
+      className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 cursor-pointer hover:shadow-md transition-all hover:scale-[1.01]"
     >
       <div className="flex gap-4">
         {/* 썸네일 */}
-        <div className="relative w-[100px] h-[100px] flex-shrink-0 rounded-xl overflow-hidden bg-gray-100">
-          {challenge.thumbnail_url ? (
+        <div className="relative w-[100px] h-[100px] flex-shrink-0 rounded-xl overflow-hidden bg-gradient-to-br from-[#9F85E3]/10 to-[#B8A5F0]/20">
+          {challenge.thumbnail_url && !imageError ? (
             <Image
               src={challenge.thumbnail_url}
               alt={challenge.title}
               fill
               className="object-cover"
+              onError={() => setImageError(true)}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center">
+            <div className="w-full h-full flex items-center justify-center text-[#9F85E3]">
               <ChallengeTypeIcon type={challenge.challenge_type} />
             </div>
           )}
           {/* 상태 태그 (왼쪽 상단) */}
           <div
             className={cn(
-              "absolute top-2 left-2 px-2 py-0.5 rounded-full text-xs font-medium",
+              "absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-bold shadow-sm",
               getStatusTagStyle(challenge.statusTag.color)
             )}
           >
@@ -90,22 +94,22 @@ function ChallengeCard({
         </div>
 
         {/* 정보 */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 flex flex-col">
           {/* 제목 */}
-          <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
+          <h3 className="font-bold text-gray-900 mb-1.5 line-clamp-2 text-[15px]">
             {challenge.title}
           </h3>
 
           {/* 태그들 */}
-          <div className="flex flex-wrap gap-1.5 mb-3">
+          <div className="flex flex-wrap gap-1.5 mb-auto">
             {isParticipating ? (
               <>
                 {/* 참여중: 달성률, D-day */}
-                <span className="px-2 py-0.5 bg-gray-100 rounded-full text-xs text-gray-600">
+                <span className="px-2 py-0.5 bg-[#9F85E3]/10 rounded-full text-xs text-[#9F85E3] font-medium">
                   달성률 {Math.round(challenge.achievementRate)}%
                 </span>
                 {challenge.dday !== null && (
-                  <span className="px-2 py-0.5 bg-gray-100 rounded-full text-xs text-gray-600">
+                  <span className="px-2 py-0.5 bg-orange-100 rounded-full text-xs text-orange-600 font-medium">
                     D-{challenge.dday > 0 ? challenge.dday : 0}
                   </span>
                 )}
@@ -117,7 +121,7 @@ function ChallengeCard({
                   하루 {challenge.daily_verification_count}번
                 </span>
                 {challenge.total_reward && (
-                  <span className="px-2 py-0.5 bg-gray-100 rounded-full text-xs text-gray-600">
+                  <span className="px-2 py-0.5 bg-amber-100 rounded-full text-xs text-amber-700">
                     {challenge.total_reward}
                   </span>
                 )}
@@ -128,9 +132,9 @@ function ChallengeCard({
           {/* 버튼 */}
           <button
             className={cn(
-              "w-full py-2 rounded-lg text-sm font-medium transition-colors",
+              "w-full py-2.5 rounded-xl text-sm font-semibold transition-all mt-2",
               isParticipating
-                ? "bg-[#9F85E3] text-white hover:bg-[#8B74D1]"
+                ? "bg-gradient-to-r from-[#9F85E3] to-[#B8A5F0] text-white hover:shadow-md hover:shadow-[#9F85E3]/30"
                 : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             )}
             onClick={(e) => {
