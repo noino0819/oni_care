@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "몸무게는 0~300kg 사이여야 합니다." }, { status: 400 });
     }
 
-    const validActivityLevels = ['sedentary', 'lightly_active', 'moderately_active', 'very_active'];
+    const validActivityLevels = ['sedentary', 'moderately_active', 'very_active', 'extra_active'];
     if (activity_level && !validActivityLevels.includes(activity_level)) {
       return NextResponse.json({ error: "올바른 활동량을 선택해주세요." }, { status: 400 });
     }

@@ -35,11 +35,11 @@ const INTEREST_OPTIONS = [
   { value: "digestive_health", label: "소화기/장건강" },
 ];
 
-// 활동량 옵션
+// 활동량 옵션 (기획서 기준)
 const ACTIVITY_OPTIONS = [
-  { value: "very_active", label: "매우 활동적" },
-  { value: "moderately_active", label: "활동적" },
-  { value: "lightly_active", label: "저활동적" },
+  { value: "extra_active", label: "매우 활동적" },
+  { value: "very_active", label: "활동적" },
+  { value: "moderately_active", label: "저활동적" },
   { value: "sedentary", label: "비활동적" },
 ];
 
