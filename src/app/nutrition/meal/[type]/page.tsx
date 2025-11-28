@@ -2,7 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
-import { ChevronLeft, Search, ChevronDown, Check, X, Clock } from "lucide-react";
+import {
+  ChevronLeft,
+  Search,
+  ChevronDown,
+  Check,
+  X,
+  Clock,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface FoodItem {
@@ -46,13 +53,83 @@ const TODAY_MENUS: Record<string, MenuSet[]> = {
       category: "한식",
       name: "전주식콩나물해장국",
       foods: [
-        { id: "b1-1", name: "전주식콩나물해장국", calories: 134.8, carbs: 10, protein: 8, fat: 6, servingSize: "1회섭취량", servingGrams: 315, quantity: 1 },
-        { id: "b1-2", name: "현미밥", calories: 205, carbs: 40, protein: 5, fat: 1, servingSize: "1회섭취량", servingGrams: 120, quantity: 1 },
-        { id: "b1-3", name: "연근조림", calories: 52.1, carbs: 10, protein: 2, fat: 0.5, servingSize: "1회섭취량", servingGrams: 68.5, quantity: 1 },
-        { id: "b1-4", name: "포기김치", calories: 20, carbs: 3, protein: 1, fat: 0.3, servingSize: "1회섭취량", servingGrams: 50, quantity: 1 },
-        { id: "b1-5", name: "누룽지", calories: 85, carbs: 18, protein: 2, fat: 0.5, servingSize: "1회섭취량", servingGrams: 30, quantity: 1 },
-        { id: "b1-6", name: "김구이", calories: 25, carbs: 2, protein: 2, fat: 1, servingSize: "1회섭취량", servingGrams: 5, quantity: 1 },
-        { id: "b1-7", name: "계란후라이", calories: 90, carbs: 1, protein: 6, fat: 7, servingSize: "1회섭취량", servingGrams: 50, quantity: 1 },
+        {
+          id: "b1-1",
+          name: "전주식콩나물해장국",
+          calories: 134.8,
+          carbs: 10,
+          protein: 8,
+          fat: 6,
+          servingSize: "1회섭취량",
+          servingGrams: 315,
+          quantity: 1,
+        },
+        {
+          id: "b1-2",
+          name: "현미밥",
+          calories: 205,
+          carbs: 40,
+          protein: 5,
+          fat: 1,
+          servingSize: "1회섭취량",
+          servingGrams: 120,
+          quantity: 1,
+        },
+        {
+          id: "b1-3",
+          name: "연근조림",
+          calories: 52.1,
+          carbs: 10,
+          protein: 2,
+          fat: 0.5,
+          servingSize: "1회섭취량",
+          servingGrams: 68.5,
+          quantity: 1,
+        },
+        {
+          id: "b1-4",
+          name: "포기김치",
+          calories: 20,
+          carbs: 3,
+          protein: 1,
+          fat: 0.3,
+          servingSize: "1회섭취량",
+          servingGrams: 50,
+          quantity: 1,
+        },
+        {
+          id: "b1-5",
+          name: "누룽지",
+          calories: 85,
+          carbs: 18,
+          protein: 2,
+          fat: 0.5,
+          servingSize: "1회섭취량",
+          servingGrams: 30,
+          quantity: 1,
+        },
+        {
+          id: "b1-6",
+          name: "김구이",
+          calories: 25,
+          carbs: 2,
+          protein: 2,
+          fat: 1,
+          servingSize: "1회섭취량",
+          servingGrams: 5,
+          quantity: 1,
+        },
+        {
+          id: "b1-7",
+          name: "계란후라이",
+          calories: 90,
+          carbs: 1,
+          protein: 6,
+          fat: 7,
+          servingSize: "1회섭취량",
+          servingGrams: 50,
+          quantity: 1,
+        },
       ],
     },
     {
@@ -60,13 +137,83 @@ const TODAY_MENUS: Record<string, MenuSet[]> = {
       category: "양식",
       name: "시리얼",
       foods: [
-        { id: "b2-1", name: "흰우유", calories: 130, carbs: 10, protein: 6, fat: 7, servingSize: "1회섭취량", servingGrams: 200, quantity: 1 },
-        { id: "b2-2", name: "주스", calories: 90, carbs: 22, protein: 0.5, fat: 0, servingSize: "1회섭취량", servingGrams: 200, quantity: 1 },
-        { id: "b2-3", name: "식빵", calories: 150, carbs: 28, protein: 5, fat: 2, servingSize: "1회섭취량", servingGrams: 60, quantity: 1 },
-        { id: "b2-4", name: "크로와상", calories: 230, carbs: 26, protein: 4, fat: 12, servingSize: "1회섭취량", servingGrams: 60, quantity: 1 },
-        { id: "b2-5", name: "베이컨구이", calories: 120, carbs: 0, protein: 8, fat: 10, servingSize: "1회섭취량", servingGrams: 30, quantity: 1 },
-        { id: "b2-6", name: "그린샐러드", calories: 45, carbs: 5, protein: 2, fat: 2, servingSize: "1회섭취량", servingGrams: 100, quantity: 1 },
-        { id: "b2-7", name: "바나나", calories: 89, carbs: 23, protein: 1, fat: 0.3, servingSize: "1회섭취량", servingGrams: 120, quantity: 1 },
+        {
+          id: "b2-1",
+          name: "흰우유",
+          calories: 130,
+          carbs: 10,
+          protein: 6,
+          fat: 7,
+          servingSize: "1회섭취량",
+          servingGrams: 200,
+          quantity: 1,
+        },
+        {
+          id: "b2-2",
+          name: "주스",
+          calories: 90,
+          carbs: 22,
+          protein: 0.5,
+          fat: 0,
+          servingSize: "1회섭취량",
+          servingGrams: 200,
+          quantity: 1,
+        },
+        {
+          id: "b2-3",
+          name: "식빵",
+          calories: 150,
+          carbs: 28,
+          protein: 5,
+          fat: 2,
+          servingSize: "1회섭취량",
+          servingGrams: 60,
+          quantity: 1,
+        },
+        {
+          id: "b2-4",
+          name: "크로와상",
+          calories: 230,
+          carbs: 26,
+          protein: 4,
+          fat: 12,
+          servingSize: "1회섭취량",
+          servingGrams: 60,
+          quantity: 1,
+        },
+        {
+          id: "b2-5",
+          name: "베이컨구이",
+          calories: 120,
+          carbs: 0,
+          protein: 8,
+          fat: 10,
+          servingSize: "1회섭취량",
+          servingGrams: 30,
+          quantity: 1,
+        },
+        {
+          id: "b2-6",
+          name: "그린샐러드",
+          calories: 45,
+          carbs: 5,
+          protein: 2,
+          fat: 2,
+          servingSize: "1회섭취량",
+          servingGrams: 100,
+          quantity: 1,
+        },
+        {
+          id: "b2-7",
+          name: "바나나",
+          calories: 89,
+          carbs: 23,
+          protein: 1,
+          fat: 0.3,
+          servingSize: "1회섭취량",
+          servingGrams: 120,
+          quantity: 1,
+        },
       ],
     },
     {
@@ -74,9 +221,39 @@ const TODAY_MENUS: Record<string, MenuSet[]> = {
       category: "라면코너",
       name: "셀프라면",
       foods: [
-        { id: "b3-1", name: "미역&참치 토핑", calories: 80, carbs: 2, protein: 8, fat: 4, servingSize: "1회섭취량", servingGrams: 50, quantity: 1 },
-        { id: "b3-2", name: "포기김치", calories: 20, carbs: 3, protein: 1, fat: 0.3, servingSize: "1회섭취량", servingGrams: 50, quantity: 1 },
-        { id: "b3-3", name: "반달단무지", calories: 15, carbs: 3, protein: 0.3, fat: 0, servingSize: "1회섭취량", servingGrams: 30, quantity: 1 },
+        {
+          id: "b3-1",
+          name: "미역&참치 토핑",
+          calories: 80,
+          carbs: 2,
+          protein: 8,
+          fat: 4,
+          servingSize: "1회섭취량",
+          servingGrams: 50,
+          quantity: 1,
+        },
+        {
+          id: "b3-2",
+          name: "포기김치",
+          calories: 20,
+          carbs: 3,
+          protein: 1,
+          fat: 0.3,
+          servingSize: "1회섭취량",
+          servingGrams: 50,
+          quantity: 1,
+        },
+        {
+          id: "b3-3",
+          name: "반달단무지",
+          calories: 15,
+          carbs: 3,
+          protein: 0.3,
+          fat: 0,
+          servingSize: "1회섭취량",
+          servingGrams: 30,
+          quantity: 1,
+        },
       ],
     },
   ],
@@ -86,11 +263,61 @@ const TODAY_MENUS: Record<string, MenuSet[]> = {
       category: "한식",
       name: "매콤순대볶음",
       foods: [
-        { id: "l1-1", name: "매콤순대볶음", calories: 450, carbs: 30, protein: 18, fat: 28, servingSize: "1회섭취량", servingGrams: 200, quantity: 1 },
-        { id: "l1-2", name: "공기밥", calories: 300, carbs: 65, protein: 5, fat: 0.5, servingSize: "1회섭취량", servingGrams: 200, quantity: 1 },
-        { id: "l1-3", name: "된장국", calories: 80, carbs: 6, protein: 5, fat: 3, servingSize: "1회섭취량", servingGrams: 200, quantity: 1 },
-        { id: "l1-4", name: "포기김치", calories: 20, carbs: 3, protein: 1, fat: 0.3, servingSize: "1회섭취량", servingGrams: 50, quantity: 1 },
-        { id: "l1-5", name: "단무지", calories: 15, carbs: 3, protein: 0.3, fat: 0, servingSize: "1회섭취량", servingGrams: 30, quantity: 1 },
+        {
+          id: "l1-1",
+          name: "매콤순대볶음",
+          calories: 450,
+          carbs: 30,
+          protein: 18,
+          fat: 28,
+          servingSize: "1회섭취량",
+          servingGrams: 200,
+          quantity: 1,
+        },
+        {
+          id: "l1-2",
+          name: "공기밥",
+          calories: 300,
+          carbs: 65,
+          protein: 5,
+          fat: 0.5,
+          servingSize: "1회섭취량",
+          servingGrams: 200,
+          quantity: 1,
+        },
+        {
+          id: "l1-3",
+          name: "된장국",
+          calories: 80,
+          carbs: 6,
+          protein: 5,
+          fat: 3,
+          servingSize: "1회섭취량",
+          servingGrams: 200,
+          quantity: 1,
+        },
+        {
+          id: "l1-4",
+          name: "포기김치",
+          calories: 20,
+          carbs: 3,
+          protein: 1,
+          fat: 0.3,
+          servingSize: "1회섭취량",
+          servingGrams: 50,
+          quantity: 1,
+        },
+        {
+          id: "l1-5",
+          name: "단무지",
+          calories: 15,
+          carbs: 3,
+          protein: 0.3,
+          fat: 0,
+          servingSize: "1회섭취량",
+          servingGrams: 30,
+          quantity: 1,
+        },
       ],
     },
     {
@@ -98,10 +325,50 @@ const TODAY_MENUS: Record<string, MenuSet[]> = {
       category: "탕/찌개",
       name: "황태콩나물해장국",
       foods: [
-        { id: "l2-1", name: "황태콩나물해장국", calories: 350, carbs: 15, protein: 25, fat: 18, servingSize: "1회섭취량", servingGrams: 400, quantity: 1 },
-        { id: "l2-2", name: "공기밥", calories: 300, carbs: 65, protein: 5, fat: 0.5, servingSize: "1회섭취량", servingGrams: 200, quantity: 1 },
-        { id: "l2-3", name: "포기김치", calories: 20, carbs: 3, protein: 1, fat: 0.3, servingSize: "1회섭취량", servingGrams: 50, quantity: 1 },
-        { id: "l2-4", name: "깍두기", calories: 15, carbs: 3, protein: 0.5, fat: 0.1, servingSize: "1회섭취량", servingGrams: 50, quantity: 1 },
+        {
+          id: "l2-1",
+          name: "황태콩나물해장국",
+          calories: 350,
+          carbs: 15,
+          protein: 25,
+          fat: 18,
+          servingSize: "1회섭취량",
+          servingGrams: 400,
+          quantity: 1,
+        },
+        {
+          id: "l2-2",
+          name: "공기밥",
+          calories: 300,
+          carbs: 65,
+          protein: 5,
+          fat: 0.5,
+          servingSize: "1회섭취량",
+          servingGrams: 200,
+          quantity: 1,
+        },
+        {
+          id: "l2-3",
+          name: "포기김치",
+          calories: 20,
+          carbs: 3,
+          protein: 1,
+          fat: 0.3,
+          servingSize: "1회섭취량",
+          servingGrams: 50,
+          quantity: 1,
+        },
+        {
+          id: "l2-4",
+          name: "깍두기",
+          calories: 15,
+          carbs: 3,
+          protein: 0.5,
+          fat: 0.1,
+          servingSize: "1회섭취량",
+          servingGrams: 50,
+          quantity: 1,
+        },
       ],
     },
     {
@@ -109,9 +376,39 @@ const TODAY_MENUS: Record<string, MenuSet[]> = {
       category: "면류",
       name: "유니짜장면",
       foods: [
-        { id: "l3-1", name: "유니짜장면", calories: 650, carbs: 90, protein: 15, fat: 20, servingSize: "1회섭취량", servingGrams: 400, quantity: 1 },
-        { id: "l3-2", name: "단무지", calories: 20, carbs: 4, protein: 0.3, fat: 0, servingSize: "1회섭취량", servingGrams: 30, quantity: 1 },
-        { id: "l3-3", name: "양파절임", calories: 15, carbs: 3, protein: 0.3, fat: 0, servingSize: "1회섭취량", servingGrams: 30, quantity: 1 },
+        {
+          id: "l3-1",
+          name: "유니짜장면",
+          calories: 650,
+          carbs: 90,
+          protein: 15,
+          fat: 20,
+          servingSize: "1회섭취량",
+          servingGrams: 400,
+          quantity: 1,
+        },
+        {
+          id: "l3-2",
+          name: "단무지",
+          calories: 20,
+          carbs: 4,
+          protein: 0.3,
+          fat: 0,
+          servingSize: "1회섭취량",
+          servingGrams: 30,
+          quantity: 1,
+        },
+        {
+          id: "l3-3",
+          name: "양파절임",
+          calories: 15,
+          carbs: 3,
+          protein: 0.3,
+          fat: 0,
+          servingSize: "1회섭취량",
+          servingGrams: 30,
+          quantity: 1,
+        },
       ],
     },
   ],
@@ -121,11 +418,61 @@ const TODAY_MENUS: Record<string, MenuSet[]> = {
       category: "한식",
       name: "삼겹살정식",
       foods: [
-        { id: "d1-1", name: "삼겹살구이", calories: 550, carbs: 0, protein: 25, fat: 50, servingSize: "1회섭취량", servingGrams: 150, quantity: 1 },
-        { id: "d1-2", name: "공기밥", calories: 300, carbs: 65, protein: 5, fat: 0.5, servingSize: "1회섭취량", servingGrams: 200, quantity: 1 },
-        { id: "d1-3", name: "된장찌개", calories: 100, carbs: 8, protein: 6, fat: 4, servingSize: "1회섭취량", servingGrams: 200, quantity: 1 },
-        { id: "d1-4", name: "쌈채소", calories: 20, carbs: 4, protein: 1, fat: 0.2, servingSize: "1회섭취량", servingGrams: 100, quantity: 1 },
-        { id: "d1-5", name: "포기김치", calories: 20, carbs: 3, protein: 1, fat: 0.3, servingSize: "1회섭취량", servingGrams: 50, quantity: 1 },
+        {
+          id: "d1-1",
+          name: "삼겹살구이",
+          calories: 550,
+          carbs: 0,
+          protein: 25,
+          fat: 50,
+          servingSize: "1회섭취량",
+          servingGrams: 150,
+          quantity: 1,
+        },
+        {
+          id: "d1-2",
+          name: "공기밥",
+          calories: 300,
+          carbs: 65,
+          protein: 5,
+          fat: 0.5,
+          servingSize: "1회섭취량",
+          servingGrams: 200,
+          quantity: 1,
+        },
+        {
+          id: "d1-3",
+          name: "된장찌개",
+          calories: 100,
+          carbs: 8,
+          protein: 6,
+          fat: 4,
+          servingSize: "1회섭취량",
+          servingGrams: 200,
+          quantity: 1,
+        },
+        {
+          id: "d1-4",
+          name: "쌈채소",
+          calories: 20,
+          carbs: 4,
+          protein: 1,
+          fat: 0.2,
+          servingSize: "1회섭취량",
+          servingGrams: 100,
+          quantity: 1,
+        },
+        {
+          id: "d1-5",
+          name: "포기김치",
+          calories: 20,
+          carbs: 3,
+          protein: 1,
+          fat: 0.3,
+          servingSize: "1회섭취량",
+          servingGrams: 50,
+          quantity: 1,
+        },
       ],
     },
     {
@@ -133,10 +480,50 @@ const TODAY_MENUS: Record<string, MenuSet[]> = {
       category: "생선",
       name: "고등어구이정식",
       foods: [
-        { id: "d2-1", name: "고등어구이", calories: 250, carbs: 0, protein: 22, fat: 18, servingSize: "1회섭취량", servingGrams: 120, quantity: 1 },
-        { id: "d2-2", name: "현미밥", calories: 200, carbs: 40, protein: 5, fat: 1, servingSize: "1회섭취량", servingGrams: 150, quantity: 1 },
-        { id: "d2-3", name: "미역국", calories: 80, carbs: 5, protein: 3, fat: 2, servingSize: "1회섭취량", servingGrams: 200, quantity: 1 },
-        { id: "d2-4", name: "포기김치", calories: 20, carbs: 3, protein: 1, fat: 0.3, servingSize: "1회섭취량", servingGrams: 50, quantity: 1 },
+        {
+          id: "d2-1",
+          name: "고등어구이",
+          calories: 250,
+          carbs: 0,
+          protein: 22,
+          fat: 18,
+          servingSize: "1회섭취량",
+          servingGrams: 120,
+          quantity: 1,
+        },
+        {
+          id: "d2-2",
+          name: "현미밥",
+          calories: 200,
+          carbs: 40,
+          protein: 5,
+          fat: 1,
+          servingSize: "1회섭취량",
+          servingGrams: 150,
+          quantity: 1,
+        },
+        {
+          id: "d2-3",
+          name: "미역국",
+          calories: 80,
+          carbs: 5,
+          protein: 3,
+          fat: 2,
+          servingSize: "1회섭취량",
+          servingGrams: 200,
+          quantity: 1,
+        },
+        {
+          id: "d2-4",
+          name: "포기김치",
+          calories: 20,
+          carbs: 3,
+          protein: 1,
+          fat: 0.3,
+          servingSize: "1회섭취량",
+          servingGrams: 50,
+          quantity: 1,
+        },
       ],
     },
     {
@@ -144,8 +531,28 @@ const TODAY_MENUS: Record<string, MenuSet[]> = {
       category: "비빔",
       name: "비빔밥",
       foods: [
-        { id: "d3-1", name: "비빔밥", calories: 550, carbs: 75, protein: 15, fat: 18, servingSize: "1회섭취량", servingGrams: 400, quantity: 1 },
-        { id: "d3-2", name: "계란후라이", calories: 90, carbs: 1, protein: 6, fat: 7, servingSize: "1회섭취량", servingGrams: 50, quantity: 1 },
+        {
+          id: "d3-1",
+          name: "비빔밥",
+          calories: 550,
+          carbs: 75,
+          protein: 15,
+          fat: 18,
+          servingSize: "1회섭취량",
+          servingGrams: 400,
+          quantity: 1,
+        },
+        {
+          id: "d3-2",
+          name: "계란후라이",
+          calories: 90,
+          carbs: 1,
+          protein: 6,
+          fat: 7,
+          servingSize: "1회섭취량",
+          servingGrams: 50,
+          quantity: 1,
+        },
       ],
     },
   ],
@@ -155,7 +562,17 @@ const TODAY_MENUS: Record<string, MenuSet[]> = {
       category: "음료",
       name: "아메리카노",
       foods: [
-        { id: "s1-1", name: "아메리카노", calories: 10, carbs: 2, protein: 0, fat: 0, servingSize: "1회섭취량", servingGrams: 355, quantity: 1 },
+        {
+          id: "s1-1",
+          name: "아메리카노",
+          calories: 10,
+          carbs: 2,
+          protein: 0,
+          fat: 0,
+          servingSize: "1회섭취량",
+          servingGrams: 355,
+          quantity: 1,
+        },
       ],
     },
     {
@@ -163,7 +580,17 @@ const TODAY_MENUS: Record<string, MenuSet[]> = {
       category: "빵/디저트",
       name: "크로와상",
       foods: [
-        { id: "s2-1", name: "크로와상", calories: 230, carbs: 26, protein: 4, fat: 12, servingSize: "1회섭취량", servingGrams: 60, quantity: 1 },
+        {
+          id: "s2-1",
+          name: "크로와상",
+          calories: 230,
+          carbs: 26,
+          protein: 4,
+          fat: 12,
+          servingSize: "1회섭취량",
+          servingGrams: 60,
+          quantity: 1,
+        },
       ],
     },
   ],
@@ -171,17 +598,87 @@ const TODAY_MENUS: Record<string, MenuSet[]> = {
 
 // 자주 먹는 음식 샘플
 const FREQUENT_FOODS: FoodItem[] = [
-  { id: "f1", name: "흰쌀밥", calories: 300, carbs: 65, protein: 5, fat: 0.5, servingSize: "1회섭취량", servingGrams: 210, quantity: 1 },
-  { id: "f2", name: "된장찌개", calories: 120, carbs: 8, protein: 8, fat: 6, servingSize: "1회섭취량", servingGrams: 200, quantity: 1 },
-  { id: "f3", name: "김치", calories: 15, carbs: 3, protein: 1, fat: 0.3, servingSize: "1회섭취량", servingGrams: 50, quantity: 1 },
-  { id: "f4", name: "계란프라이", calories: 90, carbs: 1, protein: 6, fat: 7, servingSize: "1회섭취량", servingGrams: 50, quantity: 1 },
+  {
+    id: "f1",
+    name: "흰쌀밥",
+    calories: 300,
+    carbs: 65,
+    protein: 5,
+    fat: 0.5,
+    servingSize: "1회섭취량",
+    servingGrams: 210,
+    quantity: 1,
+  },
+  {
+    id: "f2",
+    name: "된장찌개",
+    calories: 120,
+    carbs: 8,
+    protein: 8,
+    fat: 6,
+    servingSize: "1회섭취량",
+    servingGrams: 200,
+    quantity: 1,
+  },
+  {
+    id: "f3",
+    name: "김치",
+    calories: 15,
+    carbs: 3,
+    protein: 1,
+    fat: 0.3,
+    servingSize: "1회섭취량",
+    servingGrams: 50,
+    quantity: 1,
+  },
+  {
+    id: "f4",
+    name: "계란프라이",
+    calories: 90,
+    carbs: 1,
+    protein: 6,
+    fat: 7,
+    servingSize: "1회섭취량",
+    servingGrams: 50,
+    quantity: 1,
+  },
 ];
 
 // 최근 먹은 음식 샘플
 const RECENT_FOODS: FoodItem[] = [
-  { id: "r1", name: "닭가슴살", calories: 165, carbs: 0, protein: 31, fat: 3.6, servingSize: "1회섭취량", servingGrams: 100, quantity: 1 },
-  { id: "r2", name: "사과", calories: 52, carbs: 14, protein: 0.3, fat: 0.2, servingSize: "1회섭취량", servingGrams: 150, quantity: 1 },
-  { id: "r3", name: "바나나", calories: 89, carbs: 23, protein: 1.1, fat: 0.3, servingSize: "1회섭취량", servingGrams: 120, quantity: 1 },
+  {
+    id: "r1",
+    name: "닭가슴살",
+    calories: 165,
+    carbs: 0,
+    protein: 31,
+    fat: 3.6,
+    servingSize: "1회섭취량",
+    servingGrams: 100,
+    quantity: 1,
+  },
+  {
+    id: "r2",
+    name: "사과",
+    calories: 52,
+    carbs: 14,
+    protein: 0.3,
+    fat: 0.2,
+    servingSize: "1회섭취량",
+    servingGrams: 150,
+    quantity: 1,
+  },
+  {
+    id: "r3",
+    name: "바나나",
+    calories: 89,
+    carbs: 23,
+    protein: 1.1,
+    fat: 0.3,
+    servingSize: "1회섭취량",
+    servingGrams: 120,
+    quantity: 1,
+  },
 ];
 
 export default function MealRecordPage() {
@@ -192,16 +689,20 @@ export default function MealRecordPage() {
   const dateParam = searchParams.get("date");
 
   const [selectedMealType, setSelectedMealType] = useState(initialMealType);
-  const [currentTab, setCurrentTab] = useState<"today" | "frequent" | "recent">("today");
+  const [currentTab, setCurrentTab] = useState<"today" | "frequent" | "recent">(
+    "today"
+  );
   const [searchQuery, setSearchQuery] = useState("");
   const [isFsMember, setIsFsMember] = useState(true); // FS 회원 여부 (실제로는 API에서 가져옴)
-  
+
   // 선택된 메뉴 (두 번째 화면용)
   const [selectedMenu, setSelectedMenu] = useState<MenuSet | null>(null);
   const [selectedFoods, setSelectedFoods] = useState<FoodItem[]>([]);
-  
+
   // 식사 날짜/시간
-  const [mealDate, setMealDate] = useState(dateParam || new Date().toISOString().split("T")[0]);
+  const [mealDate, setMealDate] = useState(
+    dateParam || new Date().toISOString().split("T")[0]
+  );
   const [mealTime, setMealTime] = useState(() => {
     const now = new Date();
     const hours = now.getHours();
@@ -213,7 +714,7 @@ export default function MealRecordPage() {
       minutes: "00",
     };
   });
-  
+
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -247,7 +748,13 @@ export default function MealRecordPage() {
     setSelectedFoods((prev) =>
       prev.map((f) =>
         f.id === foodId
-          ? { ...f, quantity: Math.max(0.1, Math.round((f.quantity + delta * 0.1) * 10) / 10) }
+          ? {
+              ...f,
+              quantity: Math.max(
+                0.1,
+                Math.round((f.quantity + delta * 0.1) * 10) / 10
+              ),
+            }
           : f
       )
     );
@@ -270,7 +777,10 @@ export default function MealRecordPage() {
   };
 
   // 총 칼로리 계산
-  const totalCalories = selectedFoods.reduce((sum, f) => sum + f.calories * f.quantity, 0);
+  const totalCalories = selectedFoods.reduce(
+    (sum, f) => sum + f.calories * f.quantity,
+    0
+  );
 
   // 저장
   const saveMealRecord = async () => {
@@ -354,20 +864,22 @@ export default function MealRecordPage() {
         <div className="px-4 py-4 space-y-4">
           {/* 끼니 선택 탭 */}
           <div className="flex gap-2">
-            {(["breakfast", "lunch", "dinner", "snack"] as const).map((type) => (
-              <button
-                key={type}
-                onClick={() => setSelectedMealType(type)}
-                className={cn(
-                  "flex-1 py-3 rounded-lg text-sm font-medium transition-colors",
-                  selectedMealType === type
-                    ? "bg-[#9B8BB5] text-white"
-                    : "bg-gray-200 text-gray-500"
-                )}
-              >
-                {MEAL_LABELS[type]}
-              </button>
-            ))}
+            {(["breakfast", "lunch", "dinner", "snack"] as const).map(
+              (type) => (
+                <button
+                  key={type}
+                  onClick={() => setSelectedMealType(type)}
+                  className={cn(
+                    "flex-1 py-3 rounded-lg text-sm font-medium transition-colors",
+                    selectedMealType === type
+                      ? "bg-[#9B8BB5] text-white"
+                      : "bg-gray-200 text-gray-500"
+                  )}
+                >
+                  {MEAL_LABELS[type]}
+                </button>
+              )
+            )}
           </div>
 
           {/* 날짜/시간 선택 */}
@@ -378,7 +890,9 @@ export default function MealRecordPage() {
             >
               <span className="text-sm text-gray-500">식사 날짜</span>
               <div className="flex items-center gap-1">
-                <span className="text-lg font-medium text-gray-800">{formatDate(mealDate)}</span>
+                <span className="text-lg font-medium text-gray-800">
+                  {formatDate(mealDate)}
+                </span>
                 <ChevronDown className="w-4 h-4 text-gray-400" />
               </div>
             </button>
@@ -399,18 +913,24 @@ export default function MealRecordPage() {
           {/* 메뉴 이름 */}
           <div className="flex items-center gap-2 pt-2">
             <span className="text-2xl">🍽️</span>
-            <h2 className="text-xl font-bold text-gray-800">{selectedMenu.name}</h2>
+            <h2 className="text-xl font-bold text-gray-800">
+              {selectedMenu.name}
+            </h2>
           </div>
 
           {/* 음식 목록 */}
           <div className="space-y-3">
             {selectedFoods.map((food) => (
-              <div key={food.id} className="bg-white rounded-xl p-4 border border-gray-100">
+              <div
+                key={food.id}
+                className="bg-white rounded-xl p-4 border border-gray-100"
+              >
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <h3 className="font-bold text-gray-800">{food.name}</h3>
                     <p className="text-sm text-gray-500">
-                      {food.servingSize} {food.servingGrams}g | {Math.round(food.calories * food.quantity)}kcal
+                      {food.servingSize} {food.servingGrams}g |{" "}
+                      {Math.round(food.calories * food.quantity)}kcal
                     </p>
                   </div>
                   <button onClick={() => removeFood(food.id)} className="p-1">
@@ -547,7 +1067,9 @@ export default function MealRecordPage() {
             {/* 끼니 표시 */}
             <div className="flex items-center gap-2">
               <span className="text-2xl">{MEAL_ICONS[selectedMealType]}</span>
-              <span className="text-lg font-bold text-gray-800">{MEAL_LABELS[selectedMealType]}</span>
+              <span className="text-lg font-bold text-gray-800">
+                {MEAL_LABELS[selectedMealType]}
+              </span>
             </div>
 
             {/* 메뉴 목록 */}
@@ -559,8 +1081,12 @@ export default function MealRecordPage() {
                   className="w-full bg-white rounded-xl p-4 border border-gray-200 text-left flex items-center justify-between"
                 >
                   <div>
-                    <p className="text-sm text-gray-500 mb-1">{menu.category}</p>
-                    <h3 className="font-bold text-gray-800 mb-2">{menu.name}</h3>
+                    <p className="text-sm text-gray-500 mb-1">
+                      {menu.category}
+                    </p>
+                    <h3 className="font-bold text-gray-800 mb-2">
+                      {menu.name}
+                    </h3>
                     <p className="text-sm text-gray-500">
                       {menu.foods.map((f) => f.name).join(", ")}
                     </p>
@@ -592,7 +1118,8 @@ export default function MealRecordPage() {
                 <div>
                   <h3 className="font-bold text-gray-800">{food.name}</h3>
                   <p className="text-sm text-gray-500">
-                    {food.servingSize} {food.servingGrams}g | {food.calories}kcal
+                    {food.servingSize} {food.servingGrams}g | {food.calories}
+                    kcal
                   </p>
                 </div>
                 <div className="w-6 h-6 rounded-full border-2 border-gray-300 flex items-center justify-center">
@@ -615,7 +1142,8 @@ export default function MealRecordPage() {
                 <div>
                   <h3 className="font-bold text-gray-800">{food.name}</h3>
                   <p className="text-sm text-gray-500">
-                    {food.servingSize} {food.servingGrams}g | {food.calories}kcal
+                    {food.servingSize} {food.servingGrams}g | {food.calories}
+                    kcal
                   </p>
                 </div>
                 <div className="w-6 h-6 rounded-full border-2 border-gray-300 flex items-center justify-center">
@@ -649,7 +1177,7 @@ function WheelPicker({
     <div className="relative h-[220px] overflow-hidden flex-1">
       {/* 선택 영역 하이라이트 */}
       <div className="absolute top-1/2 left-0 right-0 -translate-y-1/2 h-[44px] bg-[#C5D84B]/30 rounded-lg pointer-events-none z-10" />
-      
+
       {/* 스크롤 영역 */}
       <div
         className="absolute inset-0 overflow-y-auto scrollbar-hide snap-y snap-mandatory"
@@ -681,7 +1209,8 @@ function WheelPicker({
             )}
             onClick={() => onSelect(index)}
           >
-            {item}{suffix}
+            {item}
+            {suffix}
           </div>
         ))}
       </div>
@@ -705,11 +1234,17 @@ function DatePickerModal({
   const [day, setDay] = useState(date.getDate());
 
   const years = Array.from({ length: 5 }, (_, i) => (2023 + i).toString());
-  const months = Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, "0"));
-  const days = Array.from({ length: 31 }, (_, i) => (i + 1).toString().padStart(2, "0"));
+  const months = Array.from({ length: 12 }, (_, i) =>
+    (i + 1).toString().padStart(2, "0")
+  );
+  const days = Array.from({ length: 31 }, (_, i) =>
+    (i + 1).toString().padStart(2, "0")
+  );
 
   const handleConfirm = () => {
-    const newDate = `${year}-${month.toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
+    const newDate = `${year}-${month.toString().padStart(2, "0")}-${day
+      .toString()
+      .padStart(2, "0")}`;
     onChange(newDate);
     onClose();
   };
@@ -777,7 +1312,9 @@ function TimePickerModal({
 
   const periods = ["오전", "오후"];
   const hoursList = Array.from({ length: 12 }, (_, i) => (i + 1).toString());
-  const minutesList = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, "0"));
+  const minutesList = Array.from({ length: 60 }, (_, i) =>
+    i.toString().padStart(2, "0")
+  );
 
   const handleConfirm = () => {
     onChange({

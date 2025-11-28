@@ -207,3 +207,4 @@ export const POINT_HISTORY_TEMPLATES = {
   },
 } as const;
 
+

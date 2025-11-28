@@ -146,3 +146,4 @@ export function useUserPoints(): number {
   return profile?.points || 0;
 }
 
+

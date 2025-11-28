@@ -177,3 +177,4 @@ function BannerCharacter2() {
     </svg>
   );
 }
+

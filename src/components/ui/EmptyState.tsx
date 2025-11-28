@@ -89,3 +89,4 @@ export function NoContent({ type = "컨텐츠" }: { type?: string }) {
   );
 }
 
+

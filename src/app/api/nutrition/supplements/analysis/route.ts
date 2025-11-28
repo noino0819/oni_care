@@ -1,200 +1,429 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-// GET: 영양제 분석 결과 조회
-export async function GET(request: NextRequest) {
-  try {
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const searchParams = request.nextUrl.searchParams;
-    const date =
-      searchParams.get("date") || new Date().toISOString().split("T")[0];
-
-    // 사용자의 영양제 루틴 조회
-    const { data: routines, error: routinesError } = await supabase
-      .from("supplement_routines")
-      .select("*")
-      .eq("user_id", user.id)
-      .eq("is_active", true);
-
-    if (routinesError) {
-      console.error("Routines fetch error:", routinesError);
-      return NextResponse.json(
-        { error: routinesError.message },
-        { status: 500 }
-      );
-    }
-
-    // 해당 날짜의 분석 결과 조회
-    const { data: analysis, error: analysisError } = await supabase
-      .from("supplement_analysis")
-      .select("*")
-      .eq("user_id", user.id)
-      .eq("analysis_date", date);
-
-    // 분석 데이터가 없으면 기본 분석 생성 (시뮬레이션)
-    let analysisData = analysis || [];
-    if (analysisData.length === 0 && routines && routines.length > 0) {
-      // 영양제 루틴이 있으면 기본 분석 데이터 생성
-      analysisData = generateDefaultAnalysis(routines);
-    }
-
-    // 부족/적정/과다 카운트
-    const deficientCount = analysisData.filter(
-      (a) => a.status === "deficient"
-    ).length;
-    const adequateCount = analysisData.filter(
-      (a) => a.status === "adequate"
-    ).length;
-    const excessiveCount = analysisData.filter(
-      (a) => a.status === "excessive"
-    ).length;
-
-    return NextResponse.json({
-      totalSupplements: routines?.length || 0,
-      analysis: {
-        deficient: deficientCount,
-        adequate: adequateCount,
-        excessive: excessiveCount,
-      },
-      details: analysisData,
-      hasAnalysis: routines && routines.length > 0,
-    });
-  } catch (error) {
-    console.error("Supplement analysis API error:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch analysis" },
-      { status: 500 }
-    );
-  }
-}
-
-// 기본 분석 데이터 생성 (실제로는 서버에서 계산해야 함)
-function generateDefaultAnalysis(
-  routines: { id: string; name: string; dosage: string }[]
-) {
-  // 영양제 이름 기반으로 성분 추론 및 분석 생성
-  const ingredientMap: Record<
-    string,
-    { name: string; status: string; recommended: number; unit: string }
-  > = {
-    프로바이오틱스: {
-      name: "프로바이오틱스",
-      status: "adequate",
-      recommended: 10000000000,
-      unit: "CFU",
-    },
-    비타민: {
-      name: "비타민",
-      status: "adequate",
-      recommended: 100,
-      unit: "mg",
-    },
-    오메가: { name: "오메가-3", status: "adequate", recommended: 1000, unit: "mg" },
-    콜라겐: { name: "콜라겐", status: "deficient", recommended: 2000, unit: "mg" },
-    유산균: {
-      name: "프로바이오틱스",
-      status: "adequate",
-      recommended: 10000000000,
-      unit: "CFU",
-    },
-    아연: { name: "아연", status: "adequate", recommended: 10, unit: "mg" },
-    철분: { name: "철분", status: "deficient", recommended: 14, unit: "mg" },
-    칼슘: { name: "칼슘", status: "deficient", recommended: 700, unit: "mg" },
-    마그네슘: {
-      name: "마그네슘",
-      status: "deficient",
-      recommended: 350,
-      unit: "mg",
-    },
-    비오틴: { name: "비오틴", status: "adequate", recommended: 30, unit: "mcg" },
-  };
-
-  const analysisResults: {
-    ingredient_name: string;
-    status: string;
-    current_amount: number;
-    recommended_amount: number;
+interface IngredientData {
+    id: number;
+    externalName: string;
     unit: string;
-    source_supplements: string[];
-  }[] = [];
-
-  const processedIngredients = new Set<string>();
-
-  routines.forEach((routine) => {
-    const name = routine.name.toLowerCase();
-
-    Object.entries(ingredientMap).forEach(([keyword, data]) => {
-      if (
-        name.includes(keyword.toLowerCase()) &&
-        !processedIngredients.has(data.name)
-      ) {
-        processedIngredients.add(data.name);
-        const statusRandomizer = Math.random();
-        let status = data.status;
-
-        // 약간의 랜덤성 추가
-        if (statusRandomizer < 0.2) status = "deficient";
-        else if (statusRandomizer > 0.8) status = "excessive";
-        else status = "adequate";
-
-        const currentAmount =
-          status === "adequate"
-            ? data.recommended * (0.8 + Math.random() * 0.4)
-            : status === "deficient"
-            ? data.recommended * (0.3 + Math.random() * 0.3)
-            : data.recommended * (1.3 + Math.random() * 0.4);
-
-        analysisResults.push({
-          ingredient_name: data.name,
-          status,
-          current_amount: Math.round(currentAmount * 10) / 10,
-          recommended_amount: data.recommended,
-          unit: data.unit,
-          source_supplements: [routine.name],
-        });
-      }
-    });
-  });
-
-  // 기본 성분 추가 (영양제가 있지만 인식되지 않는 경우)
-  if (analysisResults.length === 0) {
-    analysisResults.push(
-      {
-        ingredient_name: "비타민D",
-        status: "deficient",
-        current_amount: 200,
-        recommended_amount: 400,
-        unit: "IU",
-        source_supplements: routines.map((r) => r.name),
-      },
-      {
-        ingredient_name: "비타민C",
-        status: "adequate",
-        current_amount: 100,
-        recommended_amount: 100,
-        unit: "mg",
-        source_supplements: routines.map((r) => r.name),
-      },
-      {
-        ingredient_name: "오메가-3",
-        status: "adequate",
-        current_amount: 900,
-        recommended_amount: 1000,
-        unit: "mg",
-        source_supplements: routines.map((r) => r.name),
-      }
-    );
-  }
-
-  return analysisResults;
+    minAmount: number | null;
+    maxAmount: number | null;
 }
 
+interface AnalysisResult {
+    id: string;
+    ingredientName: string;
+    status: "deficient" | "adequate" | "excessive";
+    currentAmount: number;
+    minAmount: number | null;
+    maxAmount: number | null;
+    unit: string;
+    sourceSupplements: string[];
+    recommendationText: string;
+}
+
+// 상태 판정 함수 (3케이스)
+function determineStatus(
+    currentAmount: number,
+    minAmount: number | null,
+    maxAmount: number | null
+): "deficient" | "adequate" | "excessive" {
+    // CASE 1: min/max 둘 다 있음
+    if (minAmount !== null && maxAmount !== null) {
+        if (currentAmount < minAmount) return "deficient";
+        if (currentAmount > maxAmount) return "excessive";
+        return "adequate";
+    }
+    
+    // CASE 2: min만 있음
+    if (minAmount !== null) {
+        if (currentAmount < minAmount) return "deficient";
+        return "adequate";
+    }
+    
+    // CASE 3: max만 있음
+    if (maxAmount !== null) {
+        if (currentAmount > maxAmount) return "excessive";
+        return "adequate";
+    }
+    
+    // 기준이 없으면 적정으로 판단
+    return "adequate";
+}
+
+// 권장량 표기 텍스트 생성
+function getRecommendationText(
+    minAmount: number | null,
+    maxAmount: number | null,
+    unit: string
+): string {
+    if (minAmount !== null && maxAmount !== null) {
+        return `${minAmount}~${maxAmount}${unit}`;
+    }
+    if (minAmount !== null) {
+        return `${minAmount}${unit} 이상`;
+    }
+    if (maxAmount !== null) {
+        return `${maxAmount}${unit} 미만`;
+    }
+    return "권장량 정보 없음";
+}
+
+// GET: 영양제 분석 결과 조회
+export async function GET() {
+    try {
+        const supabase = await createClient();
+
+        const {
+            data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        // 사용자의 영양제 루틴 조회
+        const { data: routines, error: routinesError } = await supabase
+            .from("supplement_routines")
+            .select("*")
+            .eq("user_id", user.id)
+            .eq("is_active", true);
+
+        if (routinesError) {
+            console.error("Routines fetch error:", routinesError);
+            return NextResponse.json(
+                { error: routinesError.message },
+                { status: 500 }
+            );
+        }
+
+        if (!routines || routines.length === 0) {
+            return NextResponse.json({
+                duplicates: [],
+                ingredients: [],
+                recommendations: [],
+                supplements: [],
+                analysisDate: new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' }),
+                hasWarning: false,
+            });
+        }
+
+        // 기능성 성분 마스터 조회
+        const { data: ingredientsMaster } = await supabase
+            .from("functional_ingredients")
+            .select("*")
+            .eq("is_active", true);
+
+        // 성분 상호작용 조회
+        const { data: interactions } = await supabase
+            .from("ingredient_interactions")
+            .select(`
+                *,
+                ingredient_1:functional_ingredients!ingredient_id_1(id, external_name),
+                ingredient_2:functional_ingredients!ingredient_id_2(id, external_name)
+            `)
+            .eq("is_active", true);
+
+        // 성분 분석 생성
+        const { ingredients, duplicates, supplements } = analyzeSupplements(
+            routines,
+            ingredientsMaster || []
+        );
+
+        // 추천 성분 생성
+        const recommendations = generateRecommendations(
+            ingredients,
+            ingredientsMaster || [],
+            interactions || []
+        );
+
+        return NextResponse.json({
+            duplicates,
+            ingredients,
+            recommendations,
+            supplements,
+            analysisDate: new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' }),
+            hasWarning: duplicates.length > 0 || ingredients.some((i) => i.status === "excessive"),
+        });
+    } catch (error) {
+        console.error("Supplement analysis API error:", error);
+        return NextResponse.json(
+            { error: "Failed to fetch analysis" },
+            { status: 500 }
+        );
+    }
+}
+
+// 영양제 분석 함수
+function analyzeSupplements(
+    routines: Array<{
+        id: string;
+        name: string;
+        brand?: string;
+        dosage: string;
+        scheduled_times?: Array<{ dosage: string }>;
+    }>,
+    ingredientsMaster: Array<{
+        id: number;
+        ingredient_code: string;
+        external_name: string;
+        daily_intake_unit: string;
+        daily_intake_min: number | null;
+        daily_intake_max: number | null;
+    }>
+) {
+    // 성분별 영양제 매핑
+    const ingredientToSupplements: Record<string, {
+        ingredientData: IngredientData;
+        supplements: string[];
+        totalAmount: number;
+    }> = {};
+
+    // 영양제 요약 정보
+    const supplements: Array<{ name: string; dosage: string }> = [];
+
+    routines.forEach((routine) => {
+        const supplementName = routine.name;
+        
+        // 섭취량 계산 (scheduled_times의 첫 번째 dosage 또는 기본값)
+        let dosageCount = 1;
+        const scheduledTimes = routine.scheduled_times || [];
+        if (scheduledTimes.length > 0) {
+            const dosageStr = scheduledTimes[0].dosage || "1정";
+            const match = dosageStr.match(/(\d+)/);
+            if (match) dosageCount = parseInt(match[1]);
+        }
+
+        supplements.push({
+            name: supplementName,
+            dosage: scheduledTimes[0]?.dosage || routine.dosage || "1정",
+        });
+
+        // 영양제 이름에서 성분 추론
+        const detectedIngredients = detectIngredients(supplementName, ingredientsMaster);
+
+        detectedIngredients.forEach(({ ingredient, amount }) => {
+            const key = ingredient.ingredient_code;
+            if (!ingredientToSupplements[key]) {
+                ingredientToSupplements[key] = {
+                    ingredientData: {
+                        id: ingredient.id,
+                        externalName: ingredient.external_name,
+                        unit: ingredient.daily_intake_unit,
+                        minAmount: ingredient.daily_intake_min,
+                        maxAmount: ingredient.daily_intake_max,
+                    },
+                    supplements: [],
+                    totalAmount: 0,
+                };
+            }
+            ingredientToSupplements[key].supplements.push(supplementName);
+            ingredientToSupplements[key].totalAmount += amount * dosageCount;
+        });
+    });
+
+    // 중복 성분 찾기 (2개 이상의 영양제에서 발견된 성분)
+    const duplicates: AnalysisResult[] = [];
+    const ingredients: AnalysisResult[] = [];
+
+    Object.entries(ingredientToSupplements).forEach(([key, data], index) => {
+        const { ingredientData, supplements: sourceSupplements, totalAmount } = data;
+        
+        const status = determineStatus(
+            totalAmount,
+            ingredientData.minAmount,
+            ingredientData.maxAmount
+        );
+
+        const recommendationText = getRecommendationText(
+            ingredientData.minAmount,
+            ingredientData.maxAmount,
+            ingredientData.unit
+        );
+
+        const analysisResult: AnalysisResult = {
+            id: `ing-${index}`,
+            ingredientName: ingredientData.externalName,
+            status,
+            currentAmount: Math.round(totalAmount * 10) / 10,
+            minAmount: ingredientData.minAmount,
+            maxAmount: ingredientData.maxAmount,
+            unit: ingredientData.unit,
+            sourceSupplements,
+            recommendationText,
+        };
+
+        ingredients.push(analysisResult);
+
+        // 중복 성분 체크 (2개 이상의 영양제에서 발견)
+        if (sourceSupplements.length >= 2) {
+            duplicates.push({
+                ...analysisResult,
+                id: `dup-${index}`,
+            });
+        }
+    });
+
+    return { ingredients, duplicates, supplements };
+}
+
+// 영양제 이름에서 성분 감지
+function detectIngredients(
+    supplementName: string,
+    ingredientsMaster: Array<{
+        id: number;
+        ingredient_code: string;
+        external_name: string;
+        internal_name: string;
+        daily_intake_unit: string;
+        daily_intake_min: number | null;
+        daily_intake_max: number | null;
+    }>
+): Array<{ ingredient: typeof ingredientsMaster[0]; amount: number }> {
+    const detected: Array<{ ingredient: typeof ingredientsMaster[0]; amount: number }> = [];
+    const nameLower = supplementName.toLowerCase();
+
+    // 키워드 매핑 (영양제 이름 → 성분 코드)
+    const keywordMapping: Record<string, { code: string; defaultAmount: number }[]> = {
+        "비타민d": [{ code: "VIT_D", defaultAmount: 1000 }],
+        "비타민 d": [{ code: "VIT_D", defaultAmount: 1000 }],
+        "비타민c": [{ code: "VIT_C", defaultAmount: 500 }],
+        "비타민 c": [{ code: "VIT_C", defaultAmount: 500 }],
+        "비타민a": [{ code: "VIT_A", defaultAmount: 300 }],
+        "비타민 a": [{ code: "VIT_A", defaultAmount: 300 }],
+        "오메가": [{ code: "OMEGA3", defaultAmount: 1000 }],
+        "칼슘": [{ code: "CALCIUM", defaultAmount: 500 }],
+        "마그네슘": [{ code: "MAGNESIUM", defaultAmount: 400 }],
+        "아연": [{ code: "ZINC", defaultAmount: 10 }],
+        "철분": [{ code: "IRON", defaultAmount: 14 }],
+        "콜라겐": [{ code: "COLLAGEN", defaultAmount: 2000 }],
+        "유산균": [{ code: "PROBIOTICS", defaultAmount: 10000000000 }],
+        "프로바이오틱스": [{ code: "PROBIOTICS", defaultAmount: 10000000000 }],
+        "비오틴": [{ code: "BIOTIN", defaultAmount: 30 }],
+        "종합": [
+            { code: "VIT_D", defaultAmount: 400 },
+            { code: "VIT_C", defaultAmount: 100 },
+            { code: "VIT_B1", defaultAmount: 1.2 },
+        ],
+        "멀티": [
+            { code: "VIT_D", defaultAmount: 400 },
+            { code: "VIT_C", defaultAmount: 100 },
+            { code: "VIT_B1", defaultAmount: 1.2 },
+        ],
+        "칼마디": [
+            { code: "CALCIUM", defaultAmount: 500 },
+            { code: "VIT_D", defaultAmount: 400 },
+        ],
+        "이뮨": [
+            { code: "VIT_C", defaultAmount: 500 },
+            { code: "ZINC", defaultAmount: 10 },
+        ],
+    };
+
+    const processedCodes = new Set<string>();
+
+    Object.entries(keywordMapping).forEach(([keyword, ingredients]) => {
+        if (nameLower.includes(keyword)) {
+            ingredients.forEach(({ code, defaultAmount }) => {
+                if (!processedCodes.has(code)) {
+                    const masterIngredient = ingredientsMaster.find(
+                        (m) => m.ingredient_code === code
+                    );
+                    if (masterIngredient) {
+                        detected.push({
+                            ingredient: masterIngredient,
+                            amount: defaultAmount,
+                        });
+                        processedCodes.add(code);
+                    }
+                }
+            });
+        }
+    });
+
+    // 아무것도 감지되지 않으면 기본 성분 추가
+    if (detected.length === 0) {
+        const defaultIngredient = ingredientsMaster.find(
+            (m) => m.ingredient_code === "VIT_D"
+        );
+        if (defaultIngredient) {
+            detected.push({
+                ingredient: defaultIngredient,
+                amount: defaultIngredient.daily_intake_min || 400,
+            });
+        }
+    }
+
+    return detected;
+}
+
+// 추천 성분 생성
+function generateRecommendations(
+    currentIngredients: AnalysisResult[],
+    ingredientsMaster: Array<{
+        id: number;
+        ingredient_code: string;
+        external_name: string;
+    }>,
+    interactions: Array<{
+        ingredient_id_1: number;
+        ingredient_id_2: number;
+        interaction_type: string;
+        description: string;
+        ingredient_1?: { id: number; external_name: string };
+        ingredient_2?: { id: number; external_name: string };
+    }>
+): Array<{ id: string; ingredientName: string; interactions: string[] }> {
+    const recommendations: Array<{ id: string; ingredientName: string; interactions: string[] }> = [];
+    
+    // 현재 섭취중인 성분 ID 목록
+    const currentIngredientNames = currentIngredients.map((i) => i.ingredientName);
+    
+    // 긍정적 상호작용이 있는 성분 찾기
+    const positiveInteractions = interactions.filter(
+        (i) => i.interaction_type === "positive"
+    );
+    
+    // 부정적 상호작용이 있는 성분 ID 목록
+    const negativeIngredientIds = new Set<number>();
+    interactions
+        .filter((i) => i.interaction_type === "negative")
+        .forEach((i) => {
+            negativeIngredientIds.add(i.ingredient_id_2);
+        });
+
+    const recommendedMap = new Map<string, string[]>();
+
+    positiveInteractions.forEach((interaction) => {
+        const ingredient1Name = interaction.ingredient_1?.external_name;
+        const ingredient2Name = interaction.ingredient_2?.external_name;
+        const ingredient2Id = interaction.ingredient_id_2;
+
+        // 현재 섭취중인 성분과 긍정적 상호작용이 있고,
+        // 아직 섭취하지 않는 성분이며,
+        // 부정적 상호작용이 없는 성분 추천
+        if (
+            ingredient1Name &&
+            ingredient2Name &&
+            currentIngredientNames.includes(ingredient1Name) &&
+            !currentIngredientNames.includes(ingredient2Name) &&
+            !negativeIngredientIds.has(ingredient2Id)
+        ) {
+            if (!recommendedMap.has(ingredient2Name)) {
+                recommendedMap.set(ingredient2Name, []);
+            }
+            recommendedMap.get(ingredient2Name)!.push(interaction.description);
+        }
+    });
+
+    let index = 0;
+    recommendedMap.forEach((interactions, ingredientName) => {
+        recommendations.push({
+            id: `rec-${index}`,
+            ingredientName,
+            interactions: [...new Set(interactions)], // 중복 제거
+        });
+        index++;
+    });
+
+    return recommendations.slice(0, 5); // 최대 5개 추천
+}

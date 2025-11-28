@@ -35,7 +35,8 @@ export default function MealEditPage() {
   const searchParams = useSearchParams();
   const mealType = params.type as string;
   const mealLabel = MEAL_LABELS[mealType] || "식사";
-  const mealDate = searchParams.get("date") || new Date().toISOString().split("T")[0];
+  const mealDate =
+    searchParams.get("date") || new Date().toISOString().split("T")[0];
 
   const [foods, setFoods] = useState<FoodRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -101,9 +102,18 @@ export default function MealEditPage() {
 
   // 삭제되지 않은 음식만 계산
   const activeFoods = foods.filter((f) => !f.isDeleted);
-  const totalCalories = activeFoods.reduce((sum, f) => sum + f.calories * f.quantity, 0);
-  const totalCarbs = activeFoods.reduce((sum, f) => sum + f.carbs * f.quantity, 0);
-  const totalProtein = activeFoods.reduce((sum, f) => sum + f.protein * f.quantity, 0);
+  const totalCalories = activeFoods.reduce(
+    (sum, f) => sum + f.calories * f.quantity,
+    0
+  );
+  const totalCarbs = activeFoods.reduce(
+    (sum, f) => sum + f.carbs * f.quantity,
+    0
+  );
+  const totalProtein = activeFoods.reduce(
+    (sum, f) => sum + f.protein * f.quantity,
+    0
+  );
   const totalFat = activeFoods.reduce((sum, f) => sum + f.fat * f.quantity, 0);
 
   // 수량 변경 (0.1 단위)
@@ -111,7 +121,13 @@ export default function MealEditPage() {
     setFoods((prev) =>
       prev.map((f) =>
         f.id === foodId
-          ? { ...f, quantity: Math.max(0.1, Math.round((f.quantity + delta) * 10) / 10) }
+          ? {
+              ...f,
+              quantity: Math.max(
+                0.1,
+                Math.round((f.quantity + delta) * 10) / 10
+              ),
+            }
           : f
       )
     );
@@ -119,9 +135,9 @@ export default function MealEditPage() {
 
   // 음식 삭제 (로컬에서 삭제 표시)
   const removeFood = (foodId: string) => {
-    setFoods((prev) => prev.map((f) => 
-      f.id === foodId ? { ...f, isDeleted: true } : f
-    ));
+    setFoods((prev) =>
+      prev.map((f) => (f.id === foodId ? { ...f, isDeleted: true } : f))
+    );
   };
 
   // 저장 - 변경사항 반영
@@ -187,7 +203,9 @@ export default function MealEditPage() {
           <button onClick={() => router.back()} className="p-1">
             <ChevronLeft className="w-6 h-6 text-gray-800" />
           </button>
-          <h1 className="text-lg font-semibold text-gray-900">{mealLabel} 수정</h1>
+          <h1 className="text-lg font-semibold text-gray-900">
+            {mealLabel} 수정
+          </h1>
           <button
             onClick={() => setShowDeleteConfirm(true)}
             className="p-1 text-red-500"
@@ -216,7 +234,7 @@ export default function MealEditPage() {
               음식 추가
             </button>
           </div>
-          
+
           {activeFoods.length === 0 ? (
             <div className="p-8 text-center text-gray-500">
               기록된 음식이 없습니다.
@@ -224,11 +242,15 @@ export default function MealEditPage() {
           ) : (
             <div className="divide-y divide-gray-100">
               {activeFoods.map((food) => (
-                <div key={food.id} className="p-4 flex items-center justify-between">
+                <div
+                  key={food.id}
+                  className="p-4 flex items-center justify-between"
+                >
                   <div className="flex-1">
                     <p className="font-medium text-gray-800">{food.name}</p>
                     <p className="text-xs text-gray-500">
-                      {Math.round(food.calories * food.quantity)}kcal · {food.servingSize}
+                      {Math.round(food.calories * food.quantity)}kcal ·{" "}
+                      {food.servingSize}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -266,19 +288,27 @@ export default function MealEditPage() {
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-gray-50 rounded-lg p-3 text-center">
               <p className="text-xs text-gray-500">칼로리</p>
-              <p className="text-lg font-bold text-gray-800">{totalCalories}kcal</p>
+              <p className="text-lg font-bold text-gray-800">
+                {totalCalories}kcal
+              </p>
             </div>
             <div className="bg-gray-50 rounded-lg p-3 text-center">
               <p className="text-xs text-gray-500">탄수화물</p>
-              <p className="text-lg font-bold text-gray-800">{totalCarbs.toFixed(1)}g</p>
+              <p className="text-lg font-bold text-gray-800">
+                {totalCarbs.toFixed(1)}g
+              </p>
             </div>
             <div className="bg-gray-50 rounded-lg p-3 text-center">
               <p className="text-xs text-gray-500">단백질</p>
-              <p className="text-lg font-bold text-gray-800">{totalProtein.toFixed(1)}g</p>
+              <p className="text-lg font-bold text-gray-800">
+                {totalProtein.toFixed(1)}g
+              </p>
             </div>
             <div className="bg-gray-50 rounded-lg p-3 text-center">
               <p className="text-xs text-gray-500">지방</p>
-              <p className="text-lg font-bold text-gray-800">{totalFat.toFixed(1)}g</p>
+              <p className="text-lg font-bold text-gray-800">
+                {totalFat.toFixed(1)}g
+              </p>
             </div>
           </div>
         </div>
@@ -315,7 +345,8 @@ export default function MealEditPage() {
               식사 기록 삭제
             </h3>
             <p className="text-sm text-gray-600 mb-6">
-              이 식사 기록을 삭제하시겠습니까?<br />
+              이 식사 기록을 삭제하시겠습니까?
+              <br />
               삭제하면 &apos;안먹음&apos;으로 처리됩니다.
             </p>
             <div className="flex gap-3">
@@ -339,4 +370,3 @@ export default function MealEditPage() {
     </div>
   );
 }
-

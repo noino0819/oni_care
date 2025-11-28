@@ -255,9 +255,14 @@ CREATE POLICY "Users can insert own diagnosis" ON public.nutrition_diagnosis FOR
 CREATE TABLE IF NOT EXISTS public.supplement_routines (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  supplement_product_id UUID REFERENCES public.supplement_products(id) ON DELETE SET NULL,
   name TEXT NOT NULL,
+  brand TEXT,
   dosage TEXT,
-  time_slot TEXT CHECK (time_slot IN ('morning', 'lunch', 'dinner', 'before_sleep')) NOT NULL,
+  dosage_per_serving TEXT, -- 1인분량 표시 (예: "1정 | 1000mg")
+  time_slot TEXT CHECK (time_slot IN ('morning', 'lunch', 'dinner', 'before_sleep')),
+  days_of_week TEXT[] DEFAULT '{mon,tue,wed,thu,fri,sat,sun}', -- 섭취요일
+  scheduled_times JSONB DEFAULT '[]', -- [{"time": "09:30", "period": "AM", "dosage": "1정"}]
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -1537,6 +1542,204 @@ INSERT INTO public.supplement_products (name, brand, description, image_url, pri
   ('비타민D 5000IU', '그리팅', '뼈 건강과 면역력 강화를 위한 고함량 비타민D', '/images/supplements/vitamin-d.png', 18000, 15000, ARRAY['비타민D'], ARRAY['#뼈건강', '#면역력', '#근력'], ARRAY['뼈관절건강', '면역력'], false, 6),
   ('멀티비타민 원어데이', '그리팅', '하루 한 알로 채우는 종합 영양제', '/images/supplements/multivitamin.png', 30000, 25000, ARRAY['종합비타민', '미네랄'], ARRAY['#종합영양', '#피로회복', '#활력'], ARRAY['피로회복', '면역력'], false, 7),
   ('밀크씨슬 간건강', '그리팅', '간 건강을 위한 실리마린 고함량 제품', '/images/supplements/milk-thistle.png', 28000, 22000, ARRAY['밀크씨슬', '실리마린'], ARRAY['#간건강', '#피로회복', '#해독'], ARRAY['피로회복'], false, 8)
+ON CONFLICT DO NOTHING;
+
+
+-- ============================================
+-- PART 15: 영양제 분석 상세 테이블 (기능성 성분, 상품 마스터)
+-- ============================================
+
+-- 기능성 성분 마스터 테이블
+CREATE TABLE IF NOT EXISTS public.functional_ingredients (
+  id SERIAL PRIMARY KEY,
+  ingredient_code TEXT NOT NULL UNIQUE,          -- 기능성 성분 코드
+  category TEXT,                                  -- 구분
+  internal_name TEXT NOT NULL,                    -- 기능성 원료명(내부)
+  external_name TEXT NOT NULL,                    -- 기능성 원료명(외부) - 화면 표시용
+  indicator_component TEXT,                       -- 지표성분
+  daily_intake_unit TEXT DEFAULT 'mg',           -- 일일 섭취량 단위
+  daily_intake_min DECIMAL(10,2),                -- 일일 섭취량 하한 (min)
+  daily_intake_max DECIMAL(10,2),                -- 일일 섭취량 상한 (max)
+  display_functionality TEXT,                     -- 표시 기능성
+  reference_note TEXT,                           -- 참고
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE public.functional_ingredients ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Anyone can view functional ingredients" ON public.functional_ingredients;
+CREATE POLICY "Anyone can view functional ingredients" ON public.functional_ingredients FOR SELECT USING (is_active = true);
+
+-- 건기식 상품 마스터 테이블
+CREATE TABLE IF NOT EXISTS public.supplement_products_master (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  product_report_number TEXT UNIQUE,             -- 품목 제조 보고번호
+  license_number TEXT,                           -- 인허가번호
+  form_unit TEXT DEFAULT '정',                   -- 형태 단위 (정, 캡슐, 포 등)
+  dosage_unit TEXT DEFAULT 'mg',                 -- 용량 단위
+  single_dose DECIMAL(10,2),                     -- 1회 용량
+  product_name TEXT NOT NULL,                    -- 품목명
+  intake_method TEXT,                            -- 섭취방법
+  default_intake_time TEXT,                      -- 기본섭취시간 (AM 9:00 등)
+  default_intake_unit TEXT DEFAULT '정',         -- 기본 섭취량 단위
+  default_intake_amount TEXT DEFAULT '1',        -- 기본 섭취량
+  manufacturer TEXT,                             -- 제조사 (브랜드명)
+  image_url TEXT,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE public.supplement_products_master ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Anyone can view supplement products master" ON public.supplement_products_master;
+CREATE POLICY "Anyone can view supplement products master" ON public.supplement_products_master FOR SELECT USING (is_active = true);
+
+-- 상품-성분 매핑 테이블
+CREATE TABLE IF NOT EXISTS public.product_ingredient_mapping (
+  id SERIAL PRIMARY KEY,
+  product_id UUID REFERENCES public.supplement_products_master(id) ON DELETE CASCADE,
+  ingredient_id INTEGER REFERENCES public.functional_ingredients(id) ON DELETE CASCADE,
+  content_unit TEXT DEFAULT 'mg',                -- 함유량 단위
+  content_amount DECIMAL(10,2) NOT NULL,         -- 함유량
+  note TEXT,                                     -- 비고
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(product_id, ingredient_id)
+);
+
+ALTER TABLE public.product_ingredient_mapping ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Anyone can view product ingredient mapping" ON public.product_ingredient_mapping;
+CREATE POLICY "Anyone can view product ingredient mapping" ON public.product_ingredient_mapping FOR SELECT USING (true);
+
+-- 성분 상호작용 테이블
+CREATE TABLE IF NOT EXISTS public.ingredient_interactions (
+  id SERIAL PRIMARY KEY,
+  ingredient_id_1 INTEGER REFERENCES public.functional_ingredients(id),
+  ingredient_id_2 INTEGER REFERENCES public.functional_ingredients(id),
+  interaction_type TEXT CHECK (interaction_type IN ('positive', 'negative')) NOT NULL,
+  description TEXT NOT NULL,                     -- 상호작용 설명
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(ingredient_id_1, ingredient_id_2)
+);
+
+ALTER TABLE public.ingredient_interactions ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Anyone can view ingredient interactions" ON public.ingredient_interactions;
+CREATE POLICY "Anyone can view ingredient interactions" ON public.ingredient_interactions FOR SELECT USING (is_active = true);
+
+-- 인덱스 추가
+CREATE INDEX IF NOT EXISTS idx_functional_ingredients_code ON public.functional_ingredients(ingredient_code);
+CREATE INDEX IF NOT EXISTS idx_supplement_products_master_name ON public.supplement_products_master(product_name);
+CREATE INDEX IF NOT EXISTS idx_product_ingredient_mapping_product ON public.product_ingredient_mapping(product_id);
+CREATE INDEX IF NOT EXISTS idx_product_ingredient_mapping_ingredient ON public.product_ingredient_mapping(ingredient_id);
+CREATE INDEX IF NOT EXISTS idx_ingredient_interactions_type ON public.ingredient_interactions(interaction_type);
+
+-- 트리거 추가
+DROP TRIGGER IF EXISTS update_supplement_products_master_updated_at ON public.supplement_products_master;
+CREATE TRIGGER update_supplement_products_master_updated_at BEFORE UPDATE ON public.supplement_products_master FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- 기능성 성분 샘플 데이터
+INSERT INTO public.functional_ingredients (ingredient_code, category, internal_name, external_name, indicator_component, daily_intake_unit, daily_intake_min, daily_intake_max, display_functionality) VALUES
+  ('VIT_A', '비타민', '비타민A', '비타민 A', 'Retinol', 'RAE', 210, 3000, '어두운 곳에서 시각 적응, 피부와 점막 건강 유지'),
+  ('VIT_D', '비타민', '비타민D', '비타민 D', 'Cholecalciferol', 'IU', 400, 4000, '칼슘과 인 흡수, 뼈 형성과 유지'),
+  ('VIT_C', '비타민', '비타민C', '비타민 C', 'Ascorbic Acid', 'mg', 100, 2000, '결합조직 형성, 철 흡수, 항산화'),
+  ('VIT_E', '비타민', '비타민E', '비타민 E', 'Tocopherol', 'mg', 12, 540, '항산화 작용'),
+  ('VIT_B1', '비타민', '비타민B1', '비타민 B1', 'Thiamine', 'mg', 1.2, NULL, '탄수화물 대사, 에너지 생성'),
+  ('VIT_B6', '비타민', '비타민B6', '비타민 B6', 'Pyridoxine', 'mg', 1.5, 100, '단백질 대사, 혈색소 합성'),
+  ('VIT_B12', '비타민', '비타민B12', '비타민 B12', 'Cobalamin', 'mcg', 2.4, NULL, '정상적인 엽산 대사'),
+  ('CALCIUM', '미네랄', '칼슘', '칼슘', NULL, 'mg', 700, 2500, '뼈와 치아 형성, 신경 근육 기능'),
+  ('MAGNESIUM', '미네랄', '마그네슘', '마그네슘', NULL, 'mg', 315, 350, '에너지 대사, 신경 근육 기능'),
+  ('ZINC', '미네랄', '아연', '아연', NULL, 'mg', 8.5, 35, '정상적인 면역기능, 세포분열'),
+  ('IRON', '미네랄', '철분', '철분', NULL, 'mg', 12, 45, '산소 운반, 에너지 생성'),
+  ('OMEGA3', '지방산', '오메가-3', '오메가-3', 'EPA+DHA', 'mg', 500, 3000, '혈행개선, 중성지질 개선'),
+  ('PROBIOTICS', '유산균', '프로바이오틱스', '프로바이오틱스', 'Lactobacillus', 'CFU', 1000000000, NULL, '장 건강, 면역 기능'),
+  ('COLLAGEN', '단백질', '콜라겐', '콜라겐', NULL, 'mg', 2000, NULL, '피부 탄력, 관절 건강'),
+  ('BIOTIN', '비타민', '비오틴', '비오틴', NULL, 'mcg', 30, NULL, '모발, 피부, 손톱 건강')
+ON CONFLICT (ingredient_code) DO NOTHING;
+
+-- 건기식 상품 마스터 샘플 데이터
+INSERT INTO public.supplement_products_master (product_report_number, product_name, manufacturer, form_unit, default_intake_amount, default_intake_time, image_url) VALUES
+  ('PRD001', '뼈엔 비타민 D', '종근당건강', '정', '1', 'AM 9:00', '/images/supplements/vitamin-d.png'),
+  ('PRD002', '닥터 파이토 마그네슘', '파이토케미컬', '캡슐', '1', 'AM 8:00', '/images/supplements/magnesium.png'),
+  ('PRD003', '맛있는 칼슘 젤리', '대웅제약', '포', '1', 'AM 8:00', '/images/supplements/calcium-jelly.png'),
+  ('PRD004', '피로엔 비타민 C', '종근당', '정', '1', 'PM 1:30', '/images/supplements/vitamin-c.png'),
+  ('PRD005', '초임계 오메가3', '뉴트리원', '캡슐', '1', 'PM 1:30', '/images/supplements/omega3-triple.png'),
+  ('PRD006', '위엔 매스틱검', '종근당건강', '정', '1', 'AM 8:00', '/images/supplements/mastic.png'),
+  ('PRD007', '비타매틱 매스틱검', '비타매틱', '정', '1', 'AM 8:00', '/images/supplements/mastic.png'),
+  ('PRD008', '오쏘몰 이뮨 플러스', '오쏘몰', '정', '2', 'AM 9:00', '/images/supplements/immune.png'),
+  ('PRD009', '뼈관절엔 칼마디', '종근당', '정', '2', 'PM 8:00', '/images/supplements/joint.png'),
+  ('PRD010', '당뇨엔 바나바', '대웅제약', '정', '1', 'PM 1:00', '/images/supplements/banaba.png')
+ON CONFLICT (product_report_number) DO NOTHING;
+
+-- 상품-성분 매핑 샘플 데이터
+INSERT INTO public.product_ingredient_mapping (product_id, ingredient_id, content_amount, content_unit)
+SELECT spm.id, fi.id, 
+  CASE 
+    WHEN fi.ingredient_code = 'VIT_D' THEN 1000
+    WHEN fi.ingredient_code = 'CALCIUM' THEN 500
+    WHEN fi.ingredient_code = 'VIT_A' THEN 300
+    ELSE 100
+  END,
+  fi.daily_intake_unit
+FROM public.supplement_products_master spm
+CROSS JOIN public.functional_ingredients fi
+WHERE spm.product_name = '뼈엔 비타민 D' AND fi.ingredient_code IN ('VIT_D', 'CALCIUM')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.product_ingredient_mapping (product_id, ingredient_id, content_amount, content_unit)
+SELECT spm.id, fi.id, 400, 'mg'
+FROM public.supplement_products_master spm
+CROSS JOIN public.functional_ingredients fi
+WHERE spm.product_name = '닥터 파이토 마그네슘' AND fi.ingredient_code = 'MAGNESIUM'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.product_ingredient_mapping (product_id, ingredient_id, content_amount, content_unit)
+SELECT spm.id, fi.id, 500, 'mg'
+FROM public.supplement_products_master spm
+CROSS JOIN public.functional_ingredients fi
+WHERE spm.product_name = '맛있는 칼슘 젤리' AND fi.ingredient_code = 'CALCIUM'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.product_ingredient_mapping (product_id, ingredient_id, content_amount, content_unit)
+SELECT spm.id, fi.id, 1000, 'mg'
+FROM public.supplement_products_master spm
+CROSS JOIN public.functional_ingredients fi
+WHERE spm.product_name = '피로엔 비타민 C' AND fi.ingredient_code = 'VIT_C'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.product_ingredient_mapping (product_id, ingredient_id, content_amount, content_unit)
+SELECT spm.id, fi.id, 1000, 'mg'
+FROM public.supplement_products_master spm
+CROSS JOIN public.functional_ingredients fi
+WHERE spm.product_name = '초임계 오메가3' AND fi.ingredient_code = 'OMEGA3'
+ON CONFLICT DO NOTHING;
+
+-- 성분 상호작용 샘플 데이터
+INSERT INTO public.ingredient_interactions (ingredient_id_1, ingredient_id_2, interaction_type, description)
+SELECT fi1.id, fi2.id, 'positive', '칼슘과 함께 먹으면 칼슘의 흡수를 도와줘요!'
+FROM public.functional_ingredients fi1, public.functional_ingredients fi2
+WHERE fi1.ingredient_code = 'CALCIUM' AND fi2.ingredient_code = 'VIT_D'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.ingredient_interactions (ingredient_id_1, ingredient_id_2, interaction_type, description)
+SELECT fi1.id, fi2.id, 'positive', '칼슘과 함께 먹으면 칼슘의 흡수를 도와줘요!'
+FROM public.functional_ingredients fi1, public.functional_ingredients fi2
+WHERE fi1.ingredient_code = 'CALCIUM' AND fi2.ingredient_code = 'MAGNESIUM'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.ingredient_interactions (ingredient_id_1, ingredient_id_2, interaction_type, description)
+SELECT fi1.id, fi2.id, 'positive', '비타민C와 함께 먹으면 철분의 흡수를 도와줘요!'
+FROM public.functional_ingredients fi1, public.functional_ingredients fi2
+WHERE fi1.ingredient_code = 'IRON' AND fi2.ingredient_code = 'VIT_C'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.ingredient_interactions (ingredient_id_1, ingredient_id_2, interaction_type, description)
+SELECT fi1.id, fi2.id, 'negative', '칼슘과 철분을 동시에 섭취하면 서로 흡수를 방해해요!'
+FROM public.functional_ingredients fi1, public.functional_ingredients fi2
+WHERE fi1.ingredient_code = 'CALCIUM' AND fi2.ingredient_code = 'IRON'
 ON CONFLICT DO NOTHING;
 
 

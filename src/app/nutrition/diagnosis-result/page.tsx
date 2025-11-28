@@ -51,10 +51,10 @@ export default function DiagnosisResultPage() {
       try {
         // API에서 최신 진단 결과 조회
         const response = await fetch("/api/nutrition/diagnosis");
-        
+
         if (response.ok) {
           const diagnosisData = await response.json();
-          
+
           if (diagnosisData) {
             // API 데이터를 화면용 포맷으로 변환
             const formattedResult: DiagnosisResult = {
@@ -67,15 +67,22 @@ export default function DiagnosisResultPage() {
                 diseases: diagnosisData.diseases || [],
                 interests: diagnosisData.interests || [],
               },
-              diagnosisDate: new Date(diagnosisData.diagnosis_date).toLocaleDateString("ko-KR", {
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-              }).replace(/\. /g, ".").replace(/\.$/, ""),
+              diagnosisDate: new Date(diagnosisData.diagnosis_date)
+                .toLocaleDateString("ko-KR", {
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit",
+                })
+                .replace(/\. /g, ".")
+                .replace(/\.$/, ""),
               eatScore: diagnosisData.eat_score || 86,
               eatScoreMessage: generateEatScoreMessage(diagnosisData),
-              deficientNutrients: getDeficientNutrients(diagnosisData.nutrient_scores),
-              excessiveNutrients: getExcessiveNutrients(diagnosisData.nutrient_scores),
+              deficientNutrients: getDeficientNutrients(
+                diagnosisData.nutrient_scores
+              ),
+              excessiveNutrients: getExcessiveNutrients(
+                diagnosisData.nutrient_scores
+              ),
               averageScore: 94, // 평균 점수는 고정값 또는 별도 API
               recommendedCalories: diagnosisData.recommended_calories || 2100,
               basalMetabolicRate: diagnosisData.basal_metabolic_rate || 1450,
@@ -87,7 +94,7 @@ export default function DiagnosisResultPage() {
             return;
           }
         }
-        
+
         // API 실패 시 기본 데이터 사용
         setResult(getDefaultResult());
       } catch (error) {
@@ -103,13 +110,21 @@ export default function DiagnosisResultPage() {
 
   // 잇스코어 메시지 생성
   const generateEatScoreMessage = (data: Record<string, unknown>) => {
-    const deficient = getDeficientNutrients(data.nutrient_scores as Record<string, number>);
-    const excessive = getExcessiveNutrients(data.nutrient_scores as Record<string, number>);
-    
+    const deficient = getDeficientNutrients(
+      data.nutrient_scores as Record<string, number>
+    );
+    const excessive = getExcessiveNutrients(
+      data.nutrient_scores as Record<string, number>
+    );
+
     if (deficient.length > 0 && excessive.length > 0) {
-      return `${deficient.join(", ")} 섭취량이 부족하고, ${excessive.join(", ")} 과다하여 잇스코어가 감점 되었어요.`;
+      return `${deficient.join(", ")} 섭취량이 부족하고, ${excessive.join(
+        ", "
+      )} 과다하여 잇스코어가 감점 되었어요.`;
     } else if (deficient.length > 0) {
-      return `${deficient.join(", ")} 섭취량이 부족하여 잇스코어가 감점 되었어요.`;
+      return `${deficient.join(
+        ", "
+      )} 섭취량이 부족하여 잇스코어가 감점 되었어요.`;
     } else if (excessive.length > 0) {
       return `${excessive.join(", ")} 과다 섭취로 잇스코어가 감점 되었어요.`;
     }
@@ -117,11 +132,19 @@ export default function DiagnosisResultPage() {
   };
 
   // 부족 영양소 추출
-  const getDeficientNutrients = (scores: Record<string, number> | undefined) => {
+  const getDeficientNutrients = (
+    scores: Record<string, number> | undefined
+  ) => {
     if (!scores) return ["식이섬유"];
     const nutrientNames: Record<string, string> = {
-      carbs: "탄수화물", protein: "단백질", fat: "지방", fiber: "식이섬유",
-      sodium: "나트륨", sugar: "당류", saturatedFat: "포화지방", cholesterol: "콜레스테롤",
+      carbs: "탄수화물",
+      protein: "단백질",
+      fat: "지방",
+      fiber: "식이섬유",
+      sodium: "나트륨",
+      sugar: "당류",
+      saturatedFat: "포화지방",
+      cholesterol: "콜레스테롤",
     };
     return Object.entries(scores)
       .filter(([, score]) => score < 70)
@@ -129,11 +152,19 @@ export default function DiagnosisResultPage() {
   };
 
   // 과다 영양소 추출
-  const getExcessiveNutrients = (scores: Record<string, number> | undefined) => {
+  const getExcessiveNutrients = (
+    scores: Record<string, number> | undefined
+  ) => {
     if (!scores) return ["당류"];
     const nutrientNames: Record<string, string> = {
-      carbs: "탄수화물", protein: "단백질", fat: "지방", fiber: "식이섬유",
-      sodium: "나트륨", sugar: "당류", saturatedFat: "포화지방", cholesterol: "콜레스테롤",
+      carbs: "탄수화물",
+      protein: "단백질",
+      fat: "지방",
+      fiber: "식이섬유",
+      sodium: "나트륨",
+      sugar: "당류",
+      saturatedFat: "포화지방",
+      cholesterol: "콜레스테롤",
     };
     // 점수가 높으면 오히려 과다 섭취 (역산 필요한 경우)
     // 여기서는 warning_nutrients를 활용하거나 별도 로직
@@ -141,7 +172,9 @@ export default function DiagnosisResultPage() {
   };
 
   // 칼로리 상태
-  const getCalorieStatus = (data: Record<string, unknown>): "excessive" | "deficient" | "adequate" => {
+  const getCalorieStatus = (
+    data: Record<string, unknown>
+  ): "excessive" | "deficient" | "adequate" => {
     const current = (data.current_calories as number) || 1528;
     const recommended = (data.recommended_calories as number) || 2100;
     const ratio = current / recommended;
@@ -153,7 +186,7 @@ export default function DiagnosisResultPage() {
   // 질병 관리법
   const getDiseaseManagement = (diseases: string[] | undefined) => {
     if (!diseases || diseases.length === 0) return null;
-    
+
     const managementMap: Record<string, { disease: string; tips: string[] }> = {
       osteoporosis: {
         disease: "골다공증",
@@ -188,7 +221,7 @@ export default function DiagnosisResultPage() {
         ],
       },
     };
-    
+
     const firstDisease = diseases[0];
     return managementMap[firstDisease] || null;
   };
@@ -204,13 +237,17 @@ export default function DiagnosisResultPage() {
       diseases: [],
       interests: ["immunity", "muscle", "weight_control"],
     },
-    diagnosisDate: new Date().toLocaleDateString("ko-KR", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }).replace(/\. /g, ".").replace(/\.$/, ""),
+    diagnosisDate: new Date()
+      .toLocaleDateString("ko-KR", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      })
+      .replace(/\. /g, ".")
+      .replace(/\.$/, ""),
     eatScore: 86,
-    eatScoreMessage: "식이섬유 섭취량이 부족하고, 당류 과다하여 잇스코어가 감점 되었어요.",
+    eatScoreMessage:
+      "식이섬유 섭취량이 부족하고, 당류 과다하여 잇스코어가 감점 되었어요.",
     deficientNutrients: ["식이섬유"],
     excessiveNutrients: ["당류"],
     averageScore: 94,
@@ -245,7 +282,9 @@ export default function DiagnosisResultPage() {
           <button onClick={() => router.back()} className="p-1">
             <X className="w-6 h-6 text-gray-800" />
           </button>
-          <h1 className="text-lg font-semibold text-gray-900">그리팅 영양진단</h1>
+          <h1 className="text-lg font-semibold text-gray-900">
+            그리팅 영양진단
+          </h1>
           <button onClick={() => router.push("/home")} className="p-1">
             <Home className="w-6 h-6 text-[#7B9B5C]" />
           </button>
@@ -270,30 +309,38 @@ export default function DiagnosisResultPage() {
             <div>
               <span className="text-gray-500">고객정보</span>
               <p className="font-medium">
-                {result.user.gender === "female" ? "여성" : "남성"} / {result.user.age}세
+                {result.user.gender === "female" ? "여성" : "남성"} /{" "}
+                {result.user.age}세
               </p>
             </div>
             <div>
               <span className="text-gray-500">키/몸무게</span>
-              <p className="font-medium">{result.user.height}cm / {result.user.weight}kg</p>
+              <p className="font-medium">
+                {result.user.height}cm / {result.user.weight}kg
+              </p>
             </div>
             <div>
               <span className="text-gray-500">질병</span>
               <p className="font-medium">
-                {result.user.diseases.map((d) => DISEASE_MAP[d] || d).join(", ") || "없음"}
+                {result.user.diseases
+                  .map((d) => DISEASE_MAP[d] || d)
+                  .join(", ") || "없음"}
               </p>
             </div>
             <div>
               <span className="text-gray-500">관심사</span>
               <p className="font-medium">
-                {result.user.interests.slice(0, 3).map((i) => {
-                  const map: Record<string, string> = {
-                    immunity: "면역력",
-                    muscle: "근력",
-                    weight_control: "체중조절",
-                  };
-                  return map[i] || i;
-                }).join(", ")}
+                {result.user.interests
+                  .slice(0, 3)
+                  .map((i) => {
+                    const map: Record<string, string> = {
+                      immunity: "면역력",
+                      muscle: "근력",
+                      weight_control: "체중조절",
+                    };
+                    return map[i] || i;
+                  })
+                  .join(", ")}
               </p>
             </div>
           </div>
@@ -305,7 +352,9 @@ export default function DiagnosisResultPage() {
             <h3 className="text-lg font-bold">EAT SCORE</h3>
             <Info className="w-4 h-4 text-gray-400" />
           </div>
-          <p className="text-sm text-gray-500 mb-4">적정 섭취량과 비교한 나의 실제 섭취량 점수</p>
+          <p className="text-sm text-gray-500 mb-4">
+            적정 섭취량과 비교한 나의 실제 섭취량 점수
+          </p>
 
           <div className="bg-[#FFF8E6] rounded-xl p-4 mb-4">
             <p className="text-sm">
@@ -322,7 +371,9 @@ export default function DiagnosisResultPage() {
 
           <div className="mb-4">
             <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-bold text-gray-900">{result.eatScore}점</span>
+              <span className="text-4xl font-bold text-gray-900">
+                {result.eatScore}점
+              </span>
               <span className="text-gray-400">/ 100점</span>
             </div>
           </div>
@@ -335,7 +386,10 @@ export default function DiagnosisResultPage() {
             />
             <div
               className="absolute -top-6 flex flex-col items-center"
-              style={{ left: `${result.eatScore}%`, transform: "translateX(-50%)" }}
+              style={{
+                left: `${result.eatScore}%`,
+                transform: "translateX(-50%)",
+              }}
             >
               <span className="bg-gray-800 text-white text-xs px-2 py-1 rounded">
                 {result.eatScore}점
@@ -362,18 +416,34 @@ export default function DiagnosisResultPage() {
             인적사항, BMI, 활동량을 기준으로 산출한 권장 및 섭취 열량
           </p>
 
-          <div className={`rounded-xl p-4 mb-4 ${
-            result.calorieStatus === "deficient" ? "bg-blue-50" : 
-            result.calorieStatus === "excessive" ? "bg-red-50" : "bg-green-50"
-          }`}>
+          <div
+            className={`rounded-xl p-4 mb-4 ${
+              result.calorieStatus === "deficient"
+                ? "bg-blue-50"
+                : result.calorieStatus === "excessive"
+                ? "bg-red-50"
+                : "bg-green-50"
+            }`}
+          >
             <p className="text-sm">
-              <span className="font-medium text-[#7B9B5C]">{result.user.name}님</span> 하루 섭취 열량(kcal)이 권장 열량 대비{" "}
-              <span className={`font-medium ${
-                result.calorieStatus === "deficient" ? "text-blue-500" :
-                result.calorieStatus === "excessive" ? "text-red-500" : "text-green-500"
-              }`}>
-                {result.calorieStatus === "deficient" ? "부족해요" :
-                 result.calorieStatus === "excessive" ? "과다해요" : "적정해요"}
+              <span className="font-medium text-[#7B9B5C]">
+                {result.user.name}님
+              </span>{" "}
+              하루 섭취 열량(kcal)이 권장 열량 대비{" "}
+              <span
+                className={`font-medium ${
+                  result.calorieStatus === "deficient"
+                    ? "text-blue-500"
+                    : result.calorieStatus === "excessive"
+                    ? "text-red-500"
+                    : "text-green-500"
+                }`}
+              >
+                {result.calorieStatus === "deficient"
+                  ? "부족해요"
+                  : result.calorieStatus === "excessive"
+                  ? "과다해요"
+                  : "적정해요"}
               </span>
             </p>
           </div>
@@ -390,12 +460,17 @@ export default function DiagnosisResultPage() {
               {/* 기초대사량 표시 */}
               <div
                 className="absolute top-0 h-full bg-gray-400 rounded-l-lg"
-                style={{ width: `${(result.basalMetabolicRate / 4000) * 100}%` }}
+                style={{
+                  width: `${(result.basalMetabolicRate / 4000) * 100}%`,
+                }}
               />
               {/* 현재 섭취량 */}
               <div
                 className="absolute -bottom-8 flex flex-col items-center"
-                style={{ left: `${(result.currentCalories / 4000) * 100}%`, transform: "translateX(-50%)" }}
+                style={{
+                  left: `${(result.currentCalories / 4000) * 100}%`,
+                  transform: "translateX(-50%)",
+                }}
               >
                 <div className="w-2 h-2 rounded-full bg-gray-800" />
                 <span className="text-xs text-gray-600 mt-1">섭취</span>
@@ -405,11 +480,15 @@ export default function DiagnosisResultPage() {
             <div className="mt-8 flex justify-between">
               <div className="text-center">
                 <p className="text-xs text-gray-500">기초대사량</p>
-                <p className="font-medium">{result.basalMetabolicRate.toLocaleString()}kcal</p>
+                <p className="font-medium">
+                  {result.basalMetabolicRate.toLocaleString()}kcal
+                </p>
               </div>
               <div className="text-center bg-[#7B9B5C] text-white px-4 py-2 rounded-xl">
                 <p className="text-xs">권장</p>
-                <p className="font-bold">{result.recommendedCalories.toLocaleString()}kcal</p>
+                <p className="font-bold">
+                  {result.recommendedCalories.toLocaleString()}kcal
+                </p>
               </div>
             </div>
           </div>
@@ -420,10 +499,15 @@ export default function DiagnosisResultPage() {
           <div className="bg-white rounded-2xl p-4 shadow-sm">
             <h3 className="text-lg font-bold mb-4">질병 관리법</h3>
             <div className="bg-gray-50 rounded-xl p-4">
-              <p className="font-medium text-[#7B9B5C] mb-2">{result.diseaseManagement.disease}</p>
+              <p className="font-medium text-[#7B9B5C] mb-2">
+                {result.diseaseManagement.disease}
+              </p>
               <ul className="space-y-2">
                 {result.diseaseManagement.tips.map((tip, idx) => (
-                  <li key={idx} className="text-sm text-gray-600 flex items-start gap-2">
+                  <li
+                    key={idx}
+                    className="text-sm text-gray-600 flex items-start gap-2"
+                  >
                     <span className="text-[#7B9B5C]">•</span>
                     {tip}
                   </li>
@@ -444,4 +528,3 @@ export default function DiagnosisResultPage() {
     </div>
   );
 }
-

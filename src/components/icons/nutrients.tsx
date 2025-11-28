@@ -272,3 +272,4 @@ export function getNutrientIcon(nutrientType: string) {
   return icons[nutrientType] || null;
 }
 
+

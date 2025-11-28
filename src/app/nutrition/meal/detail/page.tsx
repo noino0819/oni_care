@@ -55,10 +55,11 @@ interface MealData {
 export default function MealDetailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
-  const dateParam = searchParams.get("date") || new Date().toISOString().split("T")[0];
+
+  const dateParam =
+    searchParams.get("date") || new Date().toISOString().split("T")[0];
   const typeParam = (searchParams.get("type") as MealType) || "breakfast";
-  
+
   const [selectedDate, setSelectedDate] = useState(dateParam);
   const [selectedMealType, setSelectedMealType] = useState<MealType>(typeParam);
   const [mealData, setMealData] = useState<Record<MealType, MealData | null>>({
@@ -88,15 +89,18 @@ export default function MealDetailPage() {
 
           if (response.ok) {
             const result = await response.json();
-            
+
             if (result.meals && result.meals.length > 0) {
               // 시간별로 그룹화
               const recordsMap = new Map<string, MealRecord>();
-              
+
               for (const meal of result.meals) {
-                const recordedAt = meal.recorded_at || meal.created_at || `${selectedDate}T12:00:00`;
+                const recordedAt =
+                  meal.recorded_at ||
+                  meal.created_at ||
+                  `${selectedDate}T12:00:00`;
                 const timeKey = recordedAt.slice(0, 16); // YYYY-MM-DDTHH:MM
-                
+
                 if (!recordsMap.has(timeKey)) {
                   recordsMap.set(timeKey, {
                     id: timeKey,
@@ -104,7 +108,7 @@ export default function MealDetailPage() {
                     foods: [],
                   });
                 }
-                
+
                 recordsMap.get(timeKey)!.foods.push({
                   id: meal.id,
                   name: meal.food_name,
@@ -117,13 +121,29 @@ export default function MealDetailPage() {
               }
 
               const records = Array.from(recordsMap.values()).sort(
-                (a, b) => new Date(a.recordedAt).getTime() - new Date(b.recordedAt).getTime()
+                (a, b) =>
+                  new Date(a.recordedAt).getTime() -
+                  new Date(b.recordedAt).getTime()
               );
 
-              const totalCalories = result.meals.reduce((sum: number, m: { calories?: number }) => sum + (m.calories || 0), 0);
-              const totalCarbs = result.meals.reduce((sum: number, m: { carbs?: number }) => sum + (m.carbs || 0), 0);
-              const totalProtein = result.meals.reduce((sum: number, m: { protein?: number }) => sum + (m.protein || 0), 0);
-              const totalFat = result.meals.reduce((sum: number, m: { fat?: number }) => sum + (m.fat || 0), 0);
+              const totalCalories = result.meals.reduce(
+                (sum: number, m: { calories?: number }) =>
+                  sum + (m.calories || 0),
+                0
+              );
+              const totalCarbs = result.meals.reduce(
+                (sum: number, m: { carbs?: number }) => sum + (m.carbs || 0),
+                0
+              );
+              const totalProtein = result.meals.reduce(
+                (sum: number, m: { protein?: number }) =>
+                  sum + (m.protein || 0),
+                0
+              );
+              const totalFat = result.meals.reduce(
+                (sum: number, m: { fat?: number }) => sum + (m.fat || 0),
+                0
+              );
 
               data[mealType] = {
                 mealType,
@@ -192,7 +212,11 @@ export default function MealDetailPage() {
     const fatStatus = getRatioStatus(ratios.fat, "fat");
 
     // 모두 적정
-    if (carbsStatus === "optimal" && proteinStatus === "optimal" && fatStatus === "optimal") {
+    if (
+      carbsStatus === "optimal" &&
+      proteinStatus === "optimal" &&
+      fatStatus === "optimal"
+    ) {
       return ["이번 식사는 탄수화물, 단백질, 지방을 골고루 잘 드셨네요!"];
     }
 
@@ -223,7 +247,9 @@ export default function MealDetailPage() {
 
   // 수정 페이지로 이동
   const handleEdit = (recordId: string) => {
-    router.push(`/nutrition/meal/${selectedMealType}/edit?date=${selectedDate}&recordId=${recordId}`);
+    router.push(
+      `/nutrition/meal/${selectedMealType}/edit?date=${selectedDate}&recordId=${recordId}`
+    );
   };
 
   if (isLoading) {
@@ -256,9 +282,7 @@ export default function MealDetailPage() {
             onClick={() => setSelectedMealType(type)}
             className={cn(
               "flex-1 py-3 text-sm font-medium transition-colors relative",
-              selectedMealType === type
-                ? "text-[#C5D84B]"
-                : "text-gray-500"
+              selectedMealType === type ? "text-[#C5D84B]" : "text-gray-500"
             )}
           >
             {MEAL_LABELS[type]}
@@ -276,7 +300,9 @@ export default function MealDetailPage() {
             {/* 상세분석 링크 */}
             <div className="flex justify-end mb-2">
               <button
-                onClick={() => router.push(`/nutrition/analysis?date=${selectedDate}`)}
+                onClick={() =>
+                  router.push(`/nutrition/analysis?date=${selectedDate}`)
+                }
                 className="text-sm text-gray-400"
               >
                 상세분석 &gt;
@@ -351,10 +377,7 @@ export default function MealDetailPage() {
                   <span className="text-sm font-medium text-gray-700">
                     {formatTime(record.recordedAt)}
                   </span>
-                  <button
-                    onClick={() => handleEdit(record.id)}
-                    className="p-1"
-                  >
+                  <button onClick={() => handleEdit(record.id)} className="p-1">
                     <Pencil className="w-4 h-4 text-gray-400" />
                   </button>
                 </div>
@@ -370,14 +393,18 @@ export default function MealDetailPage() {
                       )}
                     >
                       {idx === 0 && (
-                        <span className="text-2xl">{MEAL_ICONS[selectedMealType]}</span>
+                        <span className="text-2xl">
+                          {MEAL_ICONS[selectedMealType]}
+                        </span>
                       )}
                       {idx > 0 && <span className="w-8" />}
                       <div className="flex-1">
                         <p className="font-medium text-gray-800">{food.name}</p>
                         <p className="text-xs text-gray-500">{food.portion}</p>
                       </div>
-                      <span className="text-sm text-gray-600">{food.calories}kcal</span>
+                      <span className="text-sm text-gray-600">
+                        {food.calories}kcal
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -391,7 +418,11 @@ export default function MealDetailPage() {
           <span className="text-4xl mb-4">🥗</span>
           <p className="text-gray-500">기록된 식사가 없습니다.</p>
           <button
-            onClick={() => router.push(`/nutrition/meal/${selectedMealType}?date=${selectedDate}`)}
+            onClick={() =>
+              router.push(
+                `/nutrition/meal/${selectedMealType}?date=${selectedDate}`
+              )
+            }
             className="mt-4 px-6 py-2 bg-[#C5D84B] text-white rounded-full text-sm font-medium"
           >
             식사 기록하기

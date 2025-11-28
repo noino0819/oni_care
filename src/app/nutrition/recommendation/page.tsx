@@ -29,7 +29,9 @@ interface RecommendationData {
 
 export default function RecommendationPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"meal" | "product" | "ingredient">("meal");
+  const [activeTab, setActiveTab] = useState<"meal" | "product" | "ingredient">(
+    "meal"
+  );
   const [data, setData] = useState<RecommendationData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -41,31 +43,56 @@ export default function RecommendationPage() {
         user: { name: "테스트" },
         diagnosisDate: "2025.02.05",
         eatScore: 92,
-        description: "테스트님께 필요한 영양소를 골고루 섭취하기에 가장 좋은 메뉴를 추천해요",
+        description:
+          "테스트님께 필요한 영양소를 골고루 섭취하기에 가장 좋은 메뉴를 추천해요",
         hasAllergy: true,
         mealRecommendations: [
           {
             day: 1,
             dayName: "금요일",
             meals: [
-              { type: "lunch", name: "열무보리장&돼지불고기비빔 세트", image: "/images/meal-order-01.jpg" },
-              { type: "dinner", name: "해초 유부비빔밥 &마늘 대추 닭살구이 세트", image: "/images/meal-order-02.jpg" },
+              {
+                type: "lunch",
+                name: "열무보리장&돼지불고기비빔 세트",
+                image: "/images/meal-order-01.jpg",
+              },
+              {
+                type: "dinner",
+                name: "해초 유부비빔밥 &마늘 대추 닭살구이 세트",
+                image: "/images/meal-order-02.jpg",
+              },
             ],
           },
           {
             day: 2,
             dayName: "월요일",
             meals: [
-              { type: "lunch", name: "흑임자 닭볶음&김치솥밥 세트", image: "/images/meal-order-01.jpg" },
-              { type: "dinner", name: "[한국식] 콩비지 김치찜&토마토 초장소스 세트", image: "/images/meal-order-02.jpg" },
+              {
+                type: "lunch",
+                name: "흑임자 닭볶음&김치솥밥 세트",
+                image: "/images/meal-order-01.jpg",
+              },
+              {
+                type: "dinner",
+                name: "[한국식] 콩비지 김치찜&토마토 초장소스 세트",
+                image: "/images/meal-order-02.jpg",
+              },
             ],
           },
           {
             day: 3,
             dayName: "수요일",
             meals: [
-              { type: "lunch", name: "된장찌개&제육볶음 세트", image: "/images/meal-order-01.jpg" },
-              { type: "dinner", name: "닭가슴살 샐러드 세트", image: "/images/meal-order-02.jpg" },
+              {
+                type: "lunch",
+                name: "된장찌개&제육볶음 세트",
+                image: "/images/meal-order-01.jpg",
+              },
+              {
+                type: "dinner",
+                name: "닭가슴살 샐러드 세트",
+                image: "/images/meal-order-02.jpg",
+              },
             ],
           },
         ],
@@ -109,12 +136,18 @@ export default function RecommendationPage() {
         {/* 진단 결과 요약 */}
         <div className="bg-white rounded-2xl p-4 shadow-sm">
           <div className="flex items-center justify-between mb-2">
-            <h2 className="text-lg font-bold">{data.user.name}님의 진단 결과</h2>
-            <span className="text-sm text-gray-500">진단일: {data.diagnosisDate}</span>
+            <h2 className="text-lg font-bold">
+              {data.user.name}님의 진단 결과
+            </h2>
+            <span className="text-sm text-gray-500">
+              진단일: {data.diagnosisDate}
+            </span>
           </div>
           <div className="flex items-baseline gap-2 mb-2">
             <span className="text-sm text-gray-500">EAT SCORE</span>
-            <span className="text-lg font-bold text-[#7B9B5C]">{data.eatScore}점</span>
+            <span className="text-lg font-bold text-[#7B9B5C]">
+              {data.eatScore}점
+            </span>
             <span className="text-sm text-gray-400">/100점</span>
           </div>
           <p className="text-sm text-gray-600">{data.description}</p>
@@ -170,7 +203,10 @@ export default function RecommendationPage() {
 
               {/* 일별 식단 */}
               {data.mealRecommendations.map((day) => (
-                <div key={day.day} className="grid grid-cols-4 gap-2 mb-6 items-start">
+                <div
+                  key={day.day}
+                  className="grid grid-cols-4 gap-2 mb-6 items-start"
+                >
                   <div className="text-center">
                     <p className="text-sm font-medium">Day{day.day}</p>
                     <p className="text-xs text-gray-500">{day.dayName}</p>
@@ -188,7 +224,9 @@ export default function RecommendationPage() {
                           className="object-cover"
                         />
                       </div>
-                      <p className="text-xs text-gray-600 line-clamp-2">{meal.name}</p>
+                      <p className="text-xs text-gray-600 line-clamp-2">
+                        {meal.name}
+                      </p>
                     </div>
                   ))}
                 </div>

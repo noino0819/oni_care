@@ -8,3 +8,4 @@ export interface IconWithFilledProps extends IconProps {
   filled?: boolean;
 }
 
+

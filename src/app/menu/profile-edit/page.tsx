@@ -3,17 +3,17 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, Home, ChevronRight } from "lucide-react";
-import { 
-  ConfirmModal, 
-  BottomSheet, 
-  WheelPickerModal, 
+import {
+  ConfirmModal,
+  BottomSheet,
+  WheelPickerModal,
   MultiSelectBottomSheet,
-  SingleSelectBottomSheet 
+  SingleSelectBottomSheet,
 } from "@/components/ui/Modal";
-import { 
-  ACTIVITY_LEVELS, 
-  DISEASE_OPTIONS, 
-  INTEREST_OPTIONS 
+import {
+  ACTIVITY_LEVELS,
+  DISEASE_OPTIONS,
+  INTEREST_OPTIONS,
 } from "@/types/point-coupon";
 
 interface UserProfile {
@@ -64,7 +64,7 @@ export default function ProfileEditPage() {
       const res = await fetch("/api/profile");
       const data = await res.json();
       setProfile(data);
-      
+
       // 생년월일 파싱
       if (data.birth_date) {
         const date = new Date(data.birth_date);
@@ -72,7 +72,7 @@ export default function ProfileEditPage() {
         setTempBirthMonth(date.getMonth() + 1);
         setTempBirthDay(date.getDate());
       }
-      
+
       setTempBusinessCode(data.business_code || "");
     } catch (error) {
       console.error("Error fetching profile:", error);
@@ -89,7 +89,7 @@ export default function ProfileEditPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updates),
       });
-      
+
       if (res.ok) {
         const data = await res.json();
         setProfile(data);
@@ -133,26 +133,31 @@ export default function ProfileEditPage() {
   const formatBirthDate = (dateStr?: string) => {
     if (!dateStr) return "";
     const date = new Date(dateStr);
-    return `${String(date.getFullYear()).slice(2)}${String(date.getMonth() + 1).padStart(2, "0")}${String(date.getDate()).padStart(2, "0")}`;
+    return `${String(date.getFullYear()).slice(2)}${String(
+      date.getMonth() + 1
+    ).padStart(2, "0")}${String(date.getDate()).padStart(2, "0")}`;
   };
 
   const getGenderLabel = (gender?: string) => {
     switch (gender) {
-      case "male": return "남";
-      case "female": return "여";
-      default: return "";
+      case "male":
+        return "남";
+      case "female":
+        return "여";
+      default:
+        return "";
     }
   };
 
   const getActivityLabel = (level?: string) => {
-    const found = ACTIVITY_LEVELS.find(a => a.value === level);
+    const found = ACTIVITY_LEVELS.find((a) => a.value === level);
     return found?.label || "";
   };
 
   const getDiseaseLabels = (diseases?: string[]) => {
     if (!diseases || diseases.length === 0) return "해당없음";
     return diseases
-      .map(d => DISEASE_OPTIONS.find(opt => opt.value === d)?.label)
+      .map((d) => DISEASE_OPTIONS.find((opt) => opt.value === d)?.label)
       .filter(Boolean)
       .join(", ");
   };
@@ -160,7 +165,7 @@ export default function ProfileEditPage() {
   const getInterestLabels = (interests?: string[]) => {
     if (!interests || interests.length === 0) return "-";
     return interests
-      .map(i => INTEREST_OPTIONS.find(opt => opt.value === i)?.label)
+      .map((i) => INTEREST_OPTIONS.find((opt) => opt.value === i)?.label)
       .filter(Boolean)
       .join(", ");
   };
@@ -226,29 +231,35 @@ export default function ProfileEditPage() {
             {/* 이름 */}
             <div className="flex items-center justify-between px-4 py-4">
               <span className="text-gray-600">이름</span>
-              <span className="text-gray-900">{profile?.name || "김건강"} &gt;</span>
+              <span className="text-gray-900">
+                {profile?.name || "김건강"} &gt;
+              </span>
             </div>
 
             {/* 생년월일 */}
-            <button 
+            <button
               onClick={() => setShowBirthDatePicker(true)}
               className="w-full flex items-center justify-between px-4 py-4"
             >
               <span className="text-gray-600">생년월일</span>
               <div className="flex items-center gap-1">
-                <span className="text-gray-900">{formatBirthDate(profile?.birth_date) || "961128"}</span>
+                <span className="text-gray-900">
+                  {formatBirthDate(profile?.birth_date) || "961128"}
+                </span>
                 <ChevronRight className="w-4 h-4 text-gray-400" />
               </div>
             </button>
 
             {/* 성별 */}
-            <button 
+            <button
               onClick={() => setShowGenderPicker(true)}
               className="w-full flex items-center justify-between px-4 py-4"
             >
               <span className="text-gray-600">성별</span>
               <div className="flex items-center gap-1">
-                <span className="text-gray-900">{getGenderLabel(profile?.gender) || "여"}</span>
+                <span className="text-gray-900">
+                  {getGenderLabel(profile?.gender) || "여"}
+                </span>
                 <ChevronRight className="w-4 h-4 text-gray-400" />
               </div>
             </button>
@@ -256,13 +267,15 @@ export default function ProfileEditPage() {
             {/* 연락처 */}
             <div className="flex items-center justify-between px-4 py-4">
               <span className="text-gray-600">연락처</span>
-              <span className="text-gray-900">{profile?.masked_phone || "010-****-5678"}</span>
+              <span className="text-gray-900">
+                {profile?.masked_phone || "010-****-5678"}
+              </span>
             </div>
 
             {/* 비밀번호 */}
             <div className="flex items-center justify-between px-4 py-4">
               <span className="text-gray-600">비밀번호</span>
-              <button 
+              <button
                 onClick={() => router.push("/menu/profile-edit/password")}
                 className="px-4 py-1.5 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
@@ -274,13 +287,15 @@ export default function ProfileEditPage() {
 
         {/* 사업장코드 */}
         <div className="mb-6">
-          <button 
+          <button
             onClick={() => setShowBusinessCodeModal(true)}
             className="w-full flex items-center justify-between px-4 py-4 bg-white rounded-xl border border-gray-200"
           >
             <span className="text-gray-600">사업장코드</span>
             <div className="flex items-center gap-1">
-              <span className="text-gray-900">{profile?.business_code || "미등록"}</span>
+              <span className="text-gray-900">
+                {profile?.business_code || "미등록"}
+              </span>
               <ChevronRight className="w-4 h-4 text-gray-400" />
             </div>
           </button>
@@ -291,43 +306,49 @@ export default function ProfileEditPage() {
           <h2 className="text-base font-bold text-gray-900 mb-3">건강정보</h2>
           <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
             {/* 키 */}
-            <button 
+            <button
               onClick={() => setShowHeightPicker(true)}
               className="w-full flex items-center justify-between px-4 py-4"
             >
               <span className="text-gray-600">키</span>
               <div className="flex items-center gap-1">
-                <span className="text-gray-900">{profile?.height ? `${profile.height}cm` : "165cm"}</span>
+                <span className="text-gray-900">
+                  {profile?.height ? `${profile.height}cm` : "165cm"}
+                </span>
                 <ChevronRight className="w-4 h-4 text-gray-400" />
               </div>
             </button>
 
             {/* 몸무게 */}
-            <button 
+            <button
               onClick={() => setShowWeightPicker(true)}
               className="w-full flex items-center justify-between px-4 py-4"
             >
               <span className="text-gray-600">몸무게</span>
               <div className="flex items-center gap-1">
-                <span className="text-gray-900">{profile?.weight ? `${profile.weight}kg` : "58kg"}</span>
+                <span className="text-gray-900">
+                  {profile?.weight ? `${profile.weight}kg` : "58kg"}
+                </span>
                 <ChevronRight className="w-4 h-4 text-gray-400" />
               </div>
             </button>
 
             {/* 활동량 */}
-            <button 
+            <button
               onClick={() => setShowActivityPicker(true)}
               className="w-full flex items-center justify-between px-4 py-4"
             >
               <span className="text-gray-600">활동량</span>
               <div className="flex items-center gap-1">
-                <span className="text-gray-900">{getActivityLabel(profile?.activity_level) || "활동적"}</span>
+                <span className="text-gray-900">
+                  {getActivityLabel(profile?.activity_level) || "활동적"}
+                </span>
                 <ChevronRight className="w-4 h-4 text-gray-400" />
               </div>
             </button>
 
             {/* 질병 */}
-            <button 
+            <button
               onClick={() => setShowDiseasePicker(true)}
               className="w-full flex items-center justify-between px-4 py-4"
             >
@@ -354,18 +375,21 @@ export default function ProfileEditPage() {
       </div>
 
       {/* 생년월일 피커 */}
-      <BottomSheet 
-        isOpen={showBirthDatePicker} 
+      <BottomSheet
+        isOpen={showBirthDatePicker}
         onClose={() => setShowBirthDatePicker(false)}
         title="생년월일을 입력해 주세요."
       >
         <div className="flex gap-2 mb-6 relative">
           {/* 선택 영역 표시 */}
           <div className="absolute top-1/2 left-0 right-0 -translate-y-1/2 h-10 bg-gray-100 rounded-lg pointer-events-none" />
-          
+
           {/* 연도 */}
           <div className="flex-1 relative">
-            <div className="h-[200px] overflow-y-auto scrollbar-hide py-[80px]" style={{ scrollSnapType: "y mandatory" }}>
+            <div
+              className="h-[200px] overflow-y-auto scrollbar-hide py-[80px]"
+              style={{ scrollSnapType: "y mandatory" }}
+            >
               {yearOptions.map((opt) => (
                 <button
                   key={opt.value}
@@ -384,7 +408,10 @@ export default function ProfileEditPage() {
           </div>
           {/* 월 */}
           <div className="flex-1 relative">
-            <div className="h-[200px] overflow-y-auto scrollbar-hide py-[80px]" style={{ scrollSnapType: "y mandatory" }}>
+            <div
+              className="h-[200px] overflow-y-auto scrollbar-hide py-[80px]"
+              style={{ scrollSnapType: "y mandatory" }}
+            >
               {monthOptions.map((opt) => (
                 <button
                   key={opt.value}
@@ -403,7 +430,10 @@ export default function ProfileEditPage() {
           </div>
           {/* 일 */}
           <div className="flex-1 relative">
-            <div className="h-[200px] overflow-y-auto scrollbar-hide py-[80px]" style={{ scrollSnapType: "y mandatory" }}>
+            <div
+              className="h-[200px] overflow-y-auto scrollbar-hide py-[80px]"
+              style={{ scrollSnapType: "y mandatory" }}
+            >
               {dayOptions.map((opt) => (
                 <button
                   key={opt.value}
@@ -423,7 +453,9 @@ export default function ProfileEditPage() {
         </div>
         <button
           onClick={() => {
-            const birthDate = `${tempBirthYear}-${String(tempBirthMonth).padStart(2, "0")}-${String(tempBirthDay).padStart(2, "0")}`;
+            const birthDate = `${tempBirthYear}-${String(
+              tempBirthMonth
+            ).padStart(2, "0")}-${String(tempBirthDay).padStart(2, "0")}`;
             updateProfile({ birth_date: birthDate });
             setShowBirthDatePicker(false);
           }}
@@ -476,7 +508,10 @@ export default function ProfileEditPage() {
         isOpen={showActivityPicker}
         onClose={() => setShowActivityPicker(false)}
         title="활동량을 수정해주세요"
-        options={ACTIVITY_LEVELS.map(a => ({ value: a.value, label: a.label }))}
+        options={ACTIVITY_LEVELS.map((a) => ({
+          value: a.value,
+          label: a.label,
+        }))}
         selectedValue={profile?.activity_level || ""}
         onSelect={(value) => {
           updateProfile({ activity_level: value });
@@ -489,7 +524,10 @@ export default function ProfileEditPage() {
         isOpen={showDiseasePicker}
         onClose={() => setShowDiseasePicker(false)}
         title="질병을 수정해주세요"
-        options={DISEASE_OPTIONS.map(d => ({ value: d.value, label: d.label }))}
+        options={DISEASE_OPTIONS.map((d) => ({
+          value: d.value,
+          label: d.label,
+        }))}
         selectedValues={profile?.diseases || []}
         onSelect={(values) => updateProfile({ diseases: values })}
       />
@@ -499,7 +537,10 @@ export default function ProfileEditPage() {
         isOpen={showInterestPicker}
         onClose={() => setShowInterestPicker(false)}
         title="관심사를 수정해주세요"
-        options={INTEREST_OPTIONS.map(i => ({ value: i.value, label: i.label }))}
+        options={INTEREST_OPTIONS.map((i) => ({
+          value: i.value,
+          label: i.label,
+        }))}
         selectedValues={profile?.interests || []}
         onSelect={(values) => updateProfile({ interests: values })}
       />
@@ -514,13 +555,17 @@ export default function ProfileEditPage() {
           <input
             type="text"
             value={tempBusinessCode}
-            onChange={(e) => setTempBusinessCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            onChange={(e) =>
+              setTempBusinessCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+            }
             placeholder="199868"
             className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#9F85E3] text-center text-lg"
             maxLength={6}
           />
           {tempBusinessCode.length > 0 && tempBusinessCode.length !== 6 && (
-            <p className="text-sm text-red-500 mt-2">유효하지 않은 사업장코드입니다.</p>
+            <p className="text-sm text-red-500 mt-2">
+              유효하지 않은 사업장코드입니다.
+            </p>
           )}
         </div>
         <button

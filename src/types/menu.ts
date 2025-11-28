@@ -62,3 +62,4 @@ export interface Inquiry {
   updated_at: string;
 }
 
+

@@ -58,7 +58,7 @@ export default function NutritionDiagnosisPage() {
       // ============================================================
       // [테스트용] 외부 API에서 데이터를 받았다고 가정하고 DB에 저장
       // ============================================================
-      
+
       // 시뮬레이션: 외부 API에서 받은 영양진단 결과 데이터
       const mockDiagnosisResponse = {
         status: "complete",
@@ -185,7 +185,8 @@ export default function NutritionDiagnosisPage() {
           </div>
           <div className="flex-1 text-left">
             <p className="text-sm">
-              <span className="text-red-500">(필수)</span> 개인정보 수집 · 이용에
+              <span className="text-red-500">(필수)</span> 개인정보 수집 ·
+              이용에
             </p>
             <p className="font-medium">모두 동의합니다.</p>
           </div>
