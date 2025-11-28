@@ -102,18 +102,17 @@ export default function NutritionPage() {
   );
   const [isLoading, setIsLoading] = useState(true);
 
-  // 날짜 리스트 계산 (한달 기준, 스크롤 가능)
+  // 날짜 리스트 계산 (선택된 날짜 기준 앞뒤 14일)
   const scrollDates = useMemo(() => {
     const dates: Date[] = [];
-    const today = new Date();
-    // 오늘 기준 앞뒤로 14일씩 (총 29일)
+    // 선택된 날짜 기준 앞뒤로 14일씩 (총 29일)
     for (let i = -14; i <= 14; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() + i);
+      const date = new Date(selectedDate);
+      date.setDate(selectedDate.getDate() + i);
       dates.push(date);
     }
     return dates;
-  }, []);
+  }, [selectedDate]);
 
   // 주간 날짜 계산 (기존 호환용)
   const weekDates = useMemo(() => {
@@ -131,26 +130,42 @@ export default function NutritionPage() {
   }, [selectedDate]);
 
   // 스크롤 ref
-  const dateScrollRef = useRef<HTMLDivElement>(null);
+  const dateScrollRef = useRef<HTMLDivElement | null>(null);
 
-  // 선택된 날짜로 스크롤
+  // 선택된 날짜를 가운데로 스크롤
+  const scrollToCenter = (
+    container: HTMLDivElement,
+    instant: boolean = false
+  ) => {
+    // 선택된 날짜는 항상 인덱스 14에 위치 (앞뒤 14일씩이므로)
+    const selectedIdx = 14;
+    const itemWidth = 48;
+    const containerWidth = container.offsetWidth;
+    const scrollPosition =
+      selectedIdx * itemWidth - containerWidth / 2 + itemWidth / 2;
+
+    if (instant) {
+      container.scrollLeft = scrollPosition;
+    } else {
+      container.scrollTo({ left: scrollPosition, behavior: "smooth" });
+    }
+  };
+
+  // callback ref - DOM이 준비되면 즉시 스크롤
+  const setDateScrollRef = (node: HTMLDivElement | null) => {
+    dateScrollRef.current = node;
+    if (node) {
+      // 항상 가운데로 스크롤 (선택된 날짜가 항상 인덱스 14)
+      scrollToCenter(node, true);
+    }
+  };
+
+  // scrollDates가 변경될 때 (날짜 선택 시) 스크롤 위치 재설정
   useEffect(() => {
     if (dateScrollRef.current) {
-      const selectedIdx = scrollDates.findIndex(
-        (d) => d.toDateString() === selectedDate.toDateString()
-      );
-      if (selectedIdx !== -1) {
-        const itemWidth = 48; // 각 날짜 아이템 너비
-        const containerWidth = dateScrollRef.current.offsetWidth;
-        const scrollPosition =
-          selectedIdx * itemWidth - containerWidth / 2 + itemWidth / 2;
-        dateScrollRef.current.scrollTo({
-          left: scrollPosition,
-          behavior: "smooth",
-        });
-      }
+      scrollToCenter(dateScrollRef.current, true);
     }
-  }, [selectedDate, scrollDates]);
+  }, [scrollDates]);
 
   // 데이터 로드
   useEffect(() => {
@@ -348,7 +363,7 @@ export default function NutritionPage() {
 
               {/* 주간 캘린더 - 가로 스크롤 */}
               <div
-                ref={dateScrollRef}
+                ref={setDateScrollRef}
                 className="flex gap-1 overflow-x-auto scrollbar-hide pb-1"
                 style={{ scrollSnapType: "x mandatory" }}
               >
