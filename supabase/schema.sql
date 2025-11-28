@@ -1356,6 +1356,191 @@ ON CONFLICT DO NOTHING;
 
 
 -- ============================================
+-- PART 14: 영양제 분석 및 추천 관련 테이블
+-- ============================================
+
+-- 영양제 성분 마스터 테이블
+CREATE TABLE IF NOT EXISTS public.supplement_ingredients (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL UNIQUE,
+  name_en TEXT,
+  description TEXT,
+  recommended_daily_amount DECIMAL(10,2),
+  unit TEXT DEFAULT 'mg',
+  benefits TEXT[],
+  related_interests TEXT[], -- 관련 관심사 (피부건강, 장건강 등)
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE public.supplement_ingredients ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Anyone can view supplement ingredients" ON public.supplement_ingredients;
+CREATE POLICY "Anyone can view supplement ingredients" ON public.supplement_ingredients FOR SELECT USING (is_active = true);
+
+-- 영양제 상품 테이블
+CREATE TABLE IF NOT EXISTS public.supplement_products (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL,
+  brand TEXT,
+  description TEXT,
+  image_url TEXT,
+  price INTEGER DEFAULT 0,
+  sale_price INTEGER,
+  product_url TEXT, -- 그리팅몰 상품 URL
+  ingredients TEXT[], -- 주요 성분 목록
+  tags TEXT[], -- 해시태그 (#피부면역 등)
+  related_interests TEXT[], -- 관련 관심사
+  view_count INTEGER DEFAULT 0,
+  is_popular BOOLEAN DEFAULT false,
+  is_active BOOLEAN DEFAULT true,
+  display_order INTEGER DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE public.supplement_products ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Anyone can view supplement products" ON public.supplement_products;
+CREATE POLICY "Anyone can view supplement products" ON public.supplement_products FOR SELECT USING (is_active = true);
+
+-- 관심사별 성분 추천 테이블
+CREATE TABLE IF NOT EXISTS public.interest_ingredients (
+  id SERIAL PRIMARY KEY,
+  interest_name TEXT NOT NULL, -- 피부건강, 모발건강, 장건강 등
+  interest_id TEXT, -- immunity, eye_health 등 영문 ID
+  ingredient_id INTEGER REFERENCES public.supplement_ingredients(id),
+  ingredient_name TEXT NOT NULL,
+  benefit_description TEXT, -- 해당 관심사에 대한 효능 설명
+  is_warning BOOLEAN DEFAULT false, -- 주의가 필요한 성분 여부 (빨간색 표시)
+  display_order INTEGER DEFAULT 0,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE public.interest_ingredients ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Anyone can view interest ingredients" ON public.interest_ingredients;
+CREATE POLICY "Anyone can view interest ingredients" ON public.interest_ingredients FOR SELECT USING (is_active = true);
+
+-- 영양제 성분 분석 결과 테이블 (사용자별 분석)
+CREATE TABLE IF NOT EXISTS public.supplement_analysis (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  analysis_date DATE DEFAULT CURRENT_DATE NOT NULL,
+  ingredient_name TEXT NOT NULL, -- 성분명
+  status TEXT CHECK (status IN ('deficient', 'adequate', 'excessive')) NOT NULL, -- 부족/적정/과다
+  current_amount DECIMAL(10,2), -- 현재 섭취량
+  recommended_amount DECIMAL(10,2), -- 권장 섭취량
+  unit TEXT DEFAULT 'mg',
+  source_supplements TEXT[], -- 해당 성분이 포함된 영양제 이름 목록
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(user_id, analysis_date, ingredient_name)
+);
+
+ALTER TABLE public.supplement_analysis ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users can view own supplement analysis" ON public.supplement_analysis;
+DROP POLICY IF EXISTS "Users can insert own supplement analysis" ON public.supplement_analysis;
+DROP POLICY IF EXISTS "Users can update own supplement analysis" ON public.supplement_analysis;
+
+CREATE POLICY "Users can view own supplement analysis" ON public.supplement_analysis FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own supplement analysis" ON public.supplement_analysis FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own supplement analysis" ON public.supplement_analysis FOR UPDATE USING (auth.uid() = user_id);
+
+-- 인덱스 추가
+CREATE INDEX IF NOT EXISTS idx_supplement_products_popular ON public.supplement_products(is_popular, display_order);
+CREATE INDEX IF NOT EXISTS idx_supplement_products_interests ON public.supplement_products USING GIN(related_interests);
+CREATE INDEX IF NOT EXISTS idx_interest_ingredients_interest ON public.interest_ingredients(interest_name);
+CREATE INDEX IF NOT EXISTS idx_supplement_analysis_user_date ON public.supplement_analysis(user_id, analysis_date);
+
+-- 트리거 추가
+DROP TRIGGER IF EXISTS update_supplement_products_updated_at ON public.supplement_products;
+DROP TRIGGER IF EXISTS update_supplement_analysis_updated_at ON public.supplement_analysis;
+
+CREATE TRIGGER update_supplement_products_updated_at BEFORE UPDATE ON public.supplement_products FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_supplement_analysis_updated_at BEFORE UPDATE ON public.supplement_analysis FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- 영양제 성분 샘플 데이터
+INSERT INTO public.supplement_ingredients (name, name_en, description, recommended_daily_amount, unit, benefits, related_interests) VALUES
+  ('히알루론산', 'Hyaluronic Acid', '피부 보습에 도움을 줄 수 있는 성분', 120, 'mg', ARRAY['피부보습', '피부탄력'], ARRAY['피부건강']),
+  ('포스파티딜 세린', 'Phosphatidylserine', '자외선에 의한 손상으로부터 피부건강을 유지하는데 도움', 100, 'mg', ARRAY['피부손상회복', '두뇌활동'], ARRAY['피부건강', '두뇌활동']),
+  ('프로바이오틱스', 'Probiotics', '면역과민반응에 의한 피부상태 개선에 도움을 줄 수 있음', 10000000000, 'CFU', ARRAY['피부면역', '장건강'], ARRAY['피부건강', '소화기/장건강']),
+  ('비오틴', 'Biotin', '모발과 피부 건강에 도움을 줄 수 있는 비타민', 30, 'mcg', ARRAY['모발성장', '손톱건강'], ARRAY['모발건강', '피부건강']),
+  ('콜라겐', 'Collagen', '피부 탄력 및 관절 건강에 도움', 2000, 'mg', ARRAY['피부탄력', '관절건강'], ARRAY['피부건강', '뼈관절건강']),
+  ('락토바실러스', 'Lactobacillus', '장 건강 및 소화 기능 개선에 도움', 5000000000, 'CFU', ARRAY['장건강', '소화개선'], ARRAY['소화기/장건강']),
+  ('오메가-3', 'Omega-3', '혈행 개선 및 두뇌 활동에 도움', 1000, 'mg', ARRAY['혈행개선', '두뇌활동'], ARRAY['혈행개선', '두뇌활동']),
+  ('비타민D', 'Vitamin D', '뼈 건강과 면역력 강화에 도움', 400, 'IU', ARRAY['뼈건강', '면역력'], ARRAY['뼈관절건강', '면역력']),
+  ('아연', 'Zinc', '면역 기능과 피부 건강에 도움', 10, 'mg', ARRAY['면역강화', '피부건강'], ARRAY['면역력', '피부건강']),
+  ('밀크씨슬', 'Milk Thistle', '간 건강에 도움을 줄 수 있는 성분', 200, 'mg', ARRAY['간건강', '해독'], ARRAY['피로회복'])
+ON CONFLICT (name) DO NOTHING;
+
+-- 관심사별 성분 추천 샘플 데이터 (전체 12개 관심사)
+INSERT INTO public.interest_ingredients (interest_name, interest_id, ingredient_name, benefit_description, is_warning, display_order) VALUES
+  -- 면역력
+  ('면역력', 'immunity', '진세노사이드', '면역력 증진, 피로 개선에 도움을 줄 수 있음', false, 1),
+  ('면역력', 'immunity', '아연', '정상적인 면역기능, 세포분열에 필요', false, 2),
+  ('면역력', 'immunity', '베타글루칸', '면역기능개선에 도움을 줄 수 있음', false, 3),
+  -- 눈건강
+  ('눈건강', 'eye_health', '루테인', '노화로 인해 감소될 수 있는 황반색소밀도를 유지하여 눈건강에 도움을 줄 수 있음', false, 1),
+  ('눈건강', 'eye_health', '아스타잔틴', '눈의 피로도 개선에 도움을 줄 수 있음', false, 2),
+  ('눈건강', 'eye_health', '감잎 주정 추출분말', '건조한 눈을 개선하여 눈건강에 도움을 줄 수 있음', true, 3),
+  -- 뼈관절건강
+  ('뼈관절건강', 'bone_joint', '비타민 D', '칼슘과 인이 흡수되고 이용되는데 필요, 뼈의 형성과 유지에 필요, 골다공증 발생 위험 감소에 도움을 줌', false, 1),
+  ('뼈관절건강', 'bone_joint', '칼슘', '뼈와 치아 형성에 필요, 신경과 근육기능 유지에 필요, 골다공증 발생 위험 감소에 도움을 줌, 정상적인 혈액 응고에 필요', false, 2),
+  -- 근력
+  ('근력', 'muscle', '크레아틴', '근력 운동 시에 운동수행능력 향상에 도움을 줄 수 있음', false, 1),
+  ('근력', 'muscle', '커큐민', '근력 개선에 도움을 줄 수 있음', false, 2),
+  ('근력', 'muscle', '타우린', '근력 개선에 도움을 줄 수 있음', false, 3),
+  -- 체중조절
+  ('체중조절', 'weight', '공액리놀레산', '과체중인 성인의 체지방 감소에 도움을 줄 수 있음', false, 1),
+  ('체중조절', 'weight', '키토산', '체지방 감소에 도움을 줄 수 있음', false, 2),
+  ('체중조절', 'weight', '가르시니아캄보지아 추출물', '탄수화물이 지방으로 합성되는 것을 억제하여 체지방 감소에 도움을 줄 수 있음', false, 3),
+  -- 두뇌활동
+  ('두뇌활동', 'brain', '플라보놀 배당체', '기억력 개선에 도움을 줄 수 있음', false, 1),
+  ('두뇌활동', 'brain', 'EPA와 DHA의 합', '기억력 개선에 도움을 줄 수 있음', false, 2),
+  ('두뇌활동', 'brain', '진세노사이드', '혈소판 응집억제를 통한 혈액흐름, 기억력개선, 항산화에 도움을 줄 수 있음', false, 3),
+  -- 피로회복
+  ('피로회복', 'fatigue', '구연산', '피로 개선에 도움을 줄 수 있음', true, 1),
+  ('피로회복', 'fatigue', '로사빈', '스트레스로 인한 피로 개선에 도움을 줄 수 있음', false, 2),
+  ('피로회복', 'fatigue', 'L-카르니틴', '체지방 감소에 도움을 줄 수 있음, 운동으로 인한 피로개선에 도움을 줄 수 있음', false, 3),
+  -- 모발건강
+  ('모발건강', 'hair', '밀리아신', '모발상태(윤기, 탄력) 개선에 도움을 줄 수 있음', false, 1),
+  ('모발건강', 'hair', '글루코실세라마이드', '모발상태(윤기, 탄력) 개선에 도움을 줄 수 있음', false, 2),
+  ('모발건강', 'hair', '피쉬 콜라겐 펩타이드', '모발상태(윤기, 탄력) 개선에 도움을 줄 수 있음, 피부 보습에 도움을 줄 수 있음', false, 3),
+  -- 혈행개선
+  ('혈행개선', 'blood', 'EPA와 DHA의 합', '혈행개선에 도움을 줄 수 있음, 혈중중성지질 개선에 도움을 줄 수 있음', false, 1),
+  ('혈행개선', 'blood', 'L-아르기닌', '혈관이완을 통해 혈행개선에 도움을 줄 수 있음', false, 2),
+  ('혈행개선', 'blood', '나토균 배양분말', '혈소판 응집 억제를 통한 혈행개선에 도움을 줄 수 있음', false, 3),
+  -- 피부건강
+  ('피부건강', 'skin', '히알루론산', '피부보습에 도움을 줄 수 있음', false, 1),
+  ('피부건강', 'skin', '엘라그산', '자외선에 의한 손상으로부터 피부건강을 유지하는데 도움', false, 2),
+  ('피부건강', 'skin', '글루코실세라마이드', '피부 보습에 도움을 줄 수 있음', false, 3),
+  -- 갱년기
+  ('갱년기', 'menopause', '소포리코사이드', '갱년기 여성의 건강에 도움을 줄 수 있음', false, 1),
+  ('갱년기', 'menopause', '진세노사이드', '갱년기 여성의 건강에 도움을 줄 수 있음', false, 2),
+  ('갱년기', 'menopause', '석류추출물', '갱년기 여성의 건강에 도움을 줄 수 있음', false, 3),
+  -- 소화기/장건강
+  ('소화기/장건강', 'digestive', '프락토 올리고당', '장내 유익균 증식에 도움을 줄 수 있음', false, 1),
+  ('소화기/장건강', 'digestive', '식이섬유', '장내 유익균 증식에 도움을 줄 수 있음', false, 2),
+  ('소화기/장건강', 'digestive', '리놀렌산', '배변활동에 도움을 줄 수 있음, 장 불편감 완화에 도움을 줄 수 있음', false, 3)
+ON CONFLICT DO NOTHING;
+
+-- 영양제 상품 샘플 데이터
+INSERT INTO public.supplement_products (name, brand, description, image_url, price, sale_price, ingredients, tags, related_interests, is_popular, display_order) VALUES
+  ('살아있는 프로바이오틱스 골드', '그리팅', '50억 유산균이 살아서 장까지 도달하는 프로바이오틱스', '/images/supplements/probiotics-gold.png', 35000, 28000, ARRAY['프로바이오틱스', '락토바실러스'], ARRAY['#피부면역', '#장건강', '#소화개선'], ARRAY['피부건강', '소화기/장건강'], true, 1),
+  ('비비콜라겐 플러스 업', '그리팅', '저분자 피쉬콜라겐 2000mg 함유', '/images/supplements/collagen-plus.png', 42000, 35000, ARRAY['콜라겐', '히알루론산', '비타민C'], ARRAY['#피부보습', '#피부탄력', '#관절건강'], ARRAY['피부건강', '뼈관절건강'], true, 2),
+  ('포스파티딜 세린 징코', '그리팅', '두뇌활동과 피부건강에 도움을 주는 복합제품', '/images/supplements/ps-ginkgo.png', 38000, 32000, ARRAY['포스파티딜 세린', '은행잎추출물'], ARRAY['#두뇌활동', '#피부손상회복', '#집중력'], ARRAY['피부건강', '두뇌활동'], true, 3),
+  ('비오틴 5000 헤어앤네일', '그리팅', '모발과 손톱 건강에 도움을 주는 고함량 비오틴', '/images/supplements/biotin-5000.png', 25000, 20000, ARRAY['비오틴', '아연', '판토텐산'], ARRAY['#모발건강', '#손톱건강', '#탈모예방'], ARRAY['모발건강', '피부건강'], true, 4),
+  ('오메가3 트리플 파워', '그리팅', 'EPA+DHA 1000mg 고함량 오메가3', '/images/supplements/omega3-triple.png', 45000, 38000, ARRAY['오메가-3', 'EPA', 'DHA'], ARRAY['#혈행개선', '#두뇌활동', '#눈건강'], ARRAY['혈행개선', '두뇌활동'], true, 5),
+  ('비타민D 5000IU', '그리팅', '뼈 건강과 면역력 강화를 위한 고함량 비타민D', '/images/supplements/vitamin-d.png', 18000, 15000, ARRAY['비타민D'], ARRAY['#뼈건강', '#면역력', '#근력'], ARRAY['뼈관절건강', '면역력'], false, 6),
+  ('멀티비타민 원어데이', '그리팅', '하루 한 알로 채우는 종합 영양제', '/images/supplements/multivitamin.png', 30000, 25000, ARRAY['종합비타민', '미네랄'], ARRAY['#종합영양', '#피로회복', '#활력'], ARRAY['피로회복', '면역력'], false, 7),
+  ('밀크씨슬 간건강', '그리팅', '간 건강을 위한 실리마린 고함량 제품', '/images/supplements/milk-thistle.png', 28000, 22000, ARRAY['밀크씨슬', '실리마린'], ARRAY['#간건강', '#피로회복', '#해독'], ARRAY['피로회복'], false, 8)
+ON CONFLICT DO NOTHING;
+
+
+-- ============================================
 -- 완료! 이 스크립트는 여러 번 실행해도 안전합니다.
 -- ============================================
 

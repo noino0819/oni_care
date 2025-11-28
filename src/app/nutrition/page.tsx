@@ -888,8 +888,176 @@ export default function NutritionPage() {
   );
 }
 
-// 영양제 탭 컴포넌트
+// 영양제 탭 컴포넌트 (기획서 MF_NU_01 기준 전면 개선)
 function SupplementTab() {
+  const router = useRouter();
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showMonthPicker, setShowMonthPicker] = useState(false);
+  const [selectedInterest, setSelectedInterest] = useState<string | null>(null);
+
+  // 날짜 포맷
+  const formatDate = (date: Date) => {
+    return `${date.getFullYear()}년 ${date.getMonth() + 1}월`;
+  };
+
+  const dateStr = selectedDate.toISOString().split("T")[0];
+
+  // 날짜 리스트 계산 (선택된 날짜 기준 앞뒤 14일)
+  const scrollDates = useMemo(() => {
+    const dates: Date[] = [];
+    const today = new Date();
+    const maxFutureDate = new Date(today);
+    maxFutureDate.setDate(today.getDate() + 7); // 일주일 뒤까지
+
+    for (let i = -14; i <= 14; i++) {
+      const date = new Date(selectedDate);
+      date.setDate(selectedDate.getDate() + i);
+      dates.push(date);
+    }
+    return dates;
+  }, [selectedDate]);
+
+  // 스크롤 ref
+  const dateScrollRef = useRef<HTMLDivElement | null>(null);
+
+  // 선택된 날짜를 가운데로 스크롤
+  const scrollToCenter = (
+    container: HTMLDivElement,
+    instant: boolean = false
+  ) => {
+    const selectedIdx = 14;
+    const itemWidth = 48;
+    const containerWidth = container.offsetWidth;
+    const scrollPosition =
+      selectedIdx * itemWidth - containerWidth / 2 + itemWidth / 2;
+
+    if (instant) {
+      container.scrollLeft = scrollPosition;
+    } else {
+      container.scrollTo({ left: scrollPosition, behavior: "smooth" });
+    }
+  };
+
+  const setDateScrollRef = (node: HTMLDivElement | null) => {
+    dateScrollRef.current = node;
+    if (node) {
+      scrollToCenter(node, true);
+    }
+  };
+
+  useEffect(() => {
+    if (dateScrollRef.current) {
+      scrollToCenter(dateScrollRef.current, true);
+    }
+  }, [scrollDates]);
+
+  // 미래 날짜 체크 (일주일 뒤까지만)
+  const isFutureDate = (date: Date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const maxFuture = new Date(today);
+    maxFuture.setDate(today.getDate() + 7);
+    return date > maxFuture;
+  };
+
+  return (
+    <div className="space-y-4 pt-4 pb-4">
+      {/* 1. 날짜 선택 */}
+      <div className="px-4">
+        <div className="bg-white rounded-2xl p-4 shadow-sm">
+          <button
+            onClick={() => setShowMonthPicker(true)}
+            className="flex items-center gap-1 mb-3"
+          >
+            <ChevronDown className="w-4 h-4 text-gray-400" />
+            <span className="text-sm font-medium">
+              {formatDate(selectedDate)}
+            </span>
+          </button>
+
+          <div
+            ref={setDateScrollRef}
+            className="flex gap-1 overflow-x-auto scrollbar-hide pb-1"
+            style={{ scrollSnapType: "x mandatory" }}
+          >
+            {scrollDates.map((date, idx) => {
+              const isSelected =
+                date.toDateString() === selectedDate.toDateString();
+              const isToday = date.toDateString() === new Date().toDateString();
+              const dayOfWeek = date.getDay();
+              const isFuture = isFutureDate(date);
+
+              return (
+                <button
+                  key={idx}
+                  onClick={() => !isFuture && setSelectedDate(date)}
+                  disabled={isFuture}
+                  className={cn(
+                    "flex flex-col items-center gap-1 flex-shrink-0 w-12",
+                    isFuture && "opacity-40 cursor-not-allowed"
+                  )}
+                  style={{ scrollSnapAlign: "center" }}
+                >
+                  <span
+                    className={cn(
+                      "text-xs",
+                      dayOfWeek === 0
+                        ? "text-red-400"
+                        : dayOfWeek === 6
+                        ? "text-blue-400"
+                        : "text-gray-400"
+                    )}
+                  >
+                    {WEEKDAYS[dayOfWeek]}
+                  </span>
+                  <span
+                    className={cn(
+                      "w-9 h-9 flex items-center justify-center rounded-full text-sm font-medium transition-colors",
+                      isSelected
+                        ? "bg-[#9F85E3] text-white"
+                        : isToday
+                        ? "bg-gray-100 text-gray-900"
+                        : "text-gray-600"
+                    )}
+                  >
+                    {date.getDate()}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* 2. 영양제 기록 카드 */}
+      <SupplementRecordCard date={dateStr} />
+
+      {/* 3. 영양제 분석 카드 */}
+      <SupplementAnalysisCard date={dateStr} />
+
+      {/* 4. 맞춤 영양제 추천 */}
+      <SupplementRecommendationSection
+        selectedInterest={selectedInterest}
+        onSelectInterest={setSelectedInterest}
+      />
+
+      {/* 월 선택 팝업 */}
+      {showMonthPicker && (
+        <SupplementMonthPickerModal
+          selectedDate={selectedDate}
+          onSelect={(date) => {
+            setSelectedDate(date);
+            setShowMonthPicker(false);
+          }}
+          onClose={() => setShowMonthPicker(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+// 영양제 기록 카드 컴포넌트
+function SupplementRecordCard({ date }: { date: string }) {
   const router = useRouter();
   const [supplements, setSupplements] = useState<
     {
@@ -913,7 +1081,7 @@ function SupplementTab() {
     const fetchSupplements = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch("/api/nutrition/supplements");
+        const response = await fetch(`/api/nutrition/supplements?date=${date}`);
         if (response.ok) {
           const data = await response.json();
           const formattedSupplements = (data.supplements || []).map(
@@ -936,11 +1104,9 @@ function SupplementTab() {
         setIsLoading(false);
       }
     };
-
     fetchSupplements();
-  }, []);
+  }, [date]);
 
-  // 복용 토글
   const toggleTaken = async (supplementId: string) => {
     try {
       await fetch("/api/nutrition/supplements", {
@@ -949,9 +1115,9 @@ function SupplementTab() {
         body: JSON.stringify({
           routineId: supplementId,
           action: "toggleTaken",
+          date,
         }),
       });
-      // 로컬 상태 업데이트
       setSupplements((prev) =>
         prev.map((s) =>
           s.id === supplementId ? { ...s, isTaken: !s.isTaken } : s
@@ -964,148 +1130,126 @@ function SupplementTab() {
 
   const takenCount = supplements.filter((s) => s.isTaken).length;
   const totalCount = supplements.length;
+  const remainingCount = totalCount - takenCount;
   const completionRate =
     totalCount > 0 ? Math.round((takenCount / totalCount) * 100) : 0;
 
+  // 스켈레톤 UI
   if (isLoading) {
     return (
-      <div className="px-4 py-4 space-y-4">
-        <div className="bg-white rounded-2xl p-6 shadow-sm animate-pulse">
+      <div className="px-4">
+        <div className="bg-white rounded-2xl p-4 shadow-sm animate-pulse">
           <div className="flex items-center justify-between mb-4">
-            <div className="h-4 w-20 bg-gray-200 rounded" />
-            <div className="h-4 w-24 bg-gray-200 rounded" />
+            <div className="h-5 w-32 bg-gray-200 rounded" />
+            <div className="h-5 w-5 bg-gray-200 rounded" />
           </div>
           <div className="flex items-center gap-4">
-            <div className="w-24 h-24 bg-gray-200 rounded-full" />
-            <div className="flex-1 h-12 bg-gray-200 rounded-xl" />
+            <div className="h-4 w-12 bg-gray-200 rounded" />
+            <div className="flex-1 h-3 bg-gray-200 rounded-full" />
+            <div className="h-4 w-24 bg-gray-200 rounded" />
           </div>
-        </div>
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-            <div className="h-5 w-24 bg-gray-200 rounded animate-pulse" />
-            <div className="h-5 w-5 bg-gray-200 rounded animate-pulse" />
-          </div>
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="flex items-center justify-between p-4 animate-pulse"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gray-200 rounded-full" />
-                <div>
-                  <div className="h-5 w-24 bg-gray-200 rounded mb-1" />
-                  <div className="h-4 w-32 bg-gray-200 rounded" />
-                </div>
-              </div>
-              <div className="w-8 h-8 bg-gray-200 rounded-full" />
-            </div>
-          ))}
         </div>
       </div>
     );
   }
 
+  // 영양제 기록이 없는 경우
   if (supplements.length === 0) {
     return (
-      <div className="px-4 py-12">
-        <div className="bg-white rounded-2xl p-8 shadow-sm text-center">
-          <div className="text-4xl mb-4">💊</div>
-          <h3 className="text-lg font-semibold text-gray-800 mb-2">
-            챙겨먹는 영양제가 있나요?
-          </h3>
-          <p className="text-sm text-gray-500 mb-6">아직 기록이 없어요</p>
-          <button
-            onClick={() => router.push("/nutrition/supplement/routine")}
-            className="inline-flex items-center gap-2 bg-[#9F85E3] text-white px-6 py-3 rounded-xl font-medium"
-          >
-            <Plus className="w-5 h-5" />
-            영양제 루틴 등록하기
-          </button>
+      <div className="px-4">
+        <div className="bg-white rounded-2xl p-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-700 mb-1">
+                챙겨먹은 영양제가 있나요?
+              </p>
+              <div className="bg-gray-100 rounded-lg px-4 py-3 inline-block">
+                <p className="text-sm text-gray-500">아직 기록이 없어요</p>
+              </div>
+            </div>
+            <button
+              onClick={() => router.push("/nutrition/supplement/routine")}
+              className="flex items-center gap-2 bg-[#9F85E3] text-white px-4 py-2 rounded-xl text-sm font-medium"
+            >
+              <Plus className="w-4 h-4" />
+              영양제
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="px-4 py-4 space-y-4">
-      {/* 섭취 완료율 */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <span className="text-sm text-gray-500">섭취 완료율</span>
-          <span className="text-sm text-gray-500">
-            {takenCount}개 남았어요!
-          </span>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <div className="relative w-24 h-24">
-            <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
-              <circle
-                cx="50"
-                cy="50"
-                r="40"
-                stroke="#E5E7EB"
-                strokeWidth="8"
-                fill="none"
-              />
-              <circle
-                cx="50"
-                cy="50"
-                r="40"
-                stroke="#9F85E3"
-                strokeWidth="8"
-                fill="none"
-                strokeLinecap="round"
-                strokeDasharray={`${completionRate * 2.51} 251`}
-              />
-            </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-xl font-bold text-gray-900">
-                {completionRate}%
-              </span>
-            </div>
-          </div>
-
-          <div className="flex-1">
-            <button
-              onClick={() => router.push("/nutrition/supplement/log")}
-              className="w-full flex items-center justify-center gap-2 bg-gray-100 py-3 rounded-xl text-sm font-medium text-gray-700"
-            >
-              영양제 <Check className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* 영양제 목록 */}
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-          <h3 className="font-semibold text-gray-900">오늘의 영양제</h3>
+    <div className="px-4">
+      <div className="bg-white rounded-2xl p-4 shadow-sm">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-gray-800">
+            오늘의 영양제 기록
+          </h3>
           <button
-            onClick={() => router.push("/nutrition/supplement/routine")}
-            className="text-[#9F85E3]"
+            onClick={() => router.push("/nutrition/supplement/log")}
+            className="text-gray-400"
           >
-            <Plus className="w-5 h-5" />
+            <Check className="w-5 h-5" />
           </button>
         </div>
-        <div className="divide-y divide-gray-100">
+
+        {/* 진행률 바 */}
+        <div className="flex items-center gap-3">
+          <span className="text-lg font-bold text-[#9F85E3] min-w-[45px]">
+            {completionRate}%
+          </span>
+          <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-[#9F85E3] rounded-full transition-all duration-300"
+              style={{ width: `${completionRate}%` }}
+            />
+          </div>
+          <span className="text-sm text-gray-500 whitespace-nowrap">
+            {remainingCount}개 남았어요!
+          </span>
+          <div className="flex items-center gap-1">
+            {supplements.slice(0, 3).map((s, idx) => (
+              <span
+                key={idx}
+                className={cn("text-lg", s.isTaken && "opacity-50")}
+              >
+                💊
+              </span>
+            ))}
+            {takenCount > 0 && <Check className="w-4 h-4 text-[#9F85E3]" />}
+          </div>
+        </div>
+
+        {/* 영양제 목록 (간략) */}
+        <div className="mt-4 space-y-2">
           {supplements.map((supplement) => (
             <div
               key={supplement.id}
-              className="flex items-center justify-between p-4"
+              className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0"
             >
-              <div className="flex items-center gap-3">
-                <div
+              <div className="flex items-center gap-2">
+                <span
                   className={cn(
-                    "w-10 h-10 rounded-full flex items-center justify-center",
-                    supplement.isTaken ? "bg-[#9F85E3]/10" : "bg-gray-100"
+                    "text-base",
+                    supplement.isTaken && "opacity-50"
                   )}
                 >
-                  <span className="text-lg">💊</span>
-                </div>
+                  💊
+                </span>
                 <div>
-                  <p className="font-medium text-gray-900">{supplement.name}</p>
-                  <p className="text-sm text-gray-500">
+                  <p
+                    className={cn(
+                      "text-sm font-medium",
+                      supplement.isTaken
+                        ? "text-gray-400 line-through"
+                        : "text-gray-800"
+                    )}
+                  >
+                    {supplement.name}
+                  </p>
+                  <p className="text-xs text-gray-400">
                     {supplement.dosage} · {supplement.timeSlot}
                   </p>
                 </div>
@@ -1113,17 +1257,505 @@ function SupplementTab() {
               <button
                 onClick={() => toggleTaken(supplement.id)}
                 className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center border-2 transition-colors",
+                  "w-6 h-6 rounded-full flex items-center justify-center border-2 transition-colors",
                   supplement.isTaken
                     ? "bg-[#9F85E3] border-[#9F85E3]"
                     : "border-gray-300 hover:border-[#9F85E3]"
                 )}
               >
-                {supplement.isTaken && <Check className="w-4 h-4 text-white" />}
+                {supplement.isTaken && <Check className="w-3 h-3 text-white" />}
               </button>
             </div>
           ))}
         </div>
+      </div>
+    </div>
+  );
+}
+
+// 영양제 분석 카드 컴포넌트
+function SupplementAnalysisCard({ date }: { date: string }) {
+  const router = useRouter();
+  const [analysisData, setAnalysisData] = useState<{
+    totalSupplements: number;
+    analysis: { deficient: number; adequate: number; excessive: number };
+    hasAnalysis: boolean;
+  } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAnalysis = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(
+          `/api/nutrition/supplements/analysis?date=${date}`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setAnalysisData(data);
+        }
+      } catch (error) {
+        console.error("Analysis fetch error:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchAnalysis();
+  }, [date]);
+
+  // 스켈레톤 UI
+  if (isLoading) {
+    return (
+      <div className="px-4">
+        <div className="bg-gradient-to-br from-[#F5F0FF] to-[#EDE7FF] rounded-2xl p-4 shadow-sm animate-pulse">
+          <div className="h-5 w-24 bg-white/50 rounded mb-3" />
+          <div className="h-6 w-48 bg-white/50 rounded mb-2" />
+          <div className="h-4 w-64 bg-white/50 rounded mb-4" />
+          <div className="flex gap-4 mb-4">
+            <div className="h-5 w-20 bg-white/50 rounded" />
+            <div className="h-5 w-20 bg-white/50 rounded" />
+            <div className="h-5 w-20 bg-white/50 rounded" />
+          </div>
+          <div className="h-12 bg-white/50 rounded-xl" />
+        </div>
+      </div>
+    );
+  }
+
+  // 영양제 등록이 없는 경우
+  if (!analysisData?.hasAnalysis) {
+    return (
+      <div className="px-4">
+        <div className="bg-gradient-to-br from-[#F5F0FF] to-[#EDE7FF] rounded-2xl p-4 shadow-sm">
+          <h3 className="text-sm font-semibold text-gray-800 mb-3">
+            영양제 분석
+          </h3>
+          <p className="text-sm text-gray-600 mb-2">영양제를 등록하면</p>
+          <p className="text-sm text-gray-600 mb-4">
+            성분 분석을 받아볼 수 있어요!
+          </p>
+          <button
+            onClick={() => router.push("/nutrition/supplement/routine")}
+            className="w-full bg-[#9F85E3] text-white py-3 rounded-xl text-sm font-medium"
+          >
+            영양제 등록하기
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="px-4">
+      <div className="bg-gradient-to-br from-[#F5F0FF] to-[#EDE7FF] rounded-2xl p-4 shadow-sm">
+        <h3 className="text-sm font-semibold text-gray-800 mb-3">
+          영양제 분석
+        </h3>
+
+        <p className="text-base font-medium text-gray-900 mb-1">
+          총{" "}
+          <span className="text-[#9F85E3] font-bold">
+            {analysisData.totalSupplements}개
+          </span>{" "}
+          영양제를 먹고 있어요!
+        </p>
+        <p className="text-sm text-gray-600 mb-4">
+          나에게 맞는 섭취량을 고려해서 성분을 분석했어요!
+        </p>
+
+        {/* 분석 결과 */}
+        <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-full bg-blue-500" />
+            <span className="text-sm text-gray-700">
+              부족해요{" "}
+              <span className="font-bold">
+                {analysisData.analysis.deficient}
+              </span>
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-full bg-green-500" />
+            <span className="text-sm text-gray-700">
+              적정해요{" "}
+              <span className="font-bold">
+                {analysisData.analysis.adequate}
+              </span>
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-full bg-yellow-500" />
+            <span className="text-sm text-gray-700">
+              과다해요{" "}
+              <span className="font-bold">
+                {analysisData.analysis.excessive}
+              </span>
+            </span>
+          </div>
+        </div>
+
+        <button
+          onClick={() =>
+            router.push(`/nutrition/analysis?date=${date}&tab=supplement`)
+          }
+          className="w-full bg-white border border-[#9F85E3] text-[#9F85E3] py-3 rounded-xl text-sm font-medium hover:bg-[#9F85E3] hover:text-white transition-colors"
+        >
+          분석내용 자세히 보기
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// 맞춤 영양제 추천 섹션 컴포넌트
+function SupplementRecommendationSection({
+  selectedInterest,
+  onSelectInterest,
+}: {
+  selectedInterest: string | null;
+  onSelectInterest: (interest: string) => void;
+}) {
+  const router = useRouter();
+  const [recommendationData, setRecommendationData] = useState<{
+    userName: string;
+    interests: string[];
+    selectedInterest: string;
+    ingredients: { name: string; benefit: string; isWarning: boolean }[];
+    recommendedProducts: {
+      id: string;
+      name: string;
+      brand: string;
+      image: string | null;
+      tags: string[];
+    }[];
+    popularProducts: {
+      id: string;
+      name: string;
+      brand: string;
+      image: string | null;
+      tags: string[];
+    }[];
+  } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRecommendations = async () => {
+      setIsLoading(true);
+      try {
+        const url = selectedInterest
+          ? `/api/nutrition/supplements/recommendations?interest=${encodeURIComponent(
+              selectedInterest
+            )}`
+          : "/api/nutrition/supplements/recommendations";
+        const response = await fetch(url);
+        if (response.ok) {
+          const data = await response.json();
+          setRecommendationData(data);
+          if (!selectedInterest && data.selectedInterest) {
+            onSelectInterest(data.selectedInterest);
+          }
+        }
+      } catch (error) {
+        console.error("Recommendations fetch error:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchRecommendations();
+  }, [selectedInterest, onSelectInterest]);
+
+  // 스켈레톤 UI
+  if (isLoading) {
+    return (
+      <div className="px-4 space-y-4">
+        {/* 관심사 탭 스켈레톤 */}
+        <div className="bg-white rounded-2xl p-4 shadow-sm animate-pulse">
+          <div className="h-5 w-32 bg-gray-200 rounded mb-4" />
+          <div className="flex gap-2 mb-4 overflow-x-auto">
+            {[1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                className="h-8 w-20 bg-gray-200 rounded-full flex-shrink-0"
+              />
+            ))}
+          </div>
+          <div className="h-4 w-56 bg-gray-200 rounded mb-4" />
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex items-start gap-2">
+                <div className="w-5 h-5 bg-gray-200 rounded" />
+                <div className="flex-1">
+                  <div className="h-4 w-24 bg-gray-200 rounded mb-1" />
+                  <div className="h-3 w-full bg-gray-200 rounded" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        {/* 상품 스켈레톤 */}
+        <div className="flex gap-3 overflow-x-auto pb-2">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="w-32 flex-shrink-0 animate-pulse">
+              <div className="w-32 h-32 bg-gray-200 rounded-xl mb-2" />
+              <div className="h-4 w-24 bg-gray-200 rounded mb-1" />
+              <div className="h-3 w-20 bg-gray-200 rounded" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (!recommendationData) return null;
+
+  const {
+    userName,
+    interests,
+    ingredients,
+    recommendedProducts,
+    popularProducts,
+  } = recommendationData;
+  const currentInterest =
+    selectedInterest || recommendationData.selectedInterest;
+
+  return (
+    <>
+      {/* 맞춤 영양제 추천 */}
+      <div className="px-4">
+        <div className="bg-white rounded-2xl p-4 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-gray-800">
+              맞춤 영양제 추천
+            </h3>
+            <button
+              onClick={() => router.push("/nutrition/recommendation")}
+              className="text-xs text-gray-500 flex items-center gap-1"
+            >
+              더보기 <ChevronRight className="w-3 h-3" />
+            </button>
+          </div>
+
+          {/* 관심사 탭 */}
+          <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-hide pb-1">
+            {interests.map((interest) => (
+              <button
+                key={interest}
+                onClick={() => onSelectInterest(interest)}
+                className={cn(
+                  "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors",
+                  currentInterest === interest
+                    ? "bg-[#9F85E3] text-white"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                )}
+              >
+                {interest}
+              </button>
+            ))}
+          </div>
+
+          {/* 성분 안내 */}
+          <p className="text-sm text-gray-700 mb-4">
+            <span className="font-medium text-[#9F85E3]">{userName}</span>님의
+            관심사에 도움이 되는 성분이에요
+          </p>
+
+          <div className="space-y-3 mb-4">
+            {ingredients.map((ingredient, idx) => (
+              <div key={idx} className="flex items-start gap-2">
+                <span
+                  className={cn(
+                    "text-lg",
+                    ingredient.isWarning ? "text-red-500" : "text-[#9F85E3]"
+                  )}
+                >
+                  🔑
+                </span>
+                <div>
+                  <p
+                    className={cn(
+                      "text-sm font-medium",
+                      ingredient.isWarning ? "text-red-500" : "text-gray-800"
+                    )}
+                  >
+                    {ingredient.name}
+                    {ingredient.isWarning && (
+                      <span className="ml-1 text-xs">(주의)</span>
+                    )}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    · {ingredient.benefit}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* 추천 상품 */}
+          {recommendedProducts.length > 0 && (
+            <div className="overflow-x-auto scrollbar-hide -mx-2 px-2">
+              <div className="flex gap-3 pb-2">
+                {recommendedProducts.map((product) => (
+                  <button
+                    key={product.id}
+                    onClick={() => router.push(`/supplement?id=${product.id}`)}
+                    className="w-28 flex-shrink-0 text-left"
+                  >
+                    <div className="w-28 h-28 bg-gray-100 rounded-xl mb-2 flex items-center justify-center overflow-hidden">
+                      {product.image ? (
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-4xl">📦</span>
+                      )}
+                    </div>
+                    <p className="text-xs font-medium text-gray-800 line-clamp-2">
+                      {product.name}
+                    </p>
+                  </button>
+                ))}
+              </div>
+              {/* 태그 */}
+              <div className="flex flex-wrap gap-1 mt-2">
+                {recommendedProducts
+                  .flatMap((p) => p.tags)
+                  .slice(0, 6)
+                  .map((tag, idx) => (
+                    <span
+                      key={idx}
+                      className="text-xs text-[#9F85E3] bg-[#9F85E3]/10 px-2 py-0.5 rounded-full"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 인기상품 */}
+      {popularProducts.length > 0 && (
+        <div className="px-4">
+          <div className="bg-white rounded-2xl p-4 shadow-sm">
+            <h3 className="text-sm font-semibold text-gray-800 mb-4">
+              인기상품
+            </h3>
+
+            <div className="overflow-x-auto scrollbar-hide -mx-2 px-2">
+              <div className="flex gap-3 pb-2">
+                {popularProducts.map((product) => (
+                  <button
+                    key={product.id}
+                    onClick={() => router.push(`/supplement?id=${product.id}`)}
+                    className="w-28 flex-shrink-0 text-left"
+                  >
+                    <div className="w-28 h-28 bg-gray-100 rounded-xl mb-2 flex items-center justify-center overflow-hidden">
+                      {product.image ? (
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-4xl">📦</span>
+                      )}
+                    </div>
+                    <p className="text-xs font-medium text-gray-800 line-clamp-2">
+                      {product.name}
+                    </p>
+                  </button>
+                ))}
+              </div>
+              {/* 태그 */}
+              <div className="flex flex-wrap gap-1 mt-2">
+                {popularProducts
+                  .flatMap((p) => p.tags)
+                  .slice(0, 6)
+                  .map((tag, idx) => (
+                    <span
+                      key={idx}
+                      className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+// 영양제 탭용 월 선택 모달
+function SupplementMonthPickerModal({
+  selectedDate,
+  onSelect,
+  onClose,
+}: {
+  selectedDate: Date;
+  onSelect: (date: Date) => void;
+  onClose: () => void;
+}) {
+  const [year, setYear] = useState(selectedDate.getFullYear());
+  const [month, setMonth] = useState(selectedDate.getMonth());
+
+  const years = Array.from({ length: 5 }, (_, i) => 2023 + i);
+  const months = Array.from({ length: 12 }, (_, i) => i);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="relative bg-white rounded-t-3xl w-full max-w-md p-6 pb-8 animate-slide-up">
+        <div className="flex justify-center mb-6">
+          <div className="w-12 h-1 bg-gray-300 rounded-full" />
+        </div>
+
+        <div className="flex gap-4 mb-6">
+          <div className="flex-1 h-48 overflow-y-auto">
+            {years.map((y) => (
+              <button
+                key={y}
+                onClick={() => setYear(y)}
+                className={cn(
+                  "w-full py-3 text-center text-lg transition-colors",
+                  year === y ? "font-bold text-gray-900" : "text-gray-400"
+                )}
+              >
+                {y}년
+              </button>
+            ))}
+          </div>
+
+          <div className="flex-1 h-48 overflow-y-auto">
+            {months.map((m) => (
+              <button
+                key={m}
+                onClick={() => setMonth(m)}
+                className={cn(
+                  "w-full py-3 text-center text-lg transition-colors",
+                  month === m ? "font-bold text-gray-900" : "text-gray-400"
+                )}
+              >
+                {String(m + 1).padStart(2, "0")}월
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <button
+          onClick={() => {
+            const newDate = new Date(year, month, 1);
+            onSelect(newDate);
+          }}
+          className="w-full bg-gray-800 text-white py-4 rounded-xl font-medium"
+        >
+          선택
+        </button>
       </div>
     </div>
   );
