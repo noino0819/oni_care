@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   MealRecordMenuIcon,
   SupplementRecordIcon,
@@ -266,6 +266,7 @@ function RecordPlusIcon({ className }: { className?: string }) {
 
 export function BottomNavigation() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // 네비게이션을 숨겨야 하는지 확인
@@ -297,7 +298,8 @@ export function BottomNavigation() {
     pathname === "/record" ||
     pathname === "/meal-record";
   const isSupplementActive =
-    pathname === "/supplement" || pathname === "/supplement-record";
+    (pathname === "/nutrition" && searchParams.get('tab') === 'supplement') ||
+    pathname === "/supplement-record";
   const isMenuPageActive =
     pathname === "/menu" || pathname.startsWith("/menu/");
 
@@ -409,7 +411,7 @@ export function BottomNavigation() {
 
           {/* 영양제 */}
           <Link
-            href="/supplement"
+            href="/nutrition?tab=supplement"
             className="flex flex-col items-center justify-center flex-1 pt-2"
           >
             <NavSupplementIcon

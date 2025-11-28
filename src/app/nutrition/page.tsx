@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ChevronRight,
   ChevronDown,
@@ -89,11 +89,23 @@ const DISEASE_WARNINGS: Record<string, string[]> = {
 
 export default function NutritionPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  
   const [activeTab, setActiveTab] = useState<
     "todayMenu" | "meal" | "supplement"
-  >("meal");
+  >(tabParam === 'supplement' ? 'supplement' : 'meal');
   const [isFsMember, setIsFsMember] = useState(false); // FS회원 여부
   const [selectedDate, setSelectedDate] = useState(new Date());
+
+  // URL 파라미터 변경 시 탭 업데이트
+  useEffect(() => {
+    if (tabParam === 'supplement') {
+      setActiveTab('supplement');
+    } else if (tabParam === 'meal' || !tabParam) {
+      setActiveTab('meal');
+    }
+  }, [tabParam]);
   const [showMonthPicker, setShowMonthPicker] = useState(false);
   const [analysisPeriod, setAnalysisPeriod] = useState<
     "daily" | "weekly" | "monthly"
