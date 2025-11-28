@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { X, ChevronDown } from "lucide-react";
+import { X, ChevronDown, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ConfirmModal, BottomSheet } from "@/components/ui/Modal";
 
@@ -51,17 +51,69 @@ interface SurveyData {
   interests: string[];
 }
 
+// 스텝 인디케이터 컴포넌트
+function StepIndicator({ currentStep }: { currentStep: number }) {
+  return (
+    <div className="flex items-center gap-1">
+      {/* Step 1 */}
+      <div
+        className={cn(
+          "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold",
+          currentStep >= 1 ? "bg-[#9F85E3] text-white" : "bg-gray-200 text-gray-500"
+        )}
+      >
+        {currentStep > 1 ? <Check className="w-4 h-4" /> : "1"}
+      </div>
+      <div className="w-6 h-[2px] bg-gray-200">
+        <div
+          className={cn(
+            "h-full bg-[#9F85E3] transition-all duration-300",
+            currentStep > 1 ? "w-full" : "w-0"
+          )}
+        />
+      </div>
+
+      {/* Step 2 */}
+      <div
+        className={cn(
+          "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold",
+          currentStep >= 2 ? "bg-[#9F85E3] text-white" : "bg-gray-200 text-gray-500"
+        )}
+      >
+        {currentStep > 2 ? <Check className="w-4 h-4" /> : "2"}
+      </div>
+      <div className="w-6 h-[2px] bg-gray-200">
+        <div
+          className={cn(
+            "h-full bg-[#9F85E3] transition-all duration-300",
+            currentStep > 2 ? "w-full" : "w-0"
+          )}
+        />
+      </div>
+
+      {/* Step 3 */}
+      <div
+        className={cn(
+          "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold",
+          currentStep >= 3 ? "bg-[#9F85E3] text-white" : "bg-gray-200 text-gray-500"
+        )}
+      >
+        3
+      </div>
+    </div>
+  );
+}
+
 export default function SurveyPage() {
   const router = useRouter();
-  const containerRef = useRef<HTMLDivElement>(null);
-  
+
   const [currentStep, setCurrentStep] = useState(1);
   const [showExitModal, setShowExitModal] = useState(false);
   const [showActivityPicker, setShowActivityPicker] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
   const [isTooltipVisible, setIsTooltipVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const [surveyData, setSurveyData] = useState<SurveyData>({
     height: "",
     weight: "",
@@ -116,14 +168,16 @@ export default function SurveyPage() {
 
   // 키 입력 핸들러
   const handleHeightChange = (value: string) => {
-    // 숫자만 허용
     const numericValue = value.replace(/[^0-9]/g, "");
     setSurveyData((prev) => ({ ...prev, height: numericValue }));
-    
+
     if (numericValue) {
       const num = parseInt(numericValue);
       if (num < 0 || num > 200) {
-        setErrors((prev) => ({ ...prev, height: "0~200 사이의 값을 입력해주세요." }));
+        setErrors((prev) => ({
+          ...prev,
+          height: "0~200 사이의 값을 입력해주세요.",
+        }));
       } else {
         setErrors((prev) => ({ ...prev, height: "" }));
       }
@@ -136,11 +190,14 @@ export default function SurveyPage() {
   const handleWeightChange = (value: string) => {
     const numericValue = value.replace(/[^0-9]/g, "");
     setSurveyData((prev) => ({ ...prev, weight: numericValue }));
-    
+
     if (numericValue) {
       const num = parseInt(numericValue);
       if (num < 0 || num > 300) {
-        setErrors((prev) => ({ ...prev, weight: "0~300 사이의 값을 입력해주세요." }));
+        setErrors((prev) => ({
+          ...prev,
+          weight: "0~300 사이의 값을 입력해주세요.",
+        }));
       } else {
         setErrors((prev) => ({ ...prev, weight: "" }));
       }
@@ -151,9 +208,9 @@ export default function SurveyPage() {
 
   // 질병 선택 핸들러
   const handleDiseaseSelect = (disease: string) => {
-    setSurveyData((prev) => ({ 
-      ...prev, 
-      disease: prev.disease === disease ? "" : disease 
+    setSurveyData((prev) => ({
+      ...prev,
+      disease: prev.disease === disease ? "" : disease,
     }));
   };
 
@@ -206,7 +263,7 @@ export default function SurveyPage() {
 
   const handleTouchEnd = () => {
     if (!touchStart || !touchEnd) return;
-    
+
     const distance = touchStart - touchEnd;
     const isSwipeLeft = distance > 50;
     const isSwipeRight = distance < -50;
@@ -226,7 +283,6 @@ export default function SurveyPage() {
     if (currentStep < 3) {
       setCurrentStep((prev) => prev + 1);
     } else {
-      // 설문 완료 - 데이터 저장
       await submitSurvey();
     }
   };
@@ -235,7 +291,7 @@ export default function SurveyPage() {
   const submitSurvey = async () => {
     try {
       setIsSubmitting(true);
-      
+
       const response = await fetch("/api/survey", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -249,10 +305,8 @@ export default function SurveyPage() {
       });
 
       if (response.ok) {
-        // 세션 스토리지 클리어
         sessionStorage.removeItem("signup_data");
         sessionStorage.removeItem("signup_verify");
-        // 홈으로 이동
         router.push("/home");
       } else {
         const data = await response.json();
@@ -273,14 +327,15 @@ export default function SurveyPage() {
 
   const handleExitConfirm = () => {
     setShowExitModal(false);
-    // 세션 스토리지 클리어
     sessionStorage.removeItem("signup_data");
     sessionStorage.removeItem("signup_verify");
     router.push("/home");
   };
 
+  const stepLabels = ["인적사항", "질병", "관심사"];
+
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen bg-white">
       {/* 헤더 */}
       <header className="sticky top-0 z-40 bg-white border-b border-gray-100">
         <div className="flex items-center h-14 px-4">
@@ -297,100 +352,22 @@ export default function SurveyPage() {
         </div>
       </header>
 
-      {/* 스텝 인디케이터 */}
-      <div className="px-6 pt-6 pb-4">
-        <div className="flex items-center justify-start gap-2">
-          {/* Step 1 */}
-          <div 
-            className={cn(
-              "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all",
-              currentStep > 1
-                ? "bg-[#9F85E3] text-white"
-                : currentStep === 1
-                ? "bg-[#9F85E3] text-white"
-                : "bg-gray-200 text-gray-500"
-            )}
-          >
-            {currentStep > 1 ? (
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-            ) : (
-              "1"
-            )}
-          </div>
-          <div className="flex-1 h-0.5 bg-gray-200 max-w-[40px]">
-            <div 
-              className={cn(
-                "h-full bg-[#9F85E3] transition-all",
-                currentStep > 1 ? "w-full" : "w-0"
-              )} 
-            />
-          </div>
-          
-          {/* Step 2 */}
-          <div 
-            className={cn(
-              "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all",
-              currentStep > 2
-                ? "bg-[#9F85E3] text-white"
-                : currentStep === 2
-                ? "bg-[#9F85E3] text-white"
-                : "bg-gray-200 text-gray-500"
-            )}
-          >
-            {currentStep > 2 ? (
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-            ) : (
-              "2"
-            )}
-          </div>
-          <div className="flex-1 h-0.5 bg-gray-200 max-w-[40px]">
-            <div 
-              className={cn(
-                "h-full bg-[#9F85E3] transition-all",
-                currentStep > 2 ? "w-full" : "w-0"
-              )} 
-            />
-          </div>
-          
-          {/* Step 3 */}
-          <div 
-            className={cn(
-              "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all",
-              currentStep === 3
-                ? "bg-[#9F85E3] text-white"
-                : "bg-gray-200 text-gray-500"
-            )}
-          >
-            3
-          </div>
-        </div>
-        
-        {/* 현재 스텝 레이블 */}
-        <p className="text-sm text-gray-500 mt-2">
-          {currentStep === 1 && "인적사항"}
-          {currentStep === 2 && "질병"}
-          {currentStep === 3 && "관심사"}
-        </p>
-      </div>
-
-      {/* 콘텐츠 영역 */}
-      <div 
-        ref={containerRef}
-        className="flex-1 overflow-hidden"
+      {/* 메인 콘텐츠 */}
+      <main
+        className="pb-24"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        <div 
-          className="flex h-full transition-transform duration-300 ease-out"
-          style={{ transform: `translateX(-${(currentStep - 1) * 100}%)` }}
-        >
-          {/* Step 1: 인적사항 */}
-          <div className="w-full flex-shrink-0 px-6 overflow-y-auto pb-32">
+        {/* 스텝 인디케이터 */}
+        <div className="px-6 pt-6 pb-2">
+          <StepIndicator currentStep={currentStep} />
+          <p className="text-sm text-gray-500 mt-2">{stepLabels[currentStep - 1]}</p>
+        </div>
+
+        {/* Step 1: 인적사항 */}
+        {currentStep === 1 && (
+          <div className="px-6 py-4">
             <div className="mb-8">
               <h2 className="text-xl font-bold text-gray-900 mb-2">
                 인적 사항을 입력해 주세요
@@ -403,7 +380,9 @@ export default function SurveyPage() {
             <div className="space-y-6">
               {/* 키 */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">키</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  키
+                </label>
                 <div className="relative">
                   <input
                     type="text"
@@ -427,7 +406,9 @@ export default function SurveyPage() {
 
               {/* 몸무게 */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">몸무게</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  몸무게
+                </label>
                 <div className="relative">
                   <input
                     type="text"
@@ -451,14 +432,22 @@ export default function SurveyPage() {
 
               {/* 활동량 */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">활동량</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  활동량
+                </label>
                 <button
                   onClick={() => setShowActivityPicker(true)}
                   className="w-full px-4 py-4 border border-gray-200 rounded-xl text-left flex items-center justify-between hover:border-gray-300 transition-colors"
                 >
-                  <span className={surveyData.activityLevel ? "text-gray-900" : "text-gray-400"}>
+                  <span
+                    className={
+                      surveyData.activityLevel ? "text-gray-900" : "text-gray-400"
+                    }
+                  >
                     {surveyData.activityLevel
-                      ? ACTIVITY_OPTIONS.find((o) => o.value === surveyData.activityLevel)?.label
+                      ? ACTIVITY_OPTIONS.find(
+                          (o) => o.value === surveyData.activityLevel
+                        )?.label
                       : "평소 활동량을 선택해주세요"}
                   </span>
                   <ChevronDown className="w-5 h-5 text-gray-400" />
@@ -466,12 +455,15 @@ export default function SurveyPage() {
               </div>
             </div>
           </div>
+        )}
 
-          {/* Step 2: 질병 */}
-          <div className="w-full flex-shrink-0 px-6 overflow-y-auto pb-32">
+        {/* Step 2: 질병 */}
+        {currentStep === 2 && (
+          <div className="px-6 py-4">
             <div className="mb-8">
               <h2 className="text-xl font-bold text-gray-900 mb-2">
-                보유하고 있거나 관리가 필요한<br />
+                보유하고 있거나 관리가 필요한
+                <br />
                 질병이 있다면 알려주세요
               </h2>
               <p className="text-sm text-gray-500">
@@ -496,12 +488,15 @@ export default function SurveyPage() {
               ))}
             </div>
           </div>
+        )}
 
-          {/* Step 3: 관심사 */}
-          <div className="w-full flex-shrink-0 px-6 overflow-y-auto pb-32 relative">
+        {/* Step 3: 관심사 */}
+        {currentStep === 3 && (
+          <div className="px-6 py-4 relative">
             <div className="mb-8">
               <h2 className="text-xl font-bold text-gray-900 mb-2">
-                건강관심사를 최대 3개 선택해주세요<br />
+                건강관심사를 최대 3개 선택해주세요
+                <br />
                 <span className="text-[#9F85E3]">관심있는 순서대로 선택해 주세요</span>
               </h2>
               <p className="text-sm text-gray-500">
@@ -541,9 +536,9 @@ export default function SurveyPage() {
 
               {/* 취소 안내 툴팁 */}
               {showTooltip && (
-                <div 
+                <div
                   className={cn(
-                    "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 transition-opacity duration-300",
+                    "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 transition-opacity duration-300 pointer-events-none",
                     isTooltipVisible ? "opacity-100" : "opacity-0"
                   )}
                 >
@@ -555,8 +550,8 @@ export default function SurveyPage() {
               )}
             </div>
           </div>
-        </div>
-      </div>
+        )}
+      </main>
 
       {/* 하단 버튼 */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100">
@@ -586,7 +581,10 @@ export default function SurveyPage() {
             <button
               key={option.value}
               onClick={() => {
-                setSurveyData((prev) => ({ ...prev, activityLevel: option.value }));
+                setSurveyData((prev) => ({
+                  ...prev,
+                  activityLevel: option.value,
+                }));
               }}
               className={cn(
                 "w-full px-4 py-3 text-center rounded-xl transition-colors text-base",
@@ -626,4 +624,3 @@ export default function SurveyPage() {
     </div>
   );
 }
-

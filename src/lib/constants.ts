@@ -169,7 +169,7 @@ export const HIDDEN_NAV_PATHS = [
 ] as const;
 
 // 컨텐츠 상세 페이지 패턴 (prefix match)
-export const HIDDEN_NAV_PREFIXES = ["/content/"] as const;
+export const HIDDEN_NAV_PREFIXES = ["/content/", "/survey"] as const;
 
 // ============================================
 // 컨텐츠 관련
