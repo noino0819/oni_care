@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, ReactNode } from "react";
+import { useState, useEffect, useRef, ReactNode } from "react";
 import { X } from "lucide-react";
 
 interface ModalProps {
@@ -251,17 +251,27 @@ export function WheelPickerModal({
 }: WheelPickerModalProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const ITEM_HEIGHT = 44;
+  
+  // 내부에서 임시 값 관리 (스크롤 중에는 API 호출 안함)
+  const [tempValue, setTempValue] = useState<string | number>(selectedValue);
+
+  // 모달이 열릴 때 selectedValue로 tempValue 초기화
+  useEffect(() => {
+    if (isOpen) {
+      setTempValue(selectedValue);
+    }
+  }, [isOpen, selectedValue]);
 
   useEffect(() => {
     if (isOpen && containerRef.current) {
       const selectedIndex = options.findIndex(
-        (opt) => opt.value === selectedValue
+        (opt) => opt.value === tempValue
       );
       if (selectedIndex >= 0) {
         containerRef.current.scrollTop = selectedIndex * ITEM_HEIGHT;
       }
     }
-  }, [isOpen, selectedValue, options]);
+  }, [isOpen, tempValue, options]);
 
   const handleScroll = () => {
     if (containerRef.current) {
@@ -269,9 +279,16 @@ export function WheelPickerModal({
       const index = Math.round(scrollTop / ITEM_HEIGHT);
       const clampedIndex = Math.max(0, Math.min(index, options.length - 1));
       if (options[clampedIndex]) {
-        onSelect(options[clampedIndex].value);
+        // 스크롤 중에는 임시 값만 업데이트 (API 호출 안함)
+        setTempValue(options[clampedIndex].value);
       }
     }
+  };
+
+  const handleConfirm = () => {
+    // 완료 버튼 클릭 시에만 onSelect 호출 (API 호출)
+    onSelect(tempValue);
+    onClose();
   };
 
   if (!isOpen) return null;
@@ -299,13 +316,13 @@ export function WheelPickerModal({
 
         {/* Picker */}
         <div className="relative h-[220px] overflow-hidden">
-          {/* Selection indicator */}
-          <div className="absolute top-1/2 left-0 right-0 -translate-y-1/2 h-[44px] bg-gray-100 border-y border-gray-200 pointer-events-none z-10" />
+          {/* Selection indicator - 배경만 표시 */}
+          <div className="absolute top-1/2 left-0 right-0 -translate-y-1/2 h-[44px] bg-gray-100 border-y border-gray-200 pointer-events-none" />
 
-          {/* Options */}
+          {/* Options - 텍스트가 위에 보이도록 z-index 설정 */}
           <div
             ref={containerRef}
-            className="h-full overflow-y-scroll scrollbar-hide py-[88px]"
+            className="relative z-10 h-full overflow-y-scroll scrollbar-hide py-[88px]"
             onScroll={handleScroll}
             style={{
               scrollSnapType: "y mandatory",
@@ -315,7 +332,7 @@ export function WheelPickerModal({
               <div
                 key={`${option.value}-${index}`}
                 className={`h-[44px] flex items-center justify-center text-lg transition-all ${
-                  option.value === selectedValue
+                  option.value === tempValue
                     ? "text-gray-900 font-semibold"
                     : "text-gray-400"
                 }`}
@@ -330,7 +347,7 @@ export function WheelPickerModal({
         {/* Confirm Button */}
         <div className="p-4">
           <button
-            onClick={onClose}
+            onClick={handleConfirm}
             className="w-full py-4 bg-[#FFD54F] text-gray-900 font-semibold rounded-xl hover:bg-[#FFC107] transition-colors"
           >
             완 료
