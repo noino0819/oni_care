@@ -97,7 +97,7 @@ export default function PasswordChangePage() {
           </h2>
           <p className="text-sm text-gray-500">
             영문, 숫자, 특수문자를 포함하여<br />
-            8자이상 15정 이내로 설정해주세요
+            8자이상 15자 이내로 설정해주세요
           </p>
         </div>
 
@@ -110,9 +110,12 @@ export default function PasswordChangePage() {
             <input
               type={showCurrentPassword ? "text" : "password"}
               value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
+              onChange={(e) => {
+                setCurrentPassword(e.target.value);
+                setError("");
+              }}
               placeholder="비밀번호"
-              className="w-full px-4 py-3 bg-gray-100 rounded-xl pr-12 focus:outline-none focus:ring-2 focus:ring-[#9F85E3]"
+              className="w-full px-4 py-3.5 bg-gray-100 rounded-xl pr-12 focus:outline-none focus:ring-2 focus:ring-[#9F85E3] text-gray-900 placeholder:text-gray-400"
             />
             <button
               type="button"
@@ -133,9 +136,12 @@ export default function PasswordChangePage() {
             <input
               type={showNewPassword ? "text" : "password"}
               value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
+              onChange={(e) => {
+                setNewPassword(e.target.value);
+                setError("");
+              }}
               placeholder="비밀번호"
-              className="w-full px-4 py-3 bg-gray-100 rounded-xl pr-12 focus:outline-none focus:ring-2 focus:ring-[#9F85E3]"
+              className="w-full px-4 py-3.5 bg-gray-100 rounded-xl pr-12 focus:outline-none focus:ring-2 focus:ring-[#9F85E3] text-gray-900 placeholder:text-gray-400"
             />
             <button
               type="button"
@@ -149,9 +155,12 @@ export default function PasswordChangePage() {
             <input
               type={showConfirmPassword ? "text" : "password"}
               value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              onChange={(e) => {
+                setConfirmPassword(e.target.value);
+                setError("");
+              }}
               placeholder="비밀번호 확인"
-              className="w-full px-4 py-3 bg-gray-100 rounded-xl pr-12 focus:outline-none focus:ring-2 focus:ring-[#9F85E3]"
+              className="w-full px-4 py-3.5 bg-gray-100 rounded-xl pr-12 focus:outline-none focus:ring-2 focus:ring-[#9F85E3] text-gray-900 placeholder:text-gray-400"
             />
             <button
               type="button"
@@ -199,5 +208,3 @@ export default function PasswordChangePage() {
     </div>
   );
 }
-
-

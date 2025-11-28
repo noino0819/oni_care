@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, Home, ChevronRight } from "lucide-react";
 import {
@@ -15,6 +15,7 @@ import {
   DISEASE_OPTIONS,
   INTEREST_OPTIONS,
 } from "@/types/point-coupon";
+import useSWR from "swr";
 
 interface UserProfile {
   id: string;
@@ -31,13 +32,65 @@ interface UserProfile {
   interests?: string[];
 }
 
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
+// 스켈레톤 컴포넌트
+function ProfileSkeleton() {
+  return (
+    <div className="px-4 py-4 animate-pulse">
+      {/* 기본정보 스켈레톤 */}
+      <div className="mb-6">
+        <div className="h-5 w-16 bg-gray-200 rounded mb-3" />
+        <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="flex items-center justify-between px-4 py-4">
+              <div className="h-4 w-16 bg-gray-200 rounded" />
+              <div className="h-4 w-24 bg-gray-200 rounded" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 사업장코드 스켈레톤 */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between px-4 py-4 bg-white rounded-xl border border-gray-200">
+          <div className="h-4 w-20 bg-gray-200 rounded" />
+          <div className="h-4 w-16 bg-gray-200 rounded" />
+        </div>
+      </div>
+
+      {/* 건강정보 스켈레톤 */}
+      <div className="mb-6">
+        <div className="h-5 w-16 bg-gray-200 rounded mb-3" />
+        <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="flex items-center justify-between px-4 py-4">
+              <div className="h-4 w-16 bg-gray-200 rounded" />
+              <div className="h-4 w-24 bg-gray-200 rounded" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ProfileEditPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [saving, setSaving] = useState(false);
 
+  // SWR로 프로필 데이터 가져오기
+  const { data: profile, isLoading, mutate } = useSWR<UserProfile>(
+    "/api/profile",
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 5000,
+    }
+  );
+
   // 모달 상태
+  const [showNameModal, setShowNameModal] = useState(false);
   const [showBirthDatePicker, setShowBirthDatePicker] = useState(false);
   const [showGenderPicker, setShowGenderPicker] = useState(false);
   const [showHeightPicker, setShowHeightPicker] = useState(false);
@@ -50,38 +103,28 @@ export default function ProfileEditPage() {
   const [invalidCodeMessage, setInvalidCodeMessage] = useState("");
 
   // 임시 값
+  const [tempName, setTempName] = useState("");
   const [tempBusinessCode, setTempBusinessCode] = useState("");
   const [tempBirthYear, setTempBirthYear] = useState(1990);
   const [tempBirthMonth, setTempBirthMonth] = useState(1);
   const [tempBirthDay, setTempBirthDay] = useState(1);
 
+  // 프로필 데이터 변경 시 임시 값 업데이트
   useEffect(() => {
-    fetchProfile();
-  }, []);
-
-  const fetchProfile = async () => {
-    try {
-      const res = await fetch("/api/profile");
-      const data = await res.json();
-      setProfile(data);
-
-      // 생년월일 파싱
-      if (data.birth_date) {
-        const date = new Date(data.birth_date);
+    if (profile) {
+      setTempName(profile.name || "");
+      setTempBusinessCode(profile.business_code || "");
+      
+      if (profile.birth_date) {
+        const date = new Date(profile.birth_date);
         setTempBirthYear(date.getFullYear());
         setTempBirthMonth(date.getMonth() + 1);
         setTempBirthDay(date.getDate());
       }
-
-      setTempBusinessCode(data.business_code || "");
-    } catch (error) {
-      console.error("Error fetching profile:", error);
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [profile]);
 
-  const updateProfile = async (updates: Partial<UserProfile>) => {
+  const updateProfile = useCallback(async (updates: Partial<UserProfile>) => {
     setSaving(true);
     try {
       const res = await fetch("/api/profile", {
@@ -91,17 +134,23 @@ export default function ProfileEditPage() {
       });
 
       if (res.ok) {
-        const data = await res.json();
-        setProfile(data);
+        mutate();
       }
     } catch (error) {
       console.error("Error updating profile:", error);
     } finally {
       setSaving(false);
     }
-  };
+  }, [mutate]);
 
-  const handleBusinessCodeSubmit = async () => {
+  const handleNameSubmit = useCallback(() => {
+    if (tempName.trim()) {
+      updateProfile({ name: tempName.trim() });
+      setShowNameModal(false);
+    }
+  }, [tempName, updateProfile]);
+
+  const handleBusinessCodeSubmit = useCallback(async () => {
     if (tempBusinessCode.length !== 6) {
       setInvalidCodeMessage("유효하지 않은 사업장코드입니다.");
       setShowInvalidCodeAlert(true);
@@ -116,19 +165,19 @@ export default function ProfileEditPage() {
       });
 
       if (!res.ok) {
-        setInvalidCodeMessage("유효하지 않은 사업장코드입니다.");
+        const data = await res.json();
+        setInvalidCodeMessage(data.error || "유효하지 않은 사업장코드입니다.");
         setShowInvalidCodeAlert(true);
         return;
       }
 
-      const data = await res.json();
-      setProfile(data);
+      mutate();
       setShowBusinessCodeModal(false);
     } catch {
       setInvalidCodeMessage("유효하지 않은 사업장코드입니다.");
       setShowInvalidCodeAlert(true);
     }
-  };
+  }, [tempBusinessCode, mutate]);
 
   const formatBirthDate = (dateStr?: string) => {
     if (!dateStr) return "";
@@ -156,6 +205,7 @@ export default function ProfileEditPage() {
 
   const getDiseaseLabels = (diseases?: string[]) => {
     if (!diseases || diseases.length === 0) return "해당없음";
+    if (diseases.includes("none")) return "해당없음";
     return diseases
       .map((d) => DISEASE_OPTIONS.find((opt) => opt.value === d)?.label)
       .filter(Boolean)
@@ -164,10 +214,13 @@ export default function ProfileEditPage() {
 
   const getInterestLabels = (interests?: string[]) => {
     if (!interests || interests.length === 0) return "-";
-    return interests
+    const labels = interests
       .map((i) => INTEREST_OPTIONS.find((opt) => opt.value === i)?.label)
-      .filter(Boolean)
-      .join(", ");
+      .filter(Boolean);
+    if (labels.length > 2) {
+      return `${labels.slice(0, 2).join(", ")} 외 ${labels.length - 2}개`;
+    }
+    return labels.join(", ");
   };
 
   // 높이 옵션 생성 (140~200cm)
@@ -200,10 +253,22 @@ export default function ProfileEditPage() {
     label: `${String(i + 1).padStart(2, "0")}`,
   }));
 
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#9F85E3]" />
+      <div className="min-h-screen bg-white pb-20">
+        {/* 헤더 */}
+        <header className="sticky top-0 bg-white z-10 border-b border-gray-100">
+          <div className="flex items-center justify-between px-4 py-3">
+            <button onClick={() => router.back()} className="p-1">
+              <ChevronLeft className="w-6 h-6 text-gray-800" />
+            </button>
+            <h1 className="text-lg font-semibold text-gray-900">회원정보 수정</h1>
+            <button onClick={() => router.push("/home")} className="p-1">
+              <Home className="w-6 h-6 text-gray-800" />
+            </button>
+          </div>
+        </header>
+        <ProfileSkeleton />
       </div>
     );
   }
@@ -229,12 +294,16 @@ export default function ProfileEditPage() {
           <h2 className="text-base font-bold text-gray-900 mb-3">기본정보</h2>
           <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
             {/* 이름 */}
-            <div className="flex items-center justify-between px-4 py-4">
+            <button
+              onClick={() => setShowNameModal(true)}
+              className="w-full flex items-center justify-between px-4 py-4"
+            >
               <span className="text-gray-600">이름</span>
-              <span className="text-gray-900">
-                {profile?.name || "김건강"} &gt;
-              </span>
-            </div>
+              <div className="flex items-center gap-1">
+                <span className="text-gray-900">{profile?.name || "-"}</span>
+                <ChevronRight className="w-4 h-4 text-gray-400" />
+              </div>
+            </button>
 
             {/* 생년월일 */}
             <button
@@ -244,7 +313,7 @@ export default function ProfileEditPage() {
               <span className="text-gray-600">생년월일</span>
               <div className="flex items-center gap-1">
                 <span className="text-gray-900">
-                  {formatBirthDate(profile?.birth_date) || "961128"}
+                  {formatBirthDate(profile?.birth_date) || "-"}
                 </span>
                 <ChevronRight className="w-4 h-4 text-gray-400" />
               </div>
@@ -258,19 +327,25 @@ export default function ProfileEditPage() {
               <span className="text-gray-600">성별</span>
               <div className="flex items-center gap-1">
                 <span className="text-gray-900">
-                  {getGenderLabel(profile?.gender) || "여"}
+                  {getGenderLabel(profile?.gender) || "-"}
                 </span>
                 <ChevronRight className="w-4 h-4 text-gray-400" />
               </div>
             </button>
 
             {/* 연락처 */}
-            <div className="flex items-center justify-between px-4 py-4">
+            <button
+              onClick={() => router.push("/menu/profile-edit/phone")}
+              className="w-full flex items-center justify-between px-4 py-4"
+            >
               <span className="text-gray-600">연락처</span>
-              <span className="text-gray-900">
-                {profile?.masked_phone || "010-****-5678"}
-              </span>
-            </div>
+              <div className="flex items-center gap-1">
+                <span className="text-gray-900">
+                  {profile?.masked_phone || "-"}
+                </span>
+                <ChevronRight className="w-4 h-4 text-gray-400" />
+              </div>
+            </button>
 
             {/* 비밀번호 */}
             <div className="flex items-center justify-between px-4 py-4">
@@ -313,7 +388,7 @@ export default function ProfileEditPage() {
               <span className="text-gray-600">키</span>
               <div className="flex items-center gap-1">
                 <span className="text-gray-900">
-                  {profile?.height ? `${profile.height}cm` : "165cm"}
+                  {profile?.height ? `${profile.height}cm` : "-"}
                 </span>
                 <ChevronRight className="w-4 h-4 text-gray-400" />
               </div>
@@ -327,7 +402,7 @@ export default function ProfileEditPage() {
               <span className="text-gray-600">몸무게</span>
               <div className="flex items-center gap-1">
                 <span className="text-gray-900">
-                  {profile?.weight ? `${profile.weight}kg` : "58kg"}
+                  {profile?.weight ? `${profile.weight}kg` : "-"}
                 </span>
                 <ChevronRight className="w-4 h-4 text-gray-400" />
               </div>
@@ -341,7 +416,7 @@ export default function ProfileEditPage() {
               <span className="text-gray-600">활동량</span>
               <div className="flex items-center gap-1">
                 <span className="text-gray-900">
-                  {getActivityLabel(profile?.activity_level) || "활동적"}
+                  {getActivityLabel(profile?.activity_level) || "-"}
                 </span>
                 <ChevronRight className="w-4 h-4 text-gray-400" />
               </div>
@@ -360,6 +435,20 @@ export default function ProfileEditPage() {
                 <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
               </div>
             </button>
+
+            {/* 관심사 */}
+            <button
+              onClick={() => setShowInterestPicker(true)}
+              className="w-full flex items-center justify-between px-4 py-4"
+            >
+              <span className="text-gray-600">관심사</span>
+              <div className="flex items-center gap-1">
+                <span className="text-gray-900 text-right max-w-[180px] truncate">
+                  {getInterestLabels(profile?.interests)}
+                </span>
+                <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+              </div>
+            </button>
           </div>
         </div>
 
@@ -373,6 +462,35 @@ export default function ProfileEditPage() {
           </button>
         </div>
       </div>
+
+      {/* 이름 입력 모달 */}
+      <BottomSheet
+        isOpen={showNameModal}
+        onClose={() => setShowNameModal(false)}
+        title="이름을 입력해 주세요."
+      >
+        <div className="mb-6">
+          <input
+            type="text"
+            value={tempName}
+            onChange={(e) => setTempName(e.target.value)}
+            placeholder="이름"
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#9F85E3] text-center text-lg"
+            maxLength={20}
+          />
+        </div>
+        <button
+          onClick={handleNameSubmit}
+          disabled={!tempName.trim()}
+          className={`w-full py-4 rounded-xl font-semibold ${
+            tempName.trim()
+              ? "bg-[#FFD54F] text-gray-900"
+              : "bg-gray-200 text-gray-400"
+          }`}
+        >
+          완 료
+        </button>
+      </BottomSheet>
 
       {/* 생년월일 피커 */}
       <BottomSheet
@@ -563,7 +681,7 @@ export default function ProfileEditPage() {
             maxLength={6}
           />
           {tempBusinessCode.length > 0 && tempBusinessCode.length !== 6 && (
-            <p className="text-sm text-red-500 mt-2">
+            <p className="text-sm text-red-500 mt-2 text-center">
               유효하지 않은 사업장코드입니다.
             </p>
           )}

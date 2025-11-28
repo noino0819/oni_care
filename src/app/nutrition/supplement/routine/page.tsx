@@ -159,7 +159,8 @@ export default function SupplementRoutinePage() {
 
   // 뒤로가기 처리
   const handleBack = () => {
-    if (isEditMode && hasChanges) {
+    if (isEditMode) {
+      // 편집 모드에서는 항상 확인 Alert 표시
       setShowExitAlert(true);
     } else {
       router.back();
@@ -168,7 +169,8 @@ export default function SupplementRoutinePage() {
 
   // 검색 버튼 클릭
   const handleSearchClick = () => {
-    if (isEditMode && hasChanges) {
+    if (isEditMode) {
+      // 편집 모드에서는 항상 확인 Alert 표시
       setShowSearchAlert(true);
     } else {
       router.push("/nutrition/supplement/search");

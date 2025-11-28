@@ -24,6 +24,7 @@ export default function PhoneChangePage() {
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatPhone(e.target.value);
     setPhone(formatted);
+    setError("");
   };
 
   const handleSendCode = async () => {
@@ -114,7 +115,7 @@ export default function PhoneChangePage() {
       <div className="px-4 py-6">
         {/* 안내 문구 */}
         <div className="mb-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-2">
+          <h2 className="text-xl font-bold text-gray-900">
             휴대폰 번호를 재설정 해주세요.
           </h2>
         </div>
@@ -130,41 +131,42 @@ export default function PhoneChangePage() {
               value={phone}
               onChange={handlePhoneChange}
               placeholder="핸드폰 번호"
-              className="flex-1 px-4 py-3 bg-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#9F85E3]"
+              className="flex-1 px-4 py-3.5 bg-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#9F85E3] text-gray-900 placeholder:text-gray-400"
               maxLength={13}
             />
             <button
               onClick={handleSendCode}
               disabled={!isPhoneValid || loading}
-              className={`px-4 py-3 rounded-xl font-medium transition-colors ${
+              className={`px-4 py-3.5 rounded-xl font-medium transition-colors whitespace-nowrap ${
                 isPhoneValid && !loading
                   ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
                   : "bg-gray-100 text-gray-400 cursor-not-allowed"
               }`}
             >
-              {codeSent ? "재전송" : "인증번호 전송"}
+              {loading ? "전송중..." : codeSent ? "재전송" : "인증번호 전송"}
             </button>
           </div>
         </div>
 
         {/* 인증번호 입력 */}
-        <div className="mb-4">
+        <div className="mb-3">
           <input
             type="text"
             value={verificationCode}
-            onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            onChange={(e) => {
+              setVerificationCode(e.target.value.replace(/\D/g, "").slice(0, 6));
+              setError("");
+            }}
             placeholder="인증번호"
-            className="w-full px-4 py-3 bg-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#9F85E3]"
+            className="w-full px-4 py-3.5 bg-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#9F85E3] text-gray-900 placeholder:text-gray-400"
             maxLength={6}
           />
         </div>
 
-        {/* 에러/안내 메시지 */}
-        {error ? (
-          <p className="text-red-500 text-sm mb-4">{error}</p>
-        ) : (
-          <p className="text-red-500 text-sm mb-4">휴대폰 번호는 11자리입니다</p>
-        )}
+        {/* 안내/에러 메시지 */}
+        <p className="text-red-500 text-sm mb-6">
+          {error || "휴대폰 번호는 11자리입니다"}
+        </p>
 
         {/* 인증 완료 버튼 */}
         <button
@@ -197,5 +199,3 @@ export default function PhoneChangePage() {
     </div>
   );
 }
-
-

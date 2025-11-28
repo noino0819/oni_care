@@ -274,23 +274,29 @@ function analyzeSupplementsFromDB(
         // 1. 먼저 supplement_product_id로 제품 매칭 시도
         let matchedProductId = routine.supplement_product_id;
         
-        // 2. supplement_product_id가 없으면 제품명으로 매칭 시도
-        if (!matchedProductId) {
+        // 2. supplement_product_id로 매핑이 있는지 확인
+        let productMappings = matchedProductId 
+            ? productIngredientMappings.filter(m => m.product_id === matchedProductId)
+            : [];
+        
+        // 3. 매핑이 없으면 제품명으로 매칭 시도
+        if (productMappings.length === 0) {
             const matchedProduct = productsMaster.find(p => 
+                supplementName === p.product_name ||
                 supplementName.includes(p.product_name) || 
                 p.product_name.includes(supplementName) ||
                 supplementName.toLowerCase() === p.product_name.toLowerCase()
             );
             if (matchedProduct) {
                 matchedProductId = matchedProduct.id;
+                productMappings = productIngredientMappings.filter(
+                    m => m.product_id === matchedProductId
+                );
             }
         }
 
-        // 3. 제품 ID로 성분 매핑 조회
-        if (matchedProductId) {
-            const productMappings = productIngredientMappings.filter(
-                m => m.product_id === matchedProductId
-            );
+        // 4. 제품 ID로 성분 매핑 조회
+        if (matchedProductId && productMappings.length > 0) {
 
             productMappings.forEach((mapping) => {
                 if (!mapping.ingredient) return;

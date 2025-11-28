@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, Home, ChevronDown } from "lucide-react";
 import { ConfirmModal, BottomSheet } from "@/components/ui/Modal";
-import { PointsPageSkeleton } from "@/components/ui/LoadingSpinner";
+import useSWR from "swr";
 
 type TabType = "coupon" | "point";
 type CouponFilter = "all" | "greating" | "cafeteria";
@@ -32,6 +32,32 @@ interface PointHistory {
   created_at: string;
 }
 
+interface PointsResponse {
+  totalPoints: number;
+  thisMonthEarned: number;
+  thisMonthTransferred: number;
+  expiringPoints30Days: number;
+  history: PointHistory[];
+}
+
+interface CouponsResponse {
+  availableCoupons: number;
+  thisMonthIssued: number;
+  thisMonthUsed: number;
+  expiringCoupons30Days: number;
+  coupons: Coupon[];
+}
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
+// 월 선택 옵션 생성
+const generateMonthOptions = () =>
+  Array.from({ length: 12 }, (_, i) => {
+    const date = new Date();
+    date.setMonth(date.getMonth() - i);
+    return `${date.getFullYear()}년 ${date.getMonth() + 1}월`;
+  });
+
 export default function PointsPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabType>("point");
@@ -42,24 +68,6 @@ export default function PointsPage() {
     return `${now.getFullYear()}년 ${now.getMonth() + 1}월`;
   });
   const [showMonthPicker, setShowMonthPicker] = useState(false);
-  
-  // 데이터 상태
-  const [loading, setLoading] = useState(true);
-  const [totalCoupons, setTotalCoupons] = useState(2);
-  const [totalPoints, setTotalPoints] = useState(3200);
-  const [couponStats, setCouponStats] = useState({
-    available: 2,
-    thisMonthIssued: 1,
-    thisMonthUsed: 2,
-    expiring30Days: 3,
-  });
-  const [pointStats, setPointStats] = useState({
-    thisMonthEarned: 200,
-    thisMonthTransferred: 5000,
-    expiring30Days: 700,
-  });
-  const [coupons, setCoupons] = useState<Coupon[]>([]);
-  const [pointHistory, setPointHistory] = useState<PointHistory[]>([]);
 
   // 팝업 상태
   const [showTransferConfirm, setShowTransferConfirm] = useState(false);
@@ -68,71 +76,83 @@ export default function PointsPage() {
   const [showMinPointsAlert, setShowMinPointsAlert] = useState(false);
   const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null);
   const [linkAccountType, setLinkAccountType] = useState<string>("");
+  const [transferredAccount, setTransferredAccount] = useState<string>("");
 
-  // 월 선택 옵션 생성
-  const monthOptions = Array.from({ length: 12 }, (_, i) => {
-    const date = new Date();
-    date.setMonth(date.getMonth() - i);
-    return `${date.getFullYear()}년 ${date.getMonth() + 1}월`;
-  });
+  const monthOptions = useMemo(generateMonthOptions, []);
 
-  useEffect(() => {
-    fetchData();
-  }, [activeTab, couponFilter, pointFilter, selectedMonth]);
+  // 월 파싱
+  const monthParam = useMemo(() => {
+    const match = selectedMonth.match(/(\d+)년 (\d+)월/);
+    if (!match) return "";
+    return `${match[1]}-${match[2].padStart(2, "0")}`;
+  }, [selectedMonth]);
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      // 월 파싱
-      const match = selectedMonth.match(/(\d+)년 (\d+)월/);
-      if (!match) return;
-      const monthParam = `${match[1]}-${match[2].padStart(2, "0")}`;
-
-      if (activeTab === "point") {
-        const res = await fetch(`/api/points?filter=${pointFilter}&month=${monthParam}`);
-        const data = await res.json();
-        if (data.totalPoints !== undefined) setTotalPoints(data.totalPoints);
-        if (data.thisMonthEarned !== undefined) {
-          setPointStats({
-            thisMonthEarned: data.thisMonthEarned || 0,
-            thisMonthTransferred: data.thisMonthTransferred || 0,
-            expiring30Days: data.expiringPoints30Days || 0,
-          });
-        }
-        setPointHistory(data.history || []);
-      } else {
-        const res = await fetch(`/api/coupons?filter=${couponFilter}&month=${monthParam}`);
-        const data = await res.json();
-        if (data.availableCoupons !== undefined) setTotalCoupons(data.availableCoupons);
-        if (data.thisMonthIssued !== undefined) {
-          setCouponStats({
-            available: data.availableCoupons || 0,
-            thisMonthIssued: data.thisMonthIssued || 0,
-            thisMonthUsed: data.thisMonthUsed || 0,
-            expiring30Days: data.expiringCoupons30Days || 0,
-          });
-        }
-        setCoupons(data.coupons || []);
-      }
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    } finally {
-      setLoading(false);
+  // SWR로 포인트 데이터 가져오기
+  const { data: pointsData, isLoading: pointsLoading, mutate: mutatePoints } = useSWR<PointsResponse>(
+    activeTab === "point" ? `/api/points?filter=${pointFilter}&month=${monthParam}` : null,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 5000,
     }
-  };
+  );
 
-  const handleCouponTransfer = async (coupon: Coupon) => {
+  // SWR로 쿠폰 데이터 가져오기
+  const { data: couponsData, isLoading: couponsLoading, mutate: mutateCoupons } = useSWR<CouponsResponse>(
+    activeTab === "coupon" ? `/api/coupons?filter=${couponFilter}&month=${monthParam}` : null,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 5000,
+    }
+  );
+
+  // 총 쿠폰/포인트 조회 (탭 전환용)
+  const { data: summaryPointsData } = useSWR<PointsResponse>(
+    "/api/points?filter=all",
+    fetcher,
+    { revalidateOnFocus: false, dedupingInterval: 30000 }
+  );
+  
+  const { data: summaryCouponsData } = useSWR<CouponsResponse>(
+    "/api/coupons?filter=all",
+    fetcher,
+    { revalidateOnFocus: false, dedupingInterval: 30000 }
+  );
+
+  const totalPoints = summaryPointsData?.totalPoints ?? 0;
+  const totalCoupons = summaryCouponsData?.availableCoupons ?? 0;
+
+  const pointStats = useMemo(() => ({
+    thisMonthEarned: pointsData?.thisMonthEarned ?? 0,
+    thisMonthTransferred: pointsData?.thisMonthTransferred ?? 0,
+    expiring30Days: pointsData?.expiringPoints30Days ?? 0,
+  }), [pointsData]);
+
+  const couponStats = useMemo(() => ({
+    available: couponsData?.availableCoupons ?? 0,
+    thisMonthIssued: couponsData?.thisMonthIssued ?? 0,
+    thisMonthTransferred: couponsData?.thisMonthUsed ?? 0, // 이번달 전환
+    expiring30Days: couponsData?.expiringCoupons30Days ?? 0,
+  }), [couponsData]);
+
+  const pointHistory = pointsData?.history ?? [];
+  const coupons = couponsData?.coupons ?? [];
+
+  const isLoading = activeTab === "point" ? pointsLoading : couponsLoading;
+
+  const handleCouponTransfer = useCallback(async (coupon: Coupon) => {
     setSelectedCoupon(coupon);
-    
+
     try {
       const res = await fetch("/api/coupons/transfer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ couponId: coupon.id }),
       });
-      
+
       const data = await res.json();
-      
+
       if (!res.ok) {
         if (data.needsLinking) {
           setLinkAccountType(data.accountType);
@@ -142,21 +162,22 @@ export default function PointsPage() {
         }
         return;
       }
-      
+
+      setTransferredAccount(data.transferredAccount || "gre***");
       setShowTransferConfirm(true);
-      fetchData();
+      mutateCoupons();
     } catch {
       setShowTransferError(true);
     }
-  };
+  }, [mutateCoupons]);
 
-  const handlePointTransfer = () => {
+  const handlePointTransfer = useCallback(() => {
     if (totalPoints < 5000) {
       setShowMinPointsAlert(true);
       return;
     }
     router.push("/menu/points/transfer");
-  };
+  }, [totalPoints, router]);
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -169,7 +190,7 @@ export default function PointsPage() {
     return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
   };
 
-  const getStatusButton = (coupon: Coupon) => {
+  const getStatusButton = useCallback((coupon: Coupon) => {
     switch (coupon.status) {
       case "pending":
         return (
@@ -181,6 +202,18 @@ export default function PointsPage() {
         return (
           <span className="px-3 py-1.5 text-xs font-medium text-gray-500 bg-gray-100 rounded-lg">
             전환됨
+          </span>
+        );
+      case "used":
+        return (
+          <span className="px-3 py-1.5 text-xs font-medium text-gray-500 bg-gray-100 rounded-lg">
+            사용완료
+          </span>
+        );
+      case "expired":
+        return (
+          <span className="px-3 py-1.5 text-xs font-medium text-gray-500 bg-gray-100 rounded-lg">
+            만료됨
           </span>
         );
       case "available":
@@ -195,7 +228,7 @@ export default function PointsPage() {
       default:
         return null;
     }
-  };
+  }, [handleCouponTransfer]);
 
   // 내역 그룹화 (날짜별)
   const groupByDate = <T extends { created_at: string }>(items: T[]) => {
@@ -209,6 +242,28 @@ export default function PointsPage() {
     });
     return groups;
   };
+
+  // 스켈레톤 컴포넌트
+  const HistorySkeleton = () => (
+    <div className="space-y-4">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="animate-pulse">
+          <div className="h-4 w-32 bg-gray-200 rounded mb-2" />
+          <div className="bg-white rounded-xl border border-gray-100 p-4">
+            {[1, 2].map((j) => (
+              <div key={j} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                <div>
+                  <div className="h-5 w-32 bg-gray-200 rounded mb-1" />
+                  <div className="h-4 w-24 bg-gray-200 rounded" />
+                </div>
+                <div className="h-6 w-16 bg-gray-200 rounded" />
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-white pb-24">
@@ -234,11 +289,11 @@ export default function PointsPage() {
             <span className="text-lg">🐷</span>
             <span className="text-base font-semibold text-gray-900">내 자산</span>
           </div>
-          
+
           {/* 자산 현황 카드 */}
           <div className="bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
             {/* 쿠폰 행 */}
-            <button 
+            <button
               className={`w-full flex items-center justify-between px-4 py-4 transition-colors ${activeTab === "coupon" ? "bg-purple-50" : ""}`}
               onClick={() => setActiveTab("coupon")}
             >
@@ -248,11 +303,11 @@ export default function PointsPage() {
                 <span className="text-sm text-gray-400">상세보기</span>
               </div>
             </button>
-            
+
             <div className="border-t border-gray-100" />
-            
+
             {/* 포인트 행 */}
-            <button 
+            <button
               className={`w-full flex items-center justify-between px-4 py-4 transition-colors ${activeTab === "point" ? "bg-purple-50" : ""}`}
               onClick={() => setActiveTab("point")}
             >
@@ -306,7 +361,7 @@ export default function PointsPage() {
           ) : (
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm text-gray-500 mb-1">발급된 쿠폰</p>
+                <p className="text-sm text-gray-500 mb-1">전환가능 쿠폰</p>
                 <p className="text-3xl font-bold text-gray-900">{couponStats.available}장</p>
               </div>
               <div className="text-right text-sm space-y-1">
@@ -316,7 +371,7 @@ export default function PointsPage() {
                 </div>
                 <div className="flex justify-between gap-4">
                   <span className="text-gray-500">이번달 전환</span>
-                  <span className="text-gray-900 font-medium">{couponStats.thisMonthUsed}장</span>
+                  <span className="text-gray-900 font-medium">{couponStats.thisMonthTransferred}장</span>
                 </div>
                 <div className="flex justify-between gap-4">
                   <span className="text-gray-500">30일 이내 소멸 예정</span>
@@ -376,26 +431,12 @@ export default function PointsPage() {
           )}
         </div>
 
+        {/* 구분선 */}
+        <div className="border-t border-gray-200 mb-4" />
+
         {/* 내역 리스트 */}
-        {loading ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="animate-pulse">
-                <div className="h-4 w-32 bg-gray-200 rounded mb-2" />
-                <div className="bg-white rounded-xl border border-gray-100 p-4">
-                  {[1, 2].map((j) => (
-                    <div key={j} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
-                      <div>
-                        <div className="h-5 w-32 bg-gray-200 rounded mb-1" />
-                        <div className="h-4 w-24 bg-gray-200 rounded" />
-                      </div>
-                      <div className="h-6 w-16 bg-gray-200 rounded" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+        {isLoading ? (
+          <HistorySkeleton />
         ) : activeTab === "point" ? (
           pointHistory.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20">
@@ -438,7 +479,7 @@ export default function PointsPage() {
                             </div>
                           </div>
                           <span className={`font-bold text-lg ${item.points > 0 ? "text-gray-900" : "text-gray-500"}`}>
-                            {item.points > 0 ? "" : ""}{item.points.toLocaleString()}P
+                            {item.points > 0 ? "+" : ""}{item.points.toLocaleString()}P
                           </span>
                         </div>
                       </div>
@@ -494,7 +535,7 @@ export default function PointsPage() {
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100">
           <button
             onClick={handlePointTransfer}
-            className="w-full py-4 bg-[#9F85E3] text-white font-semibold rounded-xl hover:bg-[#8B71CF] transition-colors"
+            className="w-full py-4 bg-[#C9E34F] text-gray-900 font-semibold rounded-xl hover:bg-[#B8D23E] transition-colors"
           >
             포인트 전환하기
           </button>
@@ -532,7 +573,7 @@ export default function PointsPage() {
         isOpen={showTransferConfirm}
         onClose={() => setShowTransferConfirm(false)}
         onConfirm={() => setShowTransferConfirm(false)}
-        message={`확인 버튼을 누르시면\n그리팅몰(${selectedCoupon?.transferred_account || "gre***"})로 쿠폰이 전환되어\n그리팅몰 쿠폰함에서 확인하실 수 있어요!`}
+        message={`확인 버튼을 누르시면\n그리팅몰(${transferredAccount})로 쿠폰이 전환되어\n그리팅몰 쿠폰함에서 확인하실 수 있어요!`}
         showCancel
       />
 
@@ -553,7 +594,7 @@ export default function PointsPage() {
           setShowLinkRequired(false);
           router.push("/menu/account-link");
         }}
-        message={`___쿠폰 발급을 위해\n${linkAccountType === "greating_mall" ? "그리팅(카페테리아)" : "그리팅(카페테리아)"} 연동이 필요해요!`}
+        message={`___쿠폰 발급을 위해\n${linkAccountType === "greating_mall" ? "그리팅" : "카페테리아"} 연동이 필요해요!`}
         confirmText="연동하기"
         cancelText="취소"
         showCancel
